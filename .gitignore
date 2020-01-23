@@ -1,0 +1,10 @@
+*.out
+*.pdf
+*.aux
+*.synctex.gz
+*.log
+*.blg
+*.dvi
+*.o
+*.mod
+example
