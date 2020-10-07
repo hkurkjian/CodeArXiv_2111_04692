@@ -7,4 +7,5 @@
 *.dvi
 *.o
 *.mod
+*.dat
 example
