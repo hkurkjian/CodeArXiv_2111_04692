@@ -2,7 +2,7 @@
 ![1] Scientific Reports 10, 11591
 ![2] https://doi.org/10.5802/crphys.1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-MODULE vars2
+MODULE vars
  USE nrtype
  IMPLICIT NONE
 ! Global variables
@@ -13,23 +13,23 @@ MODULE vars2
 !EPSrpp|EPSrpt should be much lower than EPSpp|EPSpt
 !Suggested configuration EPSpp=1.0e-6_qp, EPSrpp=1.0e-10_qp, EPSpt=1.0e-6_qp, EPSrpt=1.e-7_qp
  LOGICAL bla1   !verbose level
- LOGICAL temperaturenulle ! .TRUE. to compute the matrix T=0 (beta=+oo), using analytical formulas to speed-up the calculation. .FALSE. otherwise 
+ LOGICAL temperaturenulle ! .TRUE. to compute the matrix at T=0 (beta=+oo), using analytical formulas to speed-up the calculation. .FALSE. otherwise 
 
-! Internal variables (calculated by oangpp and angpt subroutines)
+! Internal variables (calculated by oangpp and oangpt subroutines)
  INTEGER ptbranchmtpp,ptbranchmtpt !Number of angular points on the qp-qp and qp-qh branch cuts, written by oangpp and oangpt
  REAL(QP) opp(1:4)   !angular points om1,om2,om3 of the qp-qp branch cut and k such that om2=E(k+q/2)+E(k-q/2), written by oangpp
- REAL(QP) opt(1:2)   !angular points om_ph qp-qh branch cut and k such that om_ph=E(k+q/2)-E(k-q/2), written by oangpt
+ REAL(QP) opt(1:2)   !angular points om_ph of the qp-qh branch cut and k such that om_ph=E(k+q/2)-E(k-q/2), written by oangpt
 
 ! Parameters
  REAL(QP), PARAMETER :: bidon=-1.0e300_qp
+ REAL(QP), PARAMETER, DIMENSION(1:6) :: eta=(/1.0,1.0, 1.0,1.0,-1.0,-1.0/) !Matrice eta   (B3) dans [1]: eta=signe devant Sigma dans (36)
  REAL(QP), PARAMETER, DIMENSION(1:6) :: sig=(/1.0,1.0,-1.0,1.0,-1.0, 1.0/) !Matrice sigma (B5) dans [1]: sig=+1 pour S^epsilon et -1 pour S^omega
- REAL(QP), PARAMETER, DIMENSION(1:6) :: eta=(/1.0,1.0, 1.0,1.0,-1.0,-1.0/) !Matrice eta   (B3) dans [1]: eta=signe devant Sigma in (36)
-END MODULE vars2
+END MODULE vars
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-MODULE dspec2
+MODULE dspec
  USE nrtype
  USE nrutil, ONLY : ecrit
- USE vars2
+ USE vars
  USE modsim
  IMPLICIT NONE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -49,7 +49,6 @@ SUBROUTINE mat(om0,e,det,M,fr)
 !det=M(1,1)*M(2,2)-M(1,2)**2, the determinant of the 2*2 order-parameter matrix
 !fr a 3*3 symmetric matrix of response functions in the basis 1:phase, 2:modulus, 3:density (see equation (43) in [1])
 
-USE recettes, ONLY : ludcmp
 IMPLICIT NONE
 COMPLEX(QPC), DIMENSION(1:3,1:3), INTENT(OUT) :: M,fr
 COMPLEX(QPC), INTENT(OUT) :: det
@@ -93,8 +92,6 @@ SUBROUTINE mat_pairfield(om0,e,det,M,fr)
 !det=M(1,1)*M(2,2)-M(1,2)**2, the determinant of the matrix
 !fr=1/M the pair propagator
 
-USE recettes, ONLY : ludcmp
-!USE eqdetat
 IMPLICIT NONE
 COMPLEX(QPC), DIMENSION(1:2,1:2), INTENT(OUT) :: M,fr
 COMPLEX(QPC), INTENT(OUT) :: det
@@ -130,7 +127,6 @@ FUNCTION elementmat(num,om0,e)
 ! 5.5 -> density-phase
 ! 6.5 -> density-modulus
 ! input as global variables same as for mat
-USE recettes
 !input:
 IMPLICIT NONE
 REAL(QP), INTENT(IN)  :: num,om0,e
@@ -1148,4 +1144,4 @@ else
   opt(1)=abs(Enpt(opt(2),1.0_qp))
 endif
 END SUBROUTINE oangpt
-END MODULE dspec2
+END MODULE dspec

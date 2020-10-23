@@ -1,6 +1,6 @@
 PROGRAM intldc !Contribution of the branch cuts ("ldc") to the fermionic self-energy
- USE vars2 ! For variables share by all subroutines here and in the dspec module (in particular x0=mu/Delta and xq=q/q_Delta, opp(1:4), location of the angular points of the qp-qp branch cut)
- USE dspec2
+ USE vars ! For variables share by all subroutines here and in the dspec module (in particular x0=mu/Delta and xq=q/q_Delta, opp(1:4), location of the angular points of the qp-qp branch cut)
+ USE dspec
  IMPLICIT NONE
  LOGICAL bla0
  REAL(QP) zk,Iq(1:3)

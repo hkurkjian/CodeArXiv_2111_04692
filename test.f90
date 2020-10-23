@@ -2,8 +2,8 @@ program test
 USE nrtype
 USE modsim
 USE recettes
-USE dspec2
-USE vars2
+USE dspec
+USE vars
 IMPLICIT NONE
 
 REAL(QP) om
@@ -12,12 +12,14 @@ COMPLEX(QPC) Gam3(1:3,1:3),Mat3(1:3,1:3)
 
 om=7.12_qp
 xq=0.5_qp
-x0=10._qp
-beta=1.0_qp
-bla1=.FALSE.
+x0=1000._qp
+beta=0.0_qp
 
-!temperaturenulle=.TRUE.
-temperaturenulle=.FALSE.
+bla1=.FALSE.
+bla1=.TRUE.
+
+temperaturenulle=.TRUE.
+!temperaturenulle=.FALSE.
 
 EPSpp=1.0e-8_qp
 EPSrpp=1.0e-10_qp

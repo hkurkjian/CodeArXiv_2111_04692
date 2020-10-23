@@ -5,10 +5,10 @@ LIB_PERSO=-L./libperso -lmalib
 %.o : %.f90
 	$(COMP) -I$(MOD) -O3 -c $< -o $@
 
-intldc: dspec2.o intldc.o
+intldc: dspec.o intldc.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o intldc 
 
-test: dspec2.o test.o
+test: dspec.o test.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o test
 propre : 
 	rm -f *.o 
