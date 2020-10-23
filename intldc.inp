@@ -1,0 +1,4 @@
+z01     !  read(10,*)suffixe
+10.0      !  read(10,*)x0
+3.3333       !  read(10,*)k
+1.0       !  read(10,*)z

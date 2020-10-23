@@ -4,8 +4,9 @@ USE recettes
 USE modpro
 
  IMPLICIT NONE
- COMPLEX(QPC) I(1:3)
- REAL(QP) Ir(1:3),rhor(1:3)
+ COMPLEX(QPC) I(1:3),fr(1:3),det
+ REAL(QP) Ir(1:3),rhor(1:3),dz
+ INTEGER iz,nz
 
 ! function intsuromega has no argument but shares the values 
 ! of xq,x0 and z with the main program (for a list of
@@ -30,14 +31,24 @@ USE modpro
  axereel=.TRUE.
  z=cmplx(3.1_qp,0.0_qp)
 
+ nz=2000
+ dz=0.1_qp
+ do iz=1,nz
+ z=iz*dz
  Ir=real(intsuromega())
  rhor=dspec(real(z))
- I=cmplx(Ir,rhor,kind=qpc)
+ I=cmplx(Ir,-PI*rhor,kind=qpc)
 
  write(6,*)"axereel=",axereel
  write(6,*)"z=",z
  write(6,*)"I=",I(:)
+ det=I(1)*I(2)-I(3)**2
+ fr(1)= I(2)/det
+ fr(2)= I(1)/det
+ fr(3)=-I(3)/det
+ write(13,file=donnees)z,imag(fr)
 
+ enddo
 !Example outside the real axis
  axereel=.FALSE.
  z=cmplx(3.1_qp,1.0_qp)
