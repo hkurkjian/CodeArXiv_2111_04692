@@ -10,6 +10,10 @@ intldc: dspec.o intldc.o
 
 test: dspec.o test.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o test
+
+test2: dspec2.o test2.o
+	$(COMP) -O3 $^ $(LIB_PERSO) -o test2
+
 propre : 
 	rm -f *.o 
 	rm -f *.mod
