@@ -166,21 +166,17 @@ IMPLICIT NONE
 REAL(QP), INTENT(IN)  :: num,om0,e,T
 REAL(QP) intpp
 REAL(QP) r0 !spectral density in om0
-REAL(QP) bmax,omcrit!bmax: energy cutoff, omcrit: critical value of om after which racinfq should be used to integrate the tail
-REAL(QP) Ia0,Ia,Ib,Ic,Id,Ie,Ig,Ih,Icomp,Iinf!partial integrals
+REAL(QP) bmax,db,omcrit!bmax: energy cutoff, omcrit: critical value of om after which racinfq should be used to integrate the tail
+REAL(QP) x0crit!x0crit: critical value of x0 after which msqu and msql should be used to integrate the function around opp(3) 
+REAL(QP) Icomp,Iinf!partial integrals
+REAL(QP) arg(1:1,1:10),bornes(1:10)
 REAL(QP), PARAMETER :: singu=1.0_qp,nonsingu=-1.0_qp !singu/nonsingu: call inter with or without the regularizing term r0/(om0-om)
+REAL(QP), PARAMETER :: su=1.0_qp,nsu=-1.0_qp !short for singu/nonsingu
+INTEGER choix(1:10)
 LOGICAL axer !calculation on or outside the real axis (currently not active)
 
 axer=.TRUE.
 
-
-Ia=0.0_qp
-Ib=0.0_qp
-Ic=0.0_qp
-Id=0.0_qp
-Ie=0.0_qp
-Ig=0.0_qp
-Ih=0.0_qp
 Iinf=0.0_qp
 Icomp=0.0_qp
 
@@ -195,275 +191,223 @@ omcrit=100.0_qp !at om0>omcrit switch from midpntq to racinfq to integration the
 if(axer)then
  if(T<0.0_qp)then ! Intégrale du "+1" de 1+nP+nM
 
-
   if(floor(num)<4)then !energy cutoff in the integrals
-   bmax=9.0e6_qp
+   db=100.0_qp
+   bmax=max(9.0e6_qp,2*om0-opp(3)+db,2*opp(3)+db,4*x0+db,2*om0-2*x0+db,2*om0+db) !In case 2*om0-opp or 2*opp overflows bmax. This formula works whatever the value of ptbranchmtpp
   else
    bmax=1.0e55_qp
   endif
 
   Iinf=intinfini(bmax) !analytic integration of the 1/om^(3/2) tail from bmax to +oo for M11, M22 and M12
-
   call ecrit(bla1,'Iinf=',Iinf)
+
   r0=rhopp(num,om0,T)
-  if(ptbranchmtpp==1)then
-   if(om0<opp(1))then !cut in opp(1)
-    Ia=qromo(inter,0.0_qp         ,opp(1)             ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia)
-    Ib=qromo(inter,opp(1)         ,bmax               ,(/nonsingu/),racinfq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib)
-   else!cut in opp(1), om0 and 2.0_qp*om0-opp(1)
-    Ia=qromo(inter,0.0_qp         ,opp(1)             ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia)
-
-    if(om0<omcrit)then
-     Ib=qromo(inter,opp(1)        ,om0   ,(/singu/),midpntq,EPSpp)
-    else !use racinfq to speed up convergence
-     Ib=qromo(inter,opp(1)        ,om0   ,(/singu/),racinfq,EPSpp)
+  if(x0<x0crit)then
+    if(ptbranchmtpp==1)then
+     if(om0<opp(1))then !cut in opp(1)
+      arg(1,1:2)=         (/nsu,    nsu/)
+      choix(1:2)=         (/mpnt,   rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1),bmax/),arg(1:1,1:2),choix(1:2),EPSpp,bla1)
+     else!cut in opp(1), om0 and 2.0_qp*om0-opp(1)
+      arg(1,1:4)=         (/nsu,    su,     su,    nsu/)
+      choix(1:4)=         (/mpnt,   mpnt,   mpnt,  rinf/)
+      if(om0<omcrit) choix(2:3)=rinf
+      intpp=decoupe(inter,(/0.0_qp, opp(1), om0,   2*om0-opp(1),bmax/),arg(1:1,1:4),choix(1:4),EPSpp,bla1)
+     endif
+    elseif(ptbranchmtpp==2)then
+     if(om0<opp(1))then!cut in opp(1), opp(2) and 2*opp(2)
+      arg(1,1:4)=         (/nsu,    nsu,    nsu,    nsu/)
+      choix(1:4)=         (/mpnt,   mpnt,   msql,   rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2), 2*opp(2),bmax/),arg(1:1,1:4),choix(1:4),EPSpp,bla1)
+     elseif(om0<opp(2))then!cut in opp(1), om0, opp(2) and 2*opp(2)
+      arg(1,1:5)=         (/nsu,    su,     su,     nsu,    nsu/)
+      choix(1:5)=         (/mpnt,   mpnt,   mpnt,   msql,   rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1), om0,    opp(2), 2*opp(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+  
+      Icomp=-r0*log((opp(2)-om0)/(om0-opp(1)))!remove int_opp(1)^opp(2) r0/(om0-om)
+      call ecrit(bla1,'Icomp=',Icomp)
+     else!cut in opp(1), opp(2), om0 and 2.0_qp*om0-opp(2)
+      arg(1,1:5)=         (/nsu,    nsu,    su,    su,    nsu/)
+      choix(1:5)=         (/mpnt,   mpnt,   msql,  mpnt,  rinf/)
+      if(om0<omcrit)choix(3:4)=rinf
+      intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2),om0,   2*om0-opp(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+     endif
+    elseif(ptbranchmtpp==3)then
+     if(om0<opp(1))then !cut in opp(1), opp(2), opp(3)
+      arg(1,1:4)=         (/nsu,    nsu,    nsu,    nsu/)
+      choix(1:4)=         (/mpnt,   mpnt,   msql,   rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2), opp(3),bmax/),arg(1:1,1:4),choix(1:4),EPSpp,bla1)
+     elseif(om0<opp(2))then!cut in opp(1), om0, opp(2), opp(3)
+      arg(1,1:5)=         (/nsu,    su,     su,     nsu,    nsu/)
+      choix(1:5)=         (/mpnt,   mpnt,   mpnt,   msql,   rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1), om0,    opp(2), opp(3),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+  
+      Icomp=-r0*log((opp(2)-om0)/(om0-opp(1)))!remove int_opp(1)^opp(2) r0/(om0-om)
+      call ecrit(bla1,'Icomp=',Icomp)
+     elseif(om0<opp(3))then!cut in opp(1), opp(2), om0 and opp(3)
+      arg(1,1:5)=         (/nsu,    nsu,    su,     su,     nsu/)
+      choix(1:5)=         (/mpnt,   mpnt,   msql,   mpnt,   rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2), om0,    opp(3),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+  
+      Icomp=-r0*log((opp(3)-om0)/(om0-opp(2)))!remove int_opp(2)^opp(3) r0/(om0-om)
+      call ecrit(bla1,'Icomp=',Icomp)
+     else!cut in opp(1), opp(2), opp(3), om0 and 2.0_qp*om0-opp(3)
+      arg(1,1:6)=         (/nsu,    nsu,    nsu,   su,    su,    nsu/)
+      choix(1:6)=         (/mpnt,   mpnt,   msql,  mpnt,  mpnt,  rinf/)
+      if(om0<omcrit) choix(4:5)=rinf
+      intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2),opp(3),om0,   2*om0-opp(3),bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
+     endif
     endif
-    call ecrit(bla1,'Ib=',Ib)
+  else!x0>x0crit
 
-    if(om0<omcrit)then
-     Ic=qromo(inter,om0            ,2.0_qp*om0-opp(1)   ,(/singu/),midpntq,EPSpp)
-    else !use racinfq to speed up convergence
-     Ic=qromo(inter,om0            ,2.0_qp*om0-opp(1)   ,(/singu/),racinfq,EPSpp)
-    endif
-    call ecrit(bla1,'Ic=',Ic)
+    if(ptbranchmtpp==1)then
+     if(om0<opp(1))then 
+      arg(1,1:5)=         (/nsu,    nsu,   nsu,     nsu, nsu/)
+      choix(1:5)=         (/msqu,   msql,  msqu,    msql,rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1),2*opp(1),2*x0,4*x0,bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+     elseif(om0<2*x0)then
+      arg(1,1:5)=         (/nsu,    su,     su,    nsu,  nsu/)
+      choix(1:5)=         (/msqu,   msql,   msqu,  msql, rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1), om0,   2*x0, 4*x0,bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
 
-    if(2.0_qp*om0-opp(1)<bmax)then!if 2.0_qp*om0-opp(1) overflows bmax, recompute Iinf
-     Id=qromo(inter,2.0_qp*om0-opp(1),bmax             ,(/nonsingu/),racinfq,EPSpp)
-     call ecrit(bla1,'Id=',Id)
-    else
-     Iinf=intinfini(2.0_qp*om0-opp(1))
-    endif
+      Icomp=-r0*log((2*x0-om0)/(om0-opp(1)))
+      call ecrit(bla1,'Icomp=',Icomp)
+     else
+      arg(1,1:6)=         (/nsu,    nsu,    nsu,                 su,  su,  nsu/)
+      choix(1:6)=         (/msqu,   msql,   msqu,                msql,rinf,rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1), (2*x0+opp(1))/2.0_qp,2*x0,om0, 2*om0-2*x0,bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
+     endif
+    elseif(ptbranchmtpp==2)then
+     if(om0<opp(1))then
+      arg(1,1:6)=         (/nsu,    nsu,    nsu,    nsu,              nsu,   nsu/)
+      choix(1:6)=         (/mpnt,   msqu,   msql,   msqu,             msql,  rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2), x0+opp(2)/2.0_qp, 2*x0,  4*x0,bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
+     elseif(om0<opp(2))then
+      arg(1,1:7)=         (/nsu,    su,     su,    nsu,    nsu,              nsu,   nsu/)
+      choix(1:7)=         (/mpnt,   mpnt,   msqu,  msql,   msqu,             msql,  rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1), om0,   opp(2), x0+opp(2)/2.0_qp, 2*x0,  4*x0,bmax/),arg(1:1,1:7),choix(1:7),EPSpp,bla1)
+  
+      Icomp=-r0*log((opp(2)-om0)/(om0-opp(1)))
+      call ecrit(bla1,'Icomp=',Icomp)
+     elseif(om0<2*x0)then
+      arg(1,1:6)=         (/nsu,    nsu,     su,     su,   nsu,   nsu/)
+      choix(1:6)=         (/mpnt,   msqu,    msql,   msqu, msql,  rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1),  opp(2), om0,  2*x0,  4*x0,bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
 
-   endif
-  elseif(ptbranchmtpp==2)then
-   if(om0<opp(1))then!cut in opp(1), opp(2) and 2*opp(2)
-    Ia=qromo(inter,0.0_qp         ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,opp(1)         ,opp(2)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib) 
-    Ic=qromo(inter,opp(2)         ,2.0_qp*opp(2)       ,(/nonsingu/),midsqlq,EPSpp)!midsqlq deals with the sqrt divergence in opp(2)^+
-    call ecrit(bla1,'Ic=',Ic)
-    Id=qromo(inter,2.0_qp*opp(2)  ,bmax                ,(/nonsingu/),racinfq,EPSpp)
-    call ecrit(bla1,'Id=',Id)
-   elseif(om0<opp(2))then!cut in opp(1), om0, opp(2) and 2*opp(2)
-    Ia=qromo(inter,0.0_qp         ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,opp(1)         ,om0                 ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib) 
-    Ic=qromo(inter,om0            ,opp(2)              ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ic=',Ic)
-    Id=qromo(inter,opp(2)         ,2.0_qp*opp(2)       ,(/nonsingu/),midsqlq,EPSpp)!midsqlq deals with the sqrt divergence in opp(2)^+
-    call ecrit(bla1,'Id=',Id)
-    Ie=qromo(inter,2.0_qp*opp(2)  ,bmax                ,(/nonsingu/),racinfq,EPSpp)
-    call ecrit(bla1,'Ie=',Ie)
-    Icomp=-r0*log((opp(2)-om0)/(om0-opp(1)))!remove int_opp(1)^opp(2) r0/(om0-om)
-    call ecrit(bla1,'Icomp=',Icomp)
-   else!cut in opp(1), opp(2), om0 and 2.0_qp*om0-opp(2)
-    Ia=qromo(inter,0.0_qp         ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,opp(1)         ,opp(2)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib) 
+      Icomp=-r0*log((2*x0-om0)/(om0-opp(2)))
+      call ecrit(bla1,'Icomp=',Icomp)
+     else
+      arg(1,1:7)=         (/nsu,    nsu,     nsu,    nsu,             su,    su,  nsu/)
+      choix(1:7)=         (/mpnt,   msqu,    msql,   msqu,            msql,  rinf,rinf/)
+      intpp=decoupe(inter,(/0.0_qp, opp(1),  opp(2), x0+opp(2)/2.0_qp,2*x0,  om0, 2*om0,bmax/),arg(1:1,1:7),choix(1:7),EPSpp,bla1)
 
-    if(om0<omcrit)then
-     Ic=qromo(inter,opp(2)        ,om0   ,(/singu/),midpntq,EPSpp)
-    else !use racinfq to speed up convergence
-     Ic=qromo(inter,opp(2)        ,om0   ,(/singu/),racinfq,EPSpp)
-    endif
-    call ecrit(bla1,'Ic=',Ic)
+      Icomp=-r0*log((2*om0-om0)/(2*x0-om0))
+      call ecrit(bla1,'Icomp=',Icomp)
+     endif
+    elseif(ptbranchmtpp==3)then
+     if(om0<opp(1))then
+      arg(1,1:8)=         (/nsu,    nsu,    nsu,    nsu,                   nsu,   nsu,              nsu,   nsu/)
+      choix(1:8)=         (/mpnt,   mpnt,   msql,   msqu,                  msql,  msqu,             msql,  rinf/)
+      if(floor(num)==5) choix(2)=msql
+      bornes(1:9)=        (/0.0_qp, opp(1), opp(2), (opp(2)+opp(3))/2.0_qp,opp(3),x0+opp(3)/2.0_qp, 2*x0,  4*x0,bmax/)
+      intpp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
+     elseif(om0<opp(2))then
+      arg(1,1:9)  =       (/nsu,    su,     su,    nsu,    nsu,                   nsu,   nsu,             nsu,   nsu/)
+      choix(1:9)  =       (/mpnt,   mpnt,   msqu,  msql,   msqu,                  msql,  msqu,            msql,  rinf/)
+      if(floor(num)==5) choix(3)=rinf
+      bornes(1:10)=       (/0.0_qp, opp(1), om0,   opp(2), (opp(3)+opp(2))/2.0_qp,opp(3),x0+opp(3)/2.0_qp,2*x0,  4*x0,bmax/)
+      intpp=decoupe(inter,bornes(1:10),arg(1:1,1:9),choix(1:9),EPSpp,bla1)
+  
+      Icomp=-r0*log((opp(2)-om0)/(om0-opp(1)))
+      call ecrit(bla1,'Icomp=',Icomp)
+     elseif(om0<opp(3))then
+      arg(1,1:8)=         (/nsu,    nsu,     su,     su,   nsu,   nsu,             nsu,   nsu/)
+      choix(1:8)=         (/mpnt,   msqu,    msql,   msqu, msql,  msqu,            msql,  rinf/)
+      bornes(1:9)=        (/0.0_qp, opp(1),  opp(2), om0,  opp(3),x0+opp(3)/2.0_qp,2*x0,  4*x0,bmax/)
+      intpp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
 
-    if(om0<omcrit)then
-     Id=qromo(inter,om0            ,2.0_qp*om0-opp(2)   ,(/singu/),midpntq,EPSpp)
-    else !use racinfq to speed up convergence
-     Id=qromo(inter,om0            ,2.0_qp*om0-opp(2)   ,(/singu/),racinfq,EPSpp)
-    endif
-    call ecrit(bla1,'Id=',Id)
+      Icomp=-r0*log((opp(3)-om0)/(om0-opp(2)))
+      call ecrit(bla1,'Icomp=',Icomp)
+     elseif(om0<2*x0)then
+      arg(1,1:8)=         (/nsu,    nsu,     nsu,    nsu,                   su,    su,   nsu,   nsu/)
+      choix(1:8)=         (/mpnt,   msqu,    msql,   msqu,                  msql,  msqu, msql,  rinf/)
+      bornes(1:9)=        (/0.0_qp, opp(1),  opp(2), (opp(3)+opp(2))/2.0_qp,opp(3),om0,  2*x0,  4*x0,bmax/)
+      intpp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
 
-    if(2.0_qp*om0-opp(2)<bmax)then!if 2.0_qp*om0-opp(2) overflows bmax, recompute Iinf
-     Ie=qromo(inter,2.0_qp*om0-opp(2), bmax             ,(/nonsingu/),racinfq,EPSpp)
-     call ecrit(bla1,'Ie=',Ie)
-    else
-     Iinf=intinfini(2.0_qp*om0-opp(2))
-    endif
-   endif
-  elseif(ptbranchmtpp==3)then
-   if(om0<opp(1))then !cut in opp(1), opp(2), opp(3)
-    Ia=qromo(inter,0.0_qp         ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,opp(1)         ,opp(2)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib) 
-    Ic=qromo(inter,opp(2)         ,opp(3)              ,(/nonsingu/),midsqlq,EPSpp)!midsqlq deals with the sqrt divergence in opp(2)^+
-    call ecrit(bla1,'Ic=',Ic)
-    Id=qromo(inter,opp(3)         ,bmax                ,(/nonsingu/),racinfq,EPSpp)
-    call ecrit(bla1,'Id=',Id)
-   elseif(om0<opp(2))then!cut in opp(1), om0, opp(2), opp(3)
-    Ia=qromo(inter,0.0_qp         ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,opp(1)         ,om0                 ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib) 
-    Ic=qromo(inter,om0            ,opp(2)              ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ic=',Ic)
-    Id=qromo(inter,opp(2)         ,opp(3)              ,(/nonsingu/),midsqlq,EPSpp)!midsqlq deals with the sqrt divergence in opp(2)^+
-    call ecrit(bla1,'Id=',Id)
-    Ie=qromo(inter,opp(3)         ,bmax                ,(/nonsingu/),racinfq,EPSpp)
-    call ecrit(bla1,'Ie=',Ie)
-    Icomp=-r0*log((opp(2)-om0)/(om0-opp(1)))!remove int_opp(1)^opp(2) r0/(om0-om)
-    call ecrit(bla1,'Icomp=',Icomp)
-   elseif(om0<opp(3))then!cut in opp(1), opp(2), om0 and opp(3)
-    Ia=qromo(inter,0.0_qp         ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,opp(1)         ,opp(2)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib) 
-    Ic=qromo(inter,opp(2)         ,om0                 ,(/singu/),midsqlq,EPSpp)!midsqlq deals with the sqrt divergence in opp(2)^+
-    call ecrit(bla1,'Ic=',Ic) 
-    Id=qromo(inter,om0            ,opp(3)              ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Id=',Id)
-    Ie=qromo(inter,opp(3)         ,bmax                ,(/nonsingu/),racinfq,EPSpp)
-    call ecrit(bla1,'Ie=',Ie)
-    Icomp=-r0*log((opp(3)-om0)/(om0-opp(2)))!remove int_opp(2)^opp(3) r0/(om0-om)
-    call ecrit(bla1,'Icomp=',Icomp)
-   else!cut in opp(1), opp(2), opp(3), om0 and 2.0_qp*om0-opp(3)
-    Ia=qromo(inter,0.0_qp         ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,opp(1)         ,opp(2)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib) 
-    Ic=qromo(inter,opp(2)         ,opp(3)              ,(/nonsingu/),midsqlq,EPSpp)!midsqlq deals with the sqrt divergence in opp(2)^+
-    call ecrit(bla1,'Ic=',Ic)
-
-    if(om0<omcrit)then
-     Id=qromo(inter,opp(3)        ,om0   ,(/singu/),midpntq,EPSpp)
-    else !use racinfq to speed up convergence
-     Id=qromo(inter,opp(3)        ,om0   ,(/singu/),racinfq,EPSpp)
-    endif
-
-    call ecrit(bla1,'Id=',Id)
-
-    if(om0<omcrit)then
-     Ie=qromo(inter,om0            ,2.0_qp*om0-opp(3)   ,(/singu/),midpntq,EPSpp)
-    else !use racinfq to speed up convergence
-     Ie=qromo(inter,om0            ,2.0_qp*om0-opp(3)   ,(/singu/),racinfq,EPSpp)
-    endif
-
-    call ecrit(bla1,'Ie=',Ie)
-    if(2.0_qp*om0-opp(3)<bmax)then!if 2.0_qp*om0-opp(3) overflows bmax, recompute Iinf
-      Ig=qromo(inter,2.0_qp*om0-opp(3), bmax             ,(/nonsingu/),racinfq,EPSpp)
-    else
-     Iinf=intinfini(2.0_qp*om0-opp(3))
+      Icomp=-r0*log((2*x0-om0)/(om0-opp(3)))
+      call ecrit(bla1,'Icomp=',Icomp)
+     else
+      arg(1,1:9)=         (/nsu,    nsu,     su,     su,                    nsu,   nsu,             su,  su,  nsu/)
+      choix(1:9)=         (/mpnt,   msqu,    msql,   msqu,                  msql,  msqu,            msql,rinf,rinf/)
+      bornes(1:10)=       (/0.0_qp, opp(1),  opp(2), (opp(3)+opp(2))/2.0_qp,opp(3),x0+opp(3)/2.0_qp,2*x0,om0, 2*om0,bmax/)
+      intpp=decoupe(inter,bornes(1:10),arg(1:1,1:9),choix(1:9),EPSpp,bla1)
+      
+      Icomp=-r0*log((2*om0-om0)/(om0-2*x0))
+      call ecrit(bla1,'Icomp=',Icomp)
+     endif
     endif
 
-    call ecrit(bla1,'Ig=',Ig)
-   endif
-  else
-   STOP "Erreur de ptbranchmntpp"
   endif
-  intpp=Ia+Ib+Ic+Id+Ie+Ig+Icomp+Iinf
+  intpp=intpp+Icomp+Iinf
   call ecrit(bla1,'intpp=',intpp)
  elseif(T>0.0_qp)then ! Intégrale du terme en nP+nM de 1+nP+nM
-  bmax=1840.0_qp
+  bmax=1111840.0_qp
   r0=rhopp(num,om0,T)
   if(ptbranchmtpp==1)then
    if(om0<opp(1))then
-    Ia0=qromo(inter,0.0_qp        ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia0=',Ia0)
-    Ia=qromo(inter,opp(1)         ,bmax               ,(/nonsingu/),midinfq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia)
+    arg(1,1:2)=         (/nsu,    nsu/)
+    choix(1:2)=         (/mpnt,   minf/)
+    intpp=decoupe(inter,(/0.0_qp, opp(1),bmax/),arg(1:1,1:2),choix(1:2),EPSpp,bla1)
    else
-    Ia0=qromo(inter,0.0_qp        ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia0=',Ia0)
-    Ia=qromo(inter,opp(1)         ,om0                ,(/singu/),midpntq,EPSpp)  !implement speed-up for om>omcrit?
-    call ecrit(bla1,'Ia=',Ia)
-    Ib=qromo(inter,om0            ,2.0_qp*om0-opp(1)  ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib)
-    Ic=qromo(inter,2.0_qp*om0-opp(1), bmax            ,(/nonsingu/),midinfq,EPSpp)
-    call ecrit(bla1,'Ic=',Ic)
+    arg(1,1:4)=         (/nsu,    su,     su,    nsu/)
+    choix(1:4)=         (/mpnt,   mpnt,   mpnt,  minf/)
+    intpp=decoupe(inter,(/0.0_qp, opp(1), om0,   2.0_qp*om0-opp(1),bmax/),arg(1:1,1:4),choix(1:4),EPSpp,bla1)
    endif
   elseif(ptbranchmtpp==2)then
    if(om0<opp(1))then
-    Ia0=qromo(inter,0.0_qp        ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia0=',Ia0)
-    Ia=qromo(inter,opp(1)         ,opp(2)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,opp(2)         ,bmax                ,(/nonsingu/),midinfq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib)
+    arg(1,1:3)=         (/nsu,    nsu,    nsu/)
+    choix(1:3)=         (/mpnt,   mpnt,   minf/)
+    intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2),bmax/),arg(1:1,1:3),choix(1:3),EPSpp,bla1)
    elseif(om0<opp(2))then
-    Ia0=qromo(inter,0.0_qp        ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia0=',Ia0)
-    Ia=qromo(inter,opp(1)         ,om0                 ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,om0            ,opp(2)              ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib)
-    Ic=qromo(inter,opp(2)         ,bmax                ,(/nonsingu/),midsqlq,EPSpp)
-    call ecrit(bla1,'Ic=',Ic)
+    arg(1,1:5)=         (/nsu,    su,     su,     nsu,    nsu/)
+    choix(1:5)=         (/mpnt,   mpnt,   mpnt,   msql,   minf/)
+    intpp=decoupe(inter,(/0.0_qp, opp(1), om0,    opp(2), 2*opp(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+
     Icomp=-r0*log((opp(2)-om0)/(om0-opp(1)))
     call ecrit(bla1,'Icomp=',Icomp)
    else
-    Ia0=qromo(inter,0.0_qp        ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia0=',Ia0)
-    Ia=qromo(inter,opp(1)         ,opp(2)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,opp(2)         ,om0                 ,(/singu/),midsqlq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib)
-    Ic=qromo(inter,om0            ,2.0_qp*om0-opp(2)   ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ic=',Ic)
-    Id=qromo(inter,2.0_qp*om0-opp(2), bmax             ,(/nonsingu/),midinfq,EPSpp)
-    call ecrit(bla1,'Id=',Id)
+    arg(1,1:5)=         (/nsu,    nsu,    su,     su,    nsu/)
+    choix(1:5)=         (/mpnt,   mpnt,   msql,   mpnt,  minf/)
+    intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2), om0,   2*om0-opp(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
    endif
   elseif(ptbranchmtpp==3)then
    if(om0<opp(1))then
-    Ia0=qromo(inter,0.0_qp        ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia0=',Ia0)
-    Ia=qromo(inter,opp(1)         ,opp(2)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,opp(2)         ,opp(3)              ,(/nonsingu/),midsqlq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib)
-    Ic=qromo(inter,opp(3)         ,bmax                ,(/nonsingu/),midinfq,EPSpp)
-    call ecrit(bla1,'Ic=',Ic)
+    arg(1,1:4)=         (/nsu,    nsu,    nsu,    nsu/)
+    choix(1:4)=         (/mpnt,   mpnt,   msql,   minf/)
+    intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2), opp(3), bmax/),     arg(1:1,1:4),choix(1:4),EPSpp,bla1)
    elseif(om0<opp(2))then
-    Ia0=qromo(inter,0.0_qp        ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia0=',Ia0)
-    Ia=qromo(inter,opp(1)         ,om0                 ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,om0            ,opp(2)              ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib)
-    Ic=qromo(inter,opp(2)         ,opp(3)              ,(/nonsingu/),midsqlq,EPSpp)
-    call ecrit(bla1,'Ic=',Ic)
-    Id=qromo(inter,opp(3)         ,bmax                ,(/nonsingu/),midinfq,EPSpp)
-    call ecrit(bla1,'Id=',Id)
+    arg(1,1:5)=         (/nsu,    su,     su,   nsu,    nsu/)
+    choix(1:5)=         (/mpnt,   mpnt,   mpnt, msql,   minf/)
+    intpp=decoupe(inter,(/0.0_qp, opp(1), om0,  opp(2), opp(3),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+
     Icomp=-r0*log((opp(2)-om0)/(om0-opp(1)))
     call ecrit(bla1,'Icomp=',Icomp)
    elseif(om0<opp(3))then
-    Ia0=qromo(inter,0.0_qp        ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia0=',Ia0)
-    Ia=qromo(inter,opp(1)         ,opp(2)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,opp(2)         ,om0                 ,(/singu/),midsqlq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib) 
-    Ic=qromo(inter,om0            ,opp(3)              ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ic=',Ic)
-    Id=qromo(inter,opp(3)         ,bmax                ,(/nonsingu/),midinfq,EPSpp)
-    call ecrit(bla1,'Id=',Id)
+    arg(1,1:5)=         (/nsu,    nsu,    su,     su,   nsu/)
+    choix(1:5)=         (/mpnt,   mpnt,   msql,   mpnt, minf/)
+    intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2), om0,  opp(3),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+
     Icomp=-r0*log((opp(3)-om0)/(om0-opp(2)))
     call ecrit(bla1,'Icomp=',Icomp)
    else
-    Ia0=qromo(inter,0.0_qp        ,opp(1)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia0=',Ia0)
-    Ia=qromo(inter,opp(1)         ,opp(2)              ,(/nonsingu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ia=',Ia) 
-    Ib=qromo(inter,opp(2)         ,opp(3)              ,(/nonsingu/),midsqlq,EPSpp)
-    call ecrit(bla1,'Ib=',Ib)
-    Ic=qromo(inter,opp(3)         ,om0                 ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Ic=',Ic)
-    Id=qromo(inter,om0            ,2.0_qp*om0-opp(3)   ,(/singu/),midpntq,EPSpp)
-    call ecrit(bla1,'Id=',Id)
-    Ie=qromo(inter,2.0_qp*om0-opp(3), bmax             ,(/nonsingu/),midinfq,EPSpp)
-    call ecrit(bla1,'Ie=',Ie)
+    arg(1,1:6)=         (/nsu,    nsu,    nsu,    su,    su,   nsu/)
+    choix(1:6)=         (/mpnt,   mpnt,   msql,   mpnt,  mpnt, minf/)
+    intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2), opp(3),om0,  2*om0-opp(3),bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
    endif
   else
    STOP "Erreur de ptbranchmntpp"
   endif
- intpp=Ia0+Ia+Ib+Ic+Id+Ie+Icomp
+ intpp=intpp+Icomp
  call ecrit(bla1,'intpp=',intpp)
  endif
 endif
@@ -523,6 +467,11 @@ CONTAINS
     write(6,*)"ome,om0,num,T,r,r0,inter(is),opp=",ome,om0,num,T,r,r0,inter(is),opp
     stop
    endif
+   open(11,file="donnees.dat",POSITION="APPEND")
+    write(11,*)ome,inter(is)
+!   if(ome>opp(3)) write(11,*)ome,inter(is)
+   close(11)
+!   if(is==10write(6,*)"ome,om0,num,T,r,r0,inter(is),opp=",ome,om0,inter(is)
 
   enddo
   END FUNCTION inter
@@ -970,8 +919,11 @@ REAL(QP), INTENT(OUT) :: xi(1:3)
 REAL(QP) rac
 
 xi=(/-1.e100_qp,-1.e100_qp,-1.e100_qp/)
-
-rac=rtsafeq(emaxpt,(/om/),sqrt(x0-xq**2.0_qp/4.0_qp),1.e+20_qp,1.e-18_qp*om)
+if(x0-xq**2.0_qp/4.0_qp>0.0_qp)then
+ rac=rtsafeq(emaxpt,(/om/),sqrt(x0-xq**2.0_qp/4.0_qp),1.e+20_qp,1.e-18_qp*om)
+else
+ rac=rtsafeq(emaxpt,(/om/),0.0_qp,1.e+20_qp,1.e-18_qp*om)
+endif
 xi(1)=rac**2.0_qp-x0+xq**2.0_qp/4.0_qp
 
 if(om<opt(1))then
