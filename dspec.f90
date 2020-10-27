@@ -261,21 +261,27 @@ if(axer)then
   else!x0>x0crit
 
     if(ptbranchmtpp==1)then
-     if(om0<opp(1))then 
-      arg(1,1:5)=         (/nsu,    nsu,   nsu,     nsu, nsu/)
-      choix(1:5)=         (/msqu,   msql,  msqu,    msql,rinf/)
-      intpp=decoupe(inter,(/0.0_qp, opp(1),2*opp(1),2*x0,4*x0,bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
-     elseif(om0<2*x0)then
-      arg(1,1:5)=         (/nsu,    su,     su,    nsu,  nsu/)
-      choix(1:5)=         (/msqu,   msql,   msqu,  msql, rinf/)
-      intpp=decoupe(inter,(/0.0_qp, opp(1), om0,   2*x0, 4*x0,bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
-
-      Icomp=-r0*log((2*x0-om0)/(om0-opp(1)))
-      call ecrit(bla1,'Icomp=',Icomp)
+     if(opp(1)>2*x0)then
+      arg(1,1:5)=         (/nsu,    nsu,   nsu,             nsu,     nsu/)
+      choix(1:5)=         (/msqu,   msql,  msqu,            msql,    rinf/)
+      intpp=decoupe(inter,(/0.0_qp, 2*x0,  x0+opp(1)/2.0_qp,opp(1),  2*opp(1),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
      else
-      arg(1,1:6)=         (/nsu,    nsu,    nsu,                 su,  su,  nsu/)
-      choix(1:6)=         (/msqu,   msql,   msqu,                msql,rinf,rinf/)
-      intpp=decoupe(inter,(/0.0_qp, opp(1), (2*x0+opp(1))/2.0_qp,2*x0,om0, 2*om0-2*x0,bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
+      if(om0<opp(1))then 
+       arg(1,1:5)=         (/nsu,    nsu,   nsu,             nsu, nsu/)
+       choix(1:5)=         (/msqu,   msql,  msqu,            msql,rinf/)
+       intpp=decoupe(inter,(/0.0_qp, opp(1),x0+opp(1)/2.0_qp,2*x0,4*x0,bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+      elseif(om0<2*x0)then
+       arg(1,1:5)=         (/nsu,    su,     su,    nsu,  nsu/)
+       choix(1:5)=         (/msqu,   msql,   msqu,  msql, rinf/)
+       intpp=decoupe(inter,(/0.0_qp, opp(1), om0,   2*x0, 4*x0,bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+ 
+       Icomp=-r0*log((2*x0-om0)/(om0-opp(1)))
+       call ecrit(bla1,'Icomp=',Icomp)
+      else
+       arg(1,1:6)=         (/nsu,    nsu,    nsu,                 su,  su,  nsu/)
+       choix(1:6)=         (/msqu,   msql,   msqu,                msql,rinf,rinf/)
+       intpp=decoupe(inter,(/0.0_qp, opp(1), (2*x0+opp(1))/2.0_qp,2*x0,om0, 2*om0-2*x0,bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
+      endif
      endif
     elseif(ptbranchmtpp==2)then
      if(om0<opp(1))then
@@ -468,7 +474,7 @@ CONTAINS
     stop
    endif
    open(11,file="donnees.dat",POSITION="APPEND")
-    write(11,*)ome,inter(is)
+!    write(11,*)ome,inter(is)
 !   if(ome>opp(3)) write(11,*)ome,inter(is)
    close(11)
 !   if(is==10write(6,*)"ome,om0,num,T,r,r0,inter(is),opp=",ome,om0,inter(is)
@@ -520,6 +526,7 @@ else
   call bornesbrutalpp(om,secteur,xipp)
   s2=xipp(1)/sht
  endif
+ s2=min(s2,1.0_qp) !In case s2 overflows 1 when om becomes very large
 
  if(T<0.0_qp)then
   rho=rhoanalytic(secteur,floor(num))
@@ -595,9 +602,6 @@ CONTAINS
  REAL(QP) rhoanalytic
  REAL(QP) rrC(1:2)
  
-! write(6,*)"om,rA,rAbis=",om,PI/2.0_qp-asin(s1),PI/2.0_qp-asin(s2),rA(sec)-rAbis(sec)
-! write(6,*)"om,rB,rBbis=",om,rB(sec)-rBbis(sec)
-
  rhoanalytic=0.0_qp
  if    (num==1)then
   rhoanalytic=2.0_qp*rBp(sec)
@@ -737,20 +741,19 @@ USE recettes
 IMPLICIT NONE
 REAL(QP), INTENT(IN)  :: num,om0,e
 REAL(QP) intpt
-REAL(QP) bmax,Ia,Ib,Ic,Id,Icomp
-REAL(QP) r0 
+REAL(QP) bmax,db,Icomp
+REAL(QP) r0,arg(1,1:10)
 REAL(QP), PARAMETER :: singu=1.0_qp,nonsingu=-1.0_qp
+REAL(QP), PARAMETER :: su=1.0_qp,nsu=-1.0_qp
 LOGICAL axer
+INTEGER choix(1:10)
 
 axer=.TRUE.
 
 r0=rhopt(num,om0)
-bmax=2320.0_qp !energy cutoff of the (exponentially small) high-energy tail
+db=100.0_qp
+bmax=max(2320.0_qp,2.0_qp*om0-opt(1)+db,2.0_qp*om0+db) !energy cutoff of the (exponentially small) high-energy tail
 
-Ia=0.0_qp
-Ib=0.0_qp
-Ic=0.0_qp
-Id=0.0_qp
 Icomp=0.0_qp
 
 if(bla1)then
@@ -762,37 +765,24 @@ endif
 if(axer)then
  if(ptbranchmtpt==1)then
   if(om0<opt(1))then!cut in om0,opt(1)
-   Ia=qromo(inter,0.0_qp         ,om0           ,(/singu/),midpntq,EPSpt)
-   call ecrit(bla1,'Ia=',Ia)
-   Ib=qromo(inter,om0            ,opt(1)        ,(/singu/),midpntq,EPSpt)
-   call ecrit(bla1,'Ib=',Ib)
-   Ic=qromo(inter,opt(1)         ,bmax          ,(/nonsingu/),midinfq,EPSpt)!Exponential tail
-   call ecrit(bla1,'Ic=',Ic)
+   arg(1,1:4)=         (/su,    su,    nsu,   nsu/)
+   choix(1:4)=         (/mpnt,  mpnt,  msql,  mexp/)
+   intpt=decoupe(inter,(/0.0_qp,om0,   opt(1),2*opt(1),bmax/),arg(1:1,1:4),choix(1:4),EPSpt,bla1)
+
    Icomp=-r0*log((opt(1)-om0)/om0)
    call ecrit(bla1,'Icomp=',Icomp)
   else!cut in opt(1),om0,2.0_qp*om0-opt(1)
-   Ia=qromo(inter,0.0_qp         ,opt(1)        ,(/nonsingu/),midpntq,EPSpt)
-   call ecrit(bla1,'Ia=',Ia)
-   Ib=qromo(inter,opt(1)         ,om0           ,(/singu/),midpntq,EPSpt)
-   call ecrit(bla1,'Ib=',Ib)
-   Ic=qromo(inter,om0            ,2.0_qp*om0-opt(1),(/singu/),midpntq,EPSpt)
-   call ecrit(bla1,'Ic=',Ic)
-   if(2.0_qp*om0-opt(1)<bmax)then
-    Id=qromo(inter,2.0_qp*om0-opt(1), bmax         ,(/nonsingu/),midinfq,EPSpt)
-    call ecrit(bla1,'Id=',Id)
-   endif
+   arg(1,1:4)=         (/nsu,   su,    su,     nsu/)
+   choix(1:4)=         (/mpnt,  mpnt,  mpnt,   mexp/)
+   intpt=decoupe(inter,(/0.0_qp,opt(1),om0,    2.0_qp*om0-opt(1),bmax/),arg(1:1,1:4),choix(1:4),EPSpt,bla1)
   endif
  else!cut in om0,2.0_qp*om0
-  Ia=qromo(inter,0.0_qp         ,om0          ,(/singu/),midpntq,EPSpt)
-  call ecrit(bla1,'Ia=',Ia)
-  Ib=qromo(inter,om0            ,2.0_qp*om0   ,(/singu/),midpntq,EPSpt)
-  call ecrit(bla1,'Ib=',Ib)
-  if(2.0_qp*om0<bmax)then
-   Ic=qromo(inter,2.0_qp*om0     , bmax        ,(/nonsingu/),midinfq,EPSpt)
-   call ecrit(bla1,'Ic=',Ic)
-  endif
+  arg(1,1:3)=         (/su,    su,    nsu/)
+  choix(1:3)=         (/mpnt,  mpnt,  mexp/)
+  intpt=decoupe(inter,(/0.0_qp,om0,   2.0_qp*om0,bmax/),arg(1:1,1:3),choix(1:3),EPSpt,bla1)
+
  endif
- intpt=Ia+Ib+Ic+Id+Icomp
+ intpt=intpt+Icomp
  call ecrit(bla1,'intpt=',intpt)
 endif
 
@@ -816,6 +806,10 @@ CONTAINS
      inter(is)=r/(om0-ome)-sig(floor(num))*r/(om0+ome)
    endif
    if(isnan(inter(is)))STOP 'isnan(inter(is))'
+!   write(6,*)ome,inter(is)
+   open(11,file="donnees.dat",POSITION="APPEND")
+!    write(11,*)ome,inter(is)
+   close(11)
   enddo
   END FUNCTION inter
 END FUNCTION intpt
