@@ -10,4 +10,7 @@
 *.dat
 dspec2.f90
 example
+encorr
+intldc
+libperso/libmalib.a
 DONNEES/

@@ -1,0 +1,158 @@
+\documentclass[10pt,a4paper,a4wide]{article}
+%\documentclass[aps,floatfix,pra,preprint]{revtex4}
+\usepackage{graphicx,bm,color}
+\usepackage{array}
+\usepackage{amsmath,amsfonts,amssymb}
+%\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{chngcntr}
+\counterwithin*{paragraph}{subsubsection}
+
+
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\bmul}{\begin{multline}}
+\newcommand{\emul}{\end{multline}}
+\newcommand{\bea}{\begin{eqnarray}}
+\newcommand{\eea}{\end{eqnarray}}
+\newcommand{\rr}{\mathbf{r}}
+\newcommand{\kk}{\mathbf{k}}
+\newcommand{\qq}{\mathbf{q}}
+\newcommand{\KK}{\mathbf{K}}
+\newcommand{\QQ}{\mathbf{Q}}
+\newcommand{\pp}{\mathbf{p}}
+\newcommand{\lr}{\mathbf{l}}
+\newcommand{\zero}{\mathbf{0}}
+\newcommand{\bra}[1]{\langle #1|}
+\newcommand{\ket}[1]{|#1\rangle}
+
+\newcommand{\ii}{\mathrm{i}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\eee}{\mathrm{e}}
+
+\newcommand{\meanv}[1]{\langle #1 \rangle}
+\newcommand{\meanvl}[1]{\overline{#1}}
+\newcommand{\meanvlr}[1]{\left\langle #1 \right\rangle}
+
+
+\newcommand{\comm}[2]{\left[ #1,#2 \right]}
+\newcommand{\Tr}[1]{\text{Tr} \bb{#1}}
+\newcommand{\g}[1]{«~#1~»}
+
+
+\newcommand{\bb}[1]{\left( #1 \right)}
+\newcommand{\bbr}[1]{\left. #1 \right)}
+\newcommand{\bbl}[1]{\left( #1 \right.}
+\newcommand{\bbcro}[1]{\left[ #1 \right]}
+\newcommand{\bbcror}[1]{\left. #1 \right]}
+\newcommand{\bbcrol}[1]{\left[ #1 \right.}
+\newcommand{\bbaco}[1]{\left\{ #1 \right\}}
+\newcommand{\bbacol}[1]{\left\{ #1 \right.}
+\newcommand{\bbacor}[1]{\left. #1 \right\}}
+\newcommand{\bbv}[1]{\left\vert #1 \right\vert}
+\newcommand{\eval}[1]{\left. #1 \right|}
+
+
+
+\newcommand{\hatk}[1]{\hat{#1}_\kk}
+
+\newcommand{\deriv}[1]{i \hbar \frac{d #1}{dt}}
+\newcommand{\derivsec}[1]{- \hbar^2 \frac{d^2 #1}{dt^2}}
+\newcommand{\derivmu}[1]{\frac{d #1}{d{\mu}}}
+\newcommand{\derivmut}[1]{\frac{d #1}{d\tilde{\mu}}}
+\newcommand{\derivn}[1]{\frac{d #1}{d\bar{N}}}
+\newcommand{\gO}{\tilde{g_0}}
+\newcommand{\Xthet}{\frac{X}{\Theta}}
+
+\newcommand{\abs}[1]{\left|#1\right|}
+
+
+\newcolumntype{R}[1]{>{\raggedright}p{#1}}
+\newcolumntype{L}[1]{>{\raggedleft}p{#1}}
+\newcolumntype{C}[1]{>{\centering}p{#1}}
+
+
+\newcolumntype{R}[1]{>{\raggedright}p{#1}}
+\newcolumntype{L}[1]{>{\raggedleft}p{#1}}
+\newcolumntype{C}[1]{>{\centering}p{#1}}
+
+\usepackage{chngcntr}
+\setcounter{secnumdepth}{5}
+\renewcommand{\thesection}{\Roman{section}}
+\renewcommand{\thesubsection}{\Roman{section}.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\Roman{section}.\arabic{subsection}.\arabic{subsubsection}}
+\renewcommand{\theparagraph}{\textit{\alph{paragraph}}.}
+
+\def\noir{\bf \color{black}}
+\def\bleu{\bf \color{blue}}
+\def\rouge{ \color{red}}
+\def\vers{\bf\color{green}}
+\def\violet{\bf\color{magenta}}
+
+\usepackage{geometry}
+\geometry{vmargin=3cm}
+\geometry{hmargin=1.5cm}
+
+\begin{document}
+\title{Analytic calculation of the angular integral of the self-energy}
+\author{Hadrien $\to$ Senne}
+
+\maketitle
+
+In this note, I derive analytic formulas for the angular integrals appearing in the single-particle self-energies:
+\bea
+I_{\pm\pm}(\omega)&=&\int_{-1}^1 \frac{\dd u}{2}\bb{1\pm\frac{\xi_{\kk-\qq}}{\epsilon_{\kk-\qq}}} \frac{\Delta}{\omega+\epsilon_{\kk-\qq}}\\ 
+I_{+-}(\omega)&=&\int_{-1}^1 \frac{\dd u}{2}{\frac{\Delta}{\epsilon_{\kk-\qq}}} \frac{\Delta}{\omega+\epsilon_{\kk-\qq}} 
+\eea
+We work here in units of $|\omega|$, setting $\check k^2=k^2/2m|\omega|$, $\check q^2=q^2/2m|\omega|$ and
+\be
+\check{\xi}_{\kk-\qq}=\frac{{\xi}_{\kk-\qq}}{|\omega|}=\xi_0-2\check k \check q u \quad \text{with} \quad  \xi_0=\check k^2+\check q^2-\mu/|\omega|
+\ee
+I use a Euler substitution to rationalize the integrand, setting
+\be
+\check{\epsilon}_{\kk-\qq}=t-2\check k\check q u \quad \Longleftrightarrow \quad u=\frac{\epsilon_0^2-t}{4\check k\check q (\xi_0-t)} 
+\ee
+\be
+\dd u = \frac{t^2-2t\xi_0+\epsilon_0^2}{4\check k\check q (\xi_0-t)^2} \dd t
+\ee
+where I use $\epsilon_0=\sqrt{\xi_0^2+\check\Delta^2}$. Note in passing that this change of variable is monotonous (and increasing) since $t^2-2t\xi_0+\epsilon_0^2>0$.
+In the new variable $t$, the integrals become
+\bea
+I_{++}&=&\frac{\check \Delta^3}{2\check k\check q }\int_{t_{\rm min}}^{t_{\rm max}}  \frac{\dd t}{(t-\xi_0)P(t)}\\ 
+I_{--}&=&\frac{\check \Delta}{2\check k\check q }\int_{t_{\rm min}}^{t_{\rm max}} \dd t \frac{t-\xi_0}{P(t)} \\
+I_{+-}&=&\frac{\check \Delta^2}{2\check k\check q }\int_{t_{\rm min}}^{t_{\rm max}} \frac{\dd t}{P(t)}
+\eea
+with the new integration boundaries $t_{\rm min}=\check\epsilon_{k+q}-2\check k \check q$ and $t_{\rm max}=\check\epsilon_{k-q}+2\check k \check q$ and the polynomial
+\be
+P(t)=t^2-2t(\xi_0-\text{sg}\omega)+\epsilon_0^2-2\text{sg}\omega\xi_0
+\ee
+whose roots are
+\bea
+t_1 &=& \xi_0-\text{sg}\omega+\sqrt{1-\check\Delta^2} \\
+t_2 &=& \xi_0-\text{sg}\omega-\sqrt{1-\check\Delta^2} 
+\eea
+Effecting the partial fraction decomposition of the integrals, we get
+\bea
+I_{++}&=&\frac{\check \Delta}{4\check k\check q} (-I_1 -\text{sg}\omega I_2 -2I_3) \\ 
+I_{--}&=& \frac{\check \Delta}{4\check k\check q}  (I_1-\text{sg}\omega I_2)\\
+I_{+-}&=& \frac{\check \Delta^2}{4\check k\check q} I_2
+\eea
+with
+\be
+I_1\equiv \int_{t_{\rm min}}^{t_{\rm max}} \dd t \bb{\frac{1}{t-t_1}+\frac{1}{t-t_2}} =\text{ln} \left\vert\frac{(t_{\rm max}-t_1)(t_{\rm max}-t_2)}{(t_{\rm min}-t_1)(t_{\rm min}-t_2)}\right\vert-\ii\pi \bb{\Theta(t_{\rm max}-t_1)\Theta(t_1-t_{\rm min})+\Theta(t_{\rm max}-t_2)\Theta(t_2-t_{\rm min})}
+\ee
+\begin{multline}
+I_2\equiv \int_{t_{\rm min}}^{t_{\rm max}} \frac{\dd t}{\sqrt{1-\check\Delta^2}} \bb{\frac{1}{t-t_1}-\frac{1}{t-t_2}} \\ 
+=\begin{cases} \frac{1}{\sqrt{1-\check\Delta^2}} \text{ln} {\frac{(t_{\rm max}-t_1)(t_{\rm min}-t_2)}{(t_{\rm max}-t_2)(t_{\rm min}-t_1)}} \quad  \text{if} \quad \Delta>|\omega| \\
+ \frac{1}{\sqrt{1-\check\Delta^2}} \text{ln} \left\vert{\frac{(t_{\rm max}-t_1)(t_{\rm min}-t_2)}{(t_{\rm max}-t_2)(t_{\rm min}-t_1)}}\right\vert -\ii\pi \bb{\Theta(t_{\rm max}-t_1)\Theta(t_1-t_{\rm min})-\Theta(t_{\rm max}-t_2)\Theta(t_2-t_{\rm min})}\quad  \text{if} \quad  \Delta<|\omega|
+\end{cases}
+\end{multline}
+\be
+I_3\equiv \int_{t_{\rm min}}^{t_{\rm max}} \frac{\dd t}{t-\xi_0}=\text{ln}\frac{\epsilon_{k-q}-\xi_{k-q}}{\epsilon_{k+q}-\xi_{k+q}}
+\ee
+\bibliographystyle{unsrt}
+\bibliography{/Users/hkurkjian/Documents/biblio}
+
+\end{document}

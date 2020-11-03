@@ -1,0 +1,8 @@
+10.0      !  read(10,*)x0
+3.3333       !  read(10,*)kmin
+3.3333       !  read(10,*)kmax
+0            !  read(10,*)nk
+0.01         !  read(10,*)zkmin
+2.01         !  read(10,*)zkmax
+10           !  read(10,*)nzk
+bidon     !  read(10,*)suffixe

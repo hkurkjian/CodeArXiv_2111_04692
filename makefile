@@ -5,8 +5,8 @@ LIB_PERSO=-L./libperso -lmalib
 %.o : %.f90
 	$(COMP) -I$(MOD) -O3 -c $< -o $@
 
-intldc: dspec.o intldc.o
-	$(COMP) -O3 $^ $(LIB_PERSO) -o intldc 
+encorr: dspec.o intldc.o encorr.o
+	$(COMP) -O3 $^ $(LIB_PERSO) -o encorr
 
 test: dspec.o test.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o test
