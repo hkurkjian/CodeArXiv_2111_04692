@@ -36,6 +36,9 @@ MODULE recettes
         INTERFACE ellpi
                  MODULE PROCEDURE ellpi_q
         END INTERFACE
+        INTERFACE argum
+                 MODULE PROCEDURE argum_d,argum_q
+        END INTERFACE
 !        INTERFACE arth
 !                MODULE PROCEDURE arth_r, arth_d, arth_q, arth_i
 !        END INTERFACE
@@ -54,8 +57,6 @@ MODULE recettes
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CONTAINS
         SUBROUTINE mnewt_s(ntrial,x,tolx,tolf,usrfun)
-        USE nrtype
-        IMPLICIT NONE
         INTEGER(I4B), INTENT(IN) :: ntrial
         REAL(SP), INTENT(IN) :: tolx,tolf
         REAL(SP), DIMENSION(:), INTENT(INOUT) :: x
@@ -89,8 +90,6 @@ CONTAINS
         END SUBROUTINE mnewt_s
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE mnewt_d(ntrial,x,tolx,tolf,usrfun)
-        USE nrtype
-        IMPLICIT NONE
         INTEGER(I4B), INTENT(IN) :: ntrial
         REAL(DP), INTENT(IN) :: tolx,tolf
         REAL(DP), DIMENSION(:), INTENT(INOUT) :: x
@@ -124,8 +123,6 @@ CONTAINS
         END SUBROUTINE mnewt_d
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE mnewt_q(ntrial,x,tolx,tolf,usrfun)
-        USE nrtype
-        IMPLICIT NONE
         INTEGER(I4B), INTENT(IN) :: ntrial
         REAL(QP), INTENT(IN) :: tolx,tolf
         REAL(QP), DIMENSION(:), INTENT(INOUT) :: x
@@ -159,7 +156,7 @@ CONTAINS
         END SUBROUTINE mnewt_q
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE indexx_sp(arr,index)
-        USE nrtype; USE nrutil, ONLY :arth,assert_eq,nrerror,swap
+        USE nrutil, ONLY :arth,assert_eq,nrerror,swap
         IMPLICIT NONE
         REAL(SP), DIMENSION(:), INTENT(IN) :: arr
         INTEGER(I4B), DIMENSION(:), INTENT(OUT) :: index
@@ -242,8 +239,7 @@ CONTAINS
         END SUBROUTINE indexx_sp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE indexx_dp(arr,index)
-        USE nrtype; USE nrutil, ONLY :arth,assert_eq,nrerror,swap
-        IMPLICIT NONE
+        USE nrutil, ONLY :arth,assert_eq,nrerror,swap
         REAL(DP), DIMENSION(:), INTENT(IN) :: arr
         INTEGER(I4B), DIMENSION(:), INTENT(OUT) :: index
         INTEGER(I4B), PARAMETER :: NN=15, NSTACK=50
@@ -325,7 +321,7 @@ CONTAINS
         END SUBROUTINE indexx_dp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE indexx_qp(arr,index)
-        USE nrtype; USE nrutil, ONLY :arth,assert_eq,nrerror,swap
+        USE nrutil, ONLY :arth,assert_eq,nrerror,swap
         IMPLICIT NONE
         REAL(QP), DIMENSION(:), INTENT(IN) :: arr
         INTEGER(I4B), DIMENSION(:), INTENT(OUT) :: index
@@ -408,8 +404,7 @@ CONTAINS
         END SUBROUTINE indexx_qp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE laguer_d(a,x,its)
-        USE nrtype; USE nrutil, ONLY :poly,poly_term
-        IMPLICIT NONE
+        USE nrutil, ONLY :poly,poly_term
         INTEGER(I4B), INTENT(OUT) :: its
         COMPLEX(DPC), INTENT(INOUT) :: x
         COMPLEX(DPC), DIMENSION(:), INTENT(IN) :: a
@@ -467,8 +462,7 @@ CONTAINS
         END SUBROUTINE laguer_d
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE laguer_q(a,x,its)
-        USE nrtype; USE nrutil, ONLY :poly,poly_term
-        IMPLICIT NONE
+        USE nrutil, ONLY :poly,poly_term
         INTEGER(I4B), INTENT(OUT) :: its
         COMPLEX(QPC), INTENT(INOUT) :: x
         COMPLEX(QPC), DIMENSION(:), INTENT(IN) :: a
@@ -526,8 +520,7 @@ CONTAINS
         END SUBROUTINE laguer_q
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE zroots_d(a,roots,polish)
-        USE nrtype; USE nrutil, ONLY :assert_eq, poly_term
-        IMPLICIT NONE
+        USE nrutil, ONLY :assert_eq, poly_term
         COMPLEX(DPC), DIMENSION(:), INTENT(IN) :: a
         COMPLEX(DPC), DIMENSION(:), INTENT(OUT) :: roots
         LOGICAL(LGT), INTENT(IN) :: polish
@@ -563,8 +556,7 @@ CONTAINS
         END SUBROUTINE zroots_d
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE zroots_q(a,roots,polish)
-        USE nrtype; USE nrutil, ONLY :assert_eq, poly_term
-        IMPLICIT NONE
+        USE nrutil, ONLY :assert_eq, poly_term
         COMPLEX(QPC), DIMENSION(:), INTENT(IN) :: a
         COMPLEX(QPC), DIMENSION(:), INTENT(OUT) :: roots
         LOGICAL(LGT), INTENT(IN) :: polish
@@ -600,8 +592,7 @@ CONTAINS
         END SUBROUTINE zroots_q
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE ludcmp_s(a,indx,d)
-        USE nrtype; USE nrutil, ONLY : assert_eq,imaxloc,outerprod,swap
-        IMPLICIT NONE
+        USE nrutil, ONLY : assert_eq,imaxloc,outerprod,swap
         REAL(SP), DIMENSION(:,:), INTENT(INOUT) :: a
         INTEGER(I4B), DIMENSION(:), INTENT(OUT) :: indx
         REAL(SP), INTENT(OUT) :: d
@@ -643,8 +634,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE lubksb_s(a,indx,b)
-        USE nrtype; USE nrutil, ONLY : assert_eq
-        IMPLICIT NONE
+        USE nrutil, ONLY : assert_eq
         REAL(SP), DIMENSION(:,:), INTENT(IN) :: a
         INTEGER(I4B), DIMENSION(:), INTENT(IN) :: indx
         REAL(SP), DIMENSION(:), INTENT(INOUT) :: b
@@ -680,8 +670,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE ludcmp_d(a,indx,d)
-        USE nrtype; USE nrutil, ONLY : assert_eq,imaxloc,outerprod,swap
-        IMPLICIT NONE
+        USE nrutil, ONLY : assert_eq,imaxloc,outerprod,swap
         REAL(DP), DIMENSION(:,:), INTENT(INOUT) :: a
         INTEGER(I4B), DIMENSION(:), INTENT(OUT) :: indx
         REAL(DP), INTENT(OUT) :: d
@@ -723,8 +712,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE lubksb_d(a,indx,b)
-        USE nrtype; USE nrutil, ONLY : assert_eq
-        IMPLICIT NONE
+        USE nrutil, ONLY : assert_eq
         REAL(DP), DIMENSION(:,:), INTENT(IN) :: a
         INTEGER(I4B), DIMENSION(:), INTENT(IN) :: indx
         REAL(DP), DIMENSION(:), INTENT(INOUT) :: b
@@ -760,8 +748,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE ludcmp_q(a,indx,d)
-        USE nrtype; USE nrutil, ONLY : assert_eq,imaxloc,outerprod,swap
-        IMPLICIT NONE
+        USE nrutil, ONLY : assert_eq,imaxloc,outerprod,swap
         REAL(QP), DIMENSION(:,:), INTENT(INOUT) :: a
         INTEGER(I4B), DIMENSION(:), INTENT(OUT) :: indx
         REAL(QP), INTENT(OUT) :: d
@@ -803,8 +790,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE lubksb_q(a,indx,b)
-        USE nrtype; USE nrutil, ONLY : assert_eq
-        IMPLICIT NONE
+        USE nrutil, ONLY : assert_eq
         REAL(QP), DIMENSION(:,:), INTENT(IN) :: a
         INTEGER(I4B), DIMENSION(:), INTENT(IN) :: indx
         REAL(QP), DIMENSION(:), INTENT(INOUT) :: b
@@ -840,8 +826,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE ludcmp_cq(a,indx,d)
-        USE nrtype; USE nrutil, ONLY : assert_eq,imaxloc,outerprod,swap
-        IMPLICIT NONE
+        USE nrutil, ONLY : assert_eq,imaxloc,outerprod,swap
         COMPLEX(QPC), DIMENSION(:,:), INTENT(INOUT) :: a
         INTEGER(I4B), DIMENSION(:), INTENT(OUT) :: indx
         REAL(QP), INTENT(OUT) :: d
@@ -883,8 +868,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rd_s(x,y,z)
-        USE nrtype
-        IMPLICIT NONE
         REAL(SP), INTENT(IN) :: x,y,z
         REAL(SP) :: rd_s
         REAL(SP), PARAMETER :: ERRTOL=0.0015_sp,TINY=1.0e-38_sp,BIG=4.5e37_sp,&
@@ -930,8 +913,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rd_d(x,y,z)
-        USE nrtype
-        IMPLICIT NONE
         REAL(DP), INTENT(IN) :: x,y,z
         REAL(DP) :: rd_d
         REAL(DP), PARAMETER :: ERRTOL=0.0015_dp,TINY=1.0e-200_dp,BIG=4.5e200_dp,&
@@ -977,8 +958,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rd_q(x,y,z)
-        USE nrtype
-        IMPLICIT NONE
         REAL(QP), INTENT(IN) :: x,y,z
         REAL(QP) :: rd_q
         REAL(QP), PARAMETER :: ERRTOL=0.000025_qp,TINY=1.0e-200_qp,BIG=4.5e200_qp,&
@@ -1024,8 +1003,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rd_c(x,y,z)
-        USE nrtype
-        IMPLICIT NONE
         COMPLEX*16, INTENT(IN) :: x,y,z
         COMPLEX*16 :: rd_c
         REAL(DP), PARAMETER :: ERRTOL=0.0015_dp,TINY=1.0e-200_dp,BIG=4.5e200_dp,&
@@ -1074,8 +1051,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rd_cq(x,y,z)
-        USE nrtype
-        IMPLICIT NONE
         COMPLEX(QPC), INTENT(IN) :: x,y,z
         COMPLEX(QPC) :: rd_cq
         REAL(QP), PARAMETER :: ERRTOL=0.00005_qp,TINY=1.0e-200_qp,BIG=4.5e200_qp,&
@@ -1124,8 +1099,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rf_s(x,y,z)
-        USE nrtype
-        IMPLICIT NONE
         REAL(SP), INTENT(IN) :: x,y,z
         REAL(SP) :: rf_s
         REAL(SP), PARAMETER :: ERRTOL=0.08_sp,TINY=1.5e-38_sp,BIG=3.0e37_sp,&
@@ -1161,8 +1134,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rf_d(x,y,z)
-        USE nrtype
-        IMPLICIT NONE
         REAL(DP), INTENT(IN) :: x,y,z
         REAL(DP) :: rf_d
         REAL(DP), PARAMETER :: ERRTOL=0.0025_dp,TINY=1.5e-100_dp,BIG=3.0e100_dp,&
@@ -1201,8 +1172,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rf_q(x,y,z)
-        USE nrtype
-        IMPLICIT NONE
         REAL(QP), INTENT(IN) :: x,y,z
         REAL(QP) :: rf_q
         REAL(QP), PARAMETER :: ERRTOL=0.000025_qp,TINY=1.5e-100_qp,BIG=3.0e100_qp,&
@@ -1241,8 +1210,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rf_c(x,y,z)
-        USE nrtype
-        IMPLICIT NONE
         COMPLEX*16, INTENT(IN) :: x,y,z
         COMPLEX*16 :: rf_c
         REAL(DP), PARAMETER :: ERRTOL=0.0025_dp,TINY=1.5e-100_dp,BIG=3.0e100_dp,&
@@ -1281,8 +1248,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rf_cq(x,y,z)
-        USE nrtype
-        IMPLICIT NONE
         COMPLEX(QPC), INTENT(IN) :: x,y,z
         COMPLEX(QPC) :: rf_cq
         REAL(QP), PARAMETER :: ERRTOL=0.000025_qp,TINY=1.5e-100_qp,BIG=3.0e100_qp,&
@@ -1321,8 +1286,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rj_q(x,y,z,p)
-        USE nrtype; USE nrutil, ONLY : assert
-        IMPLICIT NONE
+        USE nrutil, ONLY : assert
         REAL(QP), INTENT(IN) :: x,y,z,p
         REAL(QP) :: rj_q
         REAL(QP), PARAMETER :: ERRTOL=0.0005_qp,TINY=2.5e-33_qp,BIG=9.0e41_qp,&
@@ -1387,8 +1351,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rc_q(x,y)
-        USE nrtype; USE nrutil, ONLY : assert
-        IMPLICIT NONE
+        USE nrutil, ONLY : assert
         REAL(QP), INTENT(IN) :: x,y
         REAL(QP) :: rc_q
         REAL(QP), PARAMETER :: ERRTOL=0.0004_qp,TINY=1.69e-68_qp,&
@@ -1425,8 +1388,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION elle_s(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         REAL(SP), INTENT(IN) :: phi,ak
         REAL(SP) :: elle_s
         !Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
@@ -1445,8 +1406,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION elle_d(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         REAL(DP), INTENT(IN) :: phi,ak
         REAL(DP) :: elle_d
         !Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
@@ -1465,8 +1424,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION elle_q(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         REAL(QP), INTENT(IN) :: phi,ak
         REAL(QP) :: elle_q
         !Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
@@ -1485,8 +1442,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION elle_c(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         COMPLEX(DPC), INTENT(IN) :: phi,ak
         COMPLEX(DPC) :: elle_c
         !Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
@@ -1501,8 +1456,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION elle_rc(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         COMPLEX(DPC), INTENT(IN) :: ak
         REAL(DP), INTENT(IN) :: phi
         COMPLEX(DPC) :: elle_rc
@@ -1518,8 +1471,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION elle_cq(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         COMPLEX(QPC), INTENT(IN) :: phi,ak
         COMPLEX(QPC) :: elle_cq
         !Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
@@ -1534,8 +1485,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION elle_rcq(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         COMPLEX(QPC), INTENT(IN) :: ak
         REAL(QP), INTENT(IN) :: phi
         COMPLEX(QPC) :: elle_rcq
@@ -1551,8 +1500,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellf_s(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         REAL(SP), INTENT(IN) :: phi,ak
         REAL(SP) :: ellf_s
 !        Legendre elliptic integral of the 1st kind F(φ, k), evaluated using Carlson's function RF .
@@ -1569,8 +1516,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellf_d(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         REAL(DP), INTENT(IN) :: phi,ak
         REAL(DP) :: ellf_d
 !        Legendre elliptic integral of the 1st kind F(φ, k), evaluated using Carlson's function RF .
@@ -1587,8 +1532,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellf_q(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         REAL(QP), INTENT(IN) :: phi,ak
         REAL(QP) :: ellf_q
 !        Legendre elliptic integral of the 1st kind F(φ, k), evaluated using Carlson's function RF .
@@ -1605,8 +1548,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellf_c(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         COMPLEX(DPC), INTENT(IN) :: phi,ak
         COMPLEX(DPC) :: ellf_c
 !        Legendre elliptic integral of the 1st kind F(φ, k), evaluated using Carlson's function RF .
@@ -1618,8 +1559,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellf_rc(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         REAL(DP), INTENT(IN) :: phi
         COMPLEX(DPC), INTENT(IN) :: ak
         COMPLEX(DPC) :: ellf_rc
@@ -1632,8 +1571,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellf_cq(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         COMPLEX(QPC), INTENT(IN) :: phi,ak
         COMPLEX(QPC) :: ellf_cq
 !        Legendre elliptic integral of the 1st kind F(φ, k), evaluated using Carlson's function RF .
@@ -1645,8 +1582,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellf_rcq(phi,ak)
-        USE nrtype
-        IMPLICIT NONE
         REAL(QP), INTENT(IN) :: phi
         COMPLEX(QPC), INTENT(IN) :: ak
         COMPLEX(QPC) :: ellf_rcq
@@ -1658,8 +1593,6 @@ CONTAINS
         END FUNCTION ellf_rcq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellpi_q(phi,en,ak)
-        USE nrtype
-        IMPLICIT NONE
         REAL(QP), INTENT(IN) :: phi,en,ak
         REAL(QP) :: ellpi_q
 !        Legendre elliptic integral of the 3rd kind Π(φ, n, k), evaluated using Carlson’s functions RJ
@@ -1675,8 +1608,6 @@ CONTAINS
         END FUNCTION ellpi_q
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rtnewt(funcd,arg,x1,x2,xacc)
-        USE nrtype
-        IMPLICIT NONE
         REAL(DP), INTENT(IN) :: x1,x2,xacc
         REAL(DP), DIMENSION(:), INTENT(IN) :: arg
         REAL(DP) :: rtnewt
@@ -1714,8 +1645,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rtsafed(funcd,arg,x1,x2,xacc)
-        USE nrtype
-        IMPLICIT NONE
         REAL(DP), INTENT(IN) :: x1,x2,xacc
         REAL(DP), DIMENSION(:), INTENT(IN) :: arg
         REAL(DP) :: rtsafed
@@ -1789,8 +1718,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rtsafeq(funcd,arg,x1,x2,xacc)
-        USE nrtype
-        IMPLICIT NONE
         REAL(QP), INTENT(IN) :: x1,x2,xacc
         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
         REAL(QP) :: rtsafeq
@@ -1864,8 +1791,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE tri_s(arr)
-        USE nrtype
-        IMPLICIT NONE
         REAL(SP), DIMENSION(:), INTENT(INOUT) :: arr
 !        Sorts an array arr into ascending numerical order, by straight insertion. arr is replaced
 !        on output by its sorted rearrangement.
@@ -1884,8 +1809,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE tri_d(arr)
-        USE nrtype
-        IMPLICIT NONE
         REAL(DP), DIMENSION(:), INTENT(INOUT) :: arr
 !        Sorts an array arr into ascending numerical order, by straight insertion. arr is replaced
 !        on output by its sorted rearrangement.
@@ -1904,8 +1827,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE tri_q(arr)
-        USE nrtype
-        IMPLICIT NONE
         REAL(QP), DIMENSION(:), INTENT(INOUT) :: arr
 !        Sorts an array arr into ascending numerical order, by straight insertion. arr is replaced
 !        on output by its sorted rearrangement.
@@ -1921,10 +1842,24 @@ CONTAINS
           arr(i+1)=a !Insert it.
         end do
         END SUBROUTINE tri_q
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        FUNCTION argum_d(z)
+        COMPLEX(DPC), INTENT(IN) :: z
+        REAL(DP) argum_d
+        argum_d=atan2(imag(z),real(z))
+        END FUNCTION argum_d
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        FUNCTION argum_q(z)
+        COMPLEX(QPC), INTENT(IN) :: z
+        REAL(QP) argum_q
+        argum_q=atan2(imag(z),real(z))
+        END FUNCTION argum_q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE frenel(x,s,c)
-        USE nrtype; USE nrutil, ONLY : nrerror
-        IMPLICIT NONE
+        USE nrutil, ONLY : nrerror
         REAL(QP), INTENT(IN) :: x
         REAL(QP), INTENT(OUT) :: s,c
         INTEGER(I4B), PARAMETER :: MAXIT=1000
@@ -2010,8 +1945,6 @@ CONTAINS
 ! Calcule l'intégrale elliptique de première espèce prolongée au plan complexe
 ! Déplace les lignes de coupure par relèvement adiabatique de la racine de l'intégrande
 ! Des points de brancherment demeurent là où l'argument de la racine carrée s'annulle
-        USE nrtype
-        IMPLICIT NONE
         COMPLEX(QPC), INTENT(IN) :: phi,ak
         COMPLEX(QPC) :: cacaf
         COMPLEX(QPC) :: int1,int2
@@ -2064,8 +1997,6 @@ CONTAINS
 ! Calcule l'intégrale elliptique de seconde espèce prolongée au plan complexe
 ! Déplace les lignes de coupure par relèvement adiabatique de la racine de l'intégrande
 ! Des points de brancherment demeurent là où l'argument de la racine carrée s'annulle
-        USE nrtype
-        IMPLICIT NONE
         COMPLEX(QPC), INTENT(IN) :: phi,ak
         COMPLEX(QPC) :: cacae
         COMPLEX(QPC) :: int1,int2
@@ -2118,7 +2049,6 @@ CONTAINS
 ! Calcule l'intégrale elliptique de première espèce prolongée au plan complexe
 ! Déplace les lignes de coupure par relèvement adiabatique de la racine de l'intégrande
 ! Des points de branchement demeurent là où l'argument de la racine carrée s'annule
-        USE nrtype
         USE modsim
         IMPLICIT NONE
         COMPLEX(QPC), INTENT(IN) :: phi,ak
@@ -2153,7 +2083,6 @@ CONTAINS
 ! Calcule l'intégrale elliptique de première espèce prolongée au plan complexe
 ! Déplace les lignes de coupure par relèvement adiabatique de la racine de l'intégrande
 ! Des points de branchement demeurent là où l'argument de la racine carrée s'annule
-        USE nrtype
         USE modsim
         IMPLICIT NONE
         COMPLEX(QPC), INTENT(IN) :: phi,ak

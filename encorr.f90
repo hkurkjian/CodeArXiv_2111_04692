@@ -18,6 +18,7 @@ open(10,file='encorr.inp')
  read(10,*)zkmax
  read(10,*)nzk
  read(10,*)suffixe
+ read(10,*)bla0
 close(10)
 
 
@@ -61,8 +62,11 @@ EPSu  =1.0e-9_qp
 EPSom =1.0e-6_qp
 EPSq  =1.0e-5_qp
 
-bla0=.TRUE.
 temperaturenulle=.TRUE.
+
+lecture =.FALSE.
+ecriture=.TRUE.
+profondeur=7
 
 do ik=0,nk
  k=kmin+dk*ik

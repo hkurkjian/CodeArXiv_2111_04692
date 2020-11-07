@@ -1635,13 +1635,12 @@ MODULE modsim
         END FUNCTION func
        END SUBROUTINE racinfvq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       FUNCTION qromovq(func,a,b,m,arg,choose,EPS,err)
+       FUNCTION qromovq(func,a,b,m,arg,choose,EPS)
        INTEGER,  INTENT(IN) :: m !Dimension du vecteur à intégrer
        REAL(QP), INTENT(IN) :: a,b
        REAL(QP), DIMENSION(:), INTENT(IN) :: arg
        REAL(QP), DIMENSION(m) :: qromovq
        REAL(QP), INTENT(IN)  :: EPS
-       LOGICAL, INTENT(OUT)  :: err
        PROCEDURE(funcvq) :: func
        INTERFACE
          SUBROUTINE choose(funk,aa,bb,mm,arg,s,n)
@@ -1654,13 +1653,12 @@ MODULE modsim
          PROCEDURE(funcvq) :: funk
          END SUBROUTINE choose
        END INTERFACE
-       INTEGER(I4B), PARAMETER :: JMAX=6,JMAXP=JMAX+1,K=6,KM=K-1
+       INTEGER(I4B), PARAMETER :: JMAX=16,JMAXP=JMAX+1,K=5,KM=K-1
        !
        REAL(QP), DIMENSION(JMAXP,m) :: h,s
        REAL(QP) :: dqromo(m)
        INTEGER(I4B) :: j,im
        LOGICAL conv(m)
-       err=.FALSE.
        h(1,:)=1.0
        do j=1,JMAX
         call choose(func,a,b,m,arg,s(j,:),j)
@@ -1675,15 +1673,15 @@ MODULE modsim
         h(j+1,:)=h(j,:)/9.0_qp
        end do
        write(6,*) 'Nombre d itération dépassé dans qromovq'
-       err=.TRUE.
        END FUNCTION qromovq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       FUNCTION qromovq2(func,a,b,m,arg,choose,EPS,err)
+       FUNCTION qromovqfixed(func,a,b,m,arg,choose,EPS,JMAX,err)
        INTEGER,  INTENT(IN) :: m !Dimension du vecteur à intégrer
        REAL(QP), INTENT(IN) :: a,b
        REAL(QP), DIMENSION(:), INTENT(IN) :: arg
-       REAL(QP), DIMENSION(m) :: qromovq2
+       REAL(QP), DIMENSION(m) :: qromovqfixed
        REAL(QP), INTENT(IN)  :: EPS
+       INTEGER,  INTENT(IN)  :: JMAX
        LOGICAL, INTENT(OUT)  :: err
        PROCEDURE(funcvq) :: func
        INTERFACE
@@ -1697,9 +1695,8 @@ MODULE modsim
          PROCEDURE(funcvq) :: funk
          END SUBROUTINE choose
        END INTERFACE
-       INTEGER(I4B), PARAMETER :: JMAX=17,JMAXP=JMAX+1,K=5,KM=K-1
        !
-       REAL(QP), DIMENSION(JMAXP,m) :: h,s
+       REAL(QP), DIMENSION(JMAX+1,m) :: h,s
        REAL(QP) :: dqromo(m)
        INTEGER(I4B) :: j,im
        LOGICAL conv(m)
@@ -1707,18 +1704,19 @@ MODULE modsim
        h(1,:)=1.0
        do j=1,JMAX
         call choose(func,a,b,m,arg,s(j,:),j)
-        if (j >= K) then
+        if (j >= JMAX) then
          do im=1,m
-          call polint(h(j-KM:j,im),s(j-KM:j,im),0.0_qp,qromovq2(im),dqromo(im))
-          conv(im)=abs(dqromo(im)) <= EPS*abs(qromovq2(im))
+          call polint(h(j-(JMAX-1):j,im),s(j-(JMAX-1):j,im),0.0_qp,qromovqfixed(im),dqromo(im))
+          conv(im)=abs(dqromo(im)) <= EPS*abs(qromovqfixed(im))
          enddo
          if (all(conv)) RETURN
         end if
         s(j+1,:)=s(j,:)
         h(j+1,:)=h(j,:)/9.0_qp
        end do
-       write(6,*) 'Nombre d itération dépassé dans qromovq'
+       write(6,*) 'Nombre d itération dépassé dans qromovqfixed'
        err=.TRUE.
-       END FUNCTION qromovq2
+       END FUNCTION qromovqfixed
+
 
 END MODULE modsim

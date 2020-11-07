@@ -6,7 +6,7 @@ LIB_PERSO=-L./libperso -lmalib
 	$(COMP) -I$(MOD) -O3 -c $< -o $@
 
 encorr: dspec.o intldc.o encorr.o
-	$(COMP) -O3 $^ $(LIB_PERSO) -o encorr
+	$(COMP) -fcheck=bounds -O3 $^ $(LIB_PERSO) -o encorr
 
 test: dspec.o test.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o test
@@ -19,3 +19,6 @@ propre :
 	rm -f *.mod
 	rm -f intldc
 	rm -f test
+	rm -f encorr
+	rm -f *.aux
+	rm -f *.syntec.gz
