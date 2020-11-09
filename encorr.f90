@@ -68,6 +68,9 @@ lecture =.FALSE.
 ecriture=.TRUE.
 profondeur=7
 
+bla1=.FALSE.
+x0crit=9.0_qp
+
 do ik=0,nk
  k=kmin+dk*ik
  write(6,*)"k=",k

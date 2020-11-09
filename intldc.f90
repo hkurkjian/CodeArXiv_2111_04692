@@ -53,7 +53,7 @@ FUNCTION selfE(k,zk)
 
  q1=0.0_qp
  q2=10.0_qp
- q3=1000.0_qp
+ q3=100.0_qp
  q4=100000.0_qp
 
  fichierlec1="grillex0_10_1.dat"
@@ -82,17 +82,17 @@ FUNCTION selfE(k,zk)
  Iq3(:)=0.0_qp
 
  argq(1)=1.5_qp 
- Iq1=qromovqfixed(intq,0.0_qp ,        10.0_qp,       3,argq,midpntvq,EPSq,profondeur,err)
+! Iq1=qromovqfixed(intq,q1 ,   q2,   3,argq,midpntvq,EPSq,profondeur,err)
  write(6,*)"Iq1=",Iq1
  if(err) write(6,*) "convergence non atteinte dans l’intégrale sur q"
 
  argq(1)=2.5_qp 
- Iq2=qromovqfixed(intq,10.0_qp,        1000.0_qp,     3,argq,midpntvq,EPSq,profondeur,err)
+ Iq2=qromovqfixed(intq,q2,    q3,   3,argq,midpntvq,EPSq,profondeur,err)
  write(6,*)"Iq2=",Iq2
  if(err) write(6,*) "convergence non atteinte dans l’intégrale sur q"
 
  argq(1)=3.5_qp 
- Iq3=qromovqfixed(intq,1000.0_qp,      100000.0_qp,   3,argq,midinfvq,EPSq,profondeur,err)
+ Iq3=qromovqfixed(intq,q3,    q4,   3,argq,midinfvq,EPSq,profondeur,err)
  write(6,*)"Iq3=",Iq3
  if(err) write(6,*) "convergence non atteinte dans l’intégrale sur q"
 
@@ -245,7 +245,7 @@ CONTAINS
    else
     call mat_pairfield(ome,e,det,Mat,Gam)
     if(ecriture)then
-     write(15+fich,*)ome,real(Mat),imag(Mat)
+     write(15+fich,*)q,ome,real(Mat),imag(Mat)
     endif
    endif
    

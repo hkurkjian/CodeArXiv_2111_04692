@@ -12,5 +12,6 @@ dspec2.f90
 example
 encorr
 intldc
+test
 libperso/libmalib.a
 DONNEES/
