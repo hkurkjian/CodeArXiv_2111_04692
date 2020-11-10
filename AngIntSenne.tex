@@ -1,0 +1,132 @@
+\documentclass[10pt,a4paper]{article}
+
+
+% Wiskunde en fysica
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{physics}
+\usepackage{unicode-math}
+
+\usepackage{geometry}
+\geometry{
+    paper=a4paper,
+    twoside=false,
+    inner=2.2cm, outer=2.2cm,
+    top=2.2cm, bottom=2.2cm,
+    footskip=1cm,
+    nohead,
+    nomarginpar,
+}
+
+% Enkele definities
+\AtBeginDocument{%
+  \let\canpi\pi
+  \renewcommand\pi{\symup\canpi}%
+}
+\newcommand{\ii}{\ensuremath{\mathrm{i}}}
+\newcommand{\ee}{\ensuremath{\mathrm{e}}}
+\newcommand{\kB}{\ensuremath{k_\mathrm{B}}}
+\newcommand{\eF}{\ensuremath{\epsilon_\mathrm{F}}}
+\newcommand{\kF}{\ensuremath{k_\mathrm{F}}}
+\newcommand{\nB}[1]{\ensuremath{n^\mathrm{B}_{#1}}}
+\newcommand{\nF}[1]{\ensuremath{n^\mathrm{F}_{#1}}}
+\newcommand{\xik}{\ensuremath{\xi_{\vb{k}}}}
+\newcommand{\xikq}{\ensuremath{\xi_{\vb{k}-\vb{q}}}}
+\newcommand{\epsk}{\ensuremath{\epsilon_{\vb{k}}}}
+\newcommand{\epskq}{\ensuremath{\epsilon_{\vb{k}-\vb{q}}}}
+\newcommand{\omq}{\ensuremath{\omega_{\vb{q}}}}
+\newcommand{\nd}{{\hphantom{\dagger}}}
+\newcommand{\kma}{\ensuremath{k_\mathrm{m}^\ast}}
+
+
+\title{Analytic calculation of the angular integral of the self-energy}
+\author{Senne $\to$ Hadrien}
+\begin{document}
+\maketitle
+
+We will compute the following integrals:
+\begin{align}
+    \mathcal{I}_{U^2} &= \int\limits_{-1}^{1} \dd{u}
+        \frac{U_{\vb{k}-\vb{q}}^2}{Z-\epskq + \ii 0^+}
+    =\int\limits_{-1}^{1} \dd{u} 
+        \frac{1}{2} \qty(1+\frac{\xikq}{\epskq}) \frac{1}{Z-\epskq + \ii 0^+}, \\
+    \mathcal{I}_{V^2} &= \int\limits_{-1}^{1} \dd{u}
+        \frac{V_{\vb{k}-\vb{q}}^2}{Z-\epskq + \ii 0^+}
+    =\int\limits_{-1}^{1} \dd{u} 
+        \frac{1}{2} \qty(1-\frac{\xikq}{\epskq}) \frac{1}{Z-\epskq + \ii 0^+}, \\
+    \mathcal{I}_{UV} &= \int\limits_{-1}^{1} \dd{u}
+        \frac{UV_{\vb{k}-\vb{q}}}{Z-\epskq + \ii 0^+}
+    =\int\limits_{-1}^{1} \dd{u} 
+        \frac{1}{2 \epskq} \frac{1}{Z-\epskq + \ii 0^+},
+\end{align}
+where dimensionless units were used (in units of $\Delta$), with
+\begin{align}
+    \xik = \frac{\hbar^2 k^2}{2m\Delta} - x_0, \qquad
+    \epsk= \sqrt{\xik^2+1}, \qquad
+    Z = \frac{\omega}{\Delta}.
+\end{align}
+The integrand can be transformed to a rational function by using Euler substitution
+\begin{equation}
+    t = \epskq - 2 k q u, \qquad \Leftrightarrow \qquad 
+    u = \frac{1}{4kq} \frac{1+\xi_0-t^2}{\xi_0+t},
+\end{equation}
+with $\xi_0 = k^2+q^2-x_0$. With this substitution, we get
+\begin{align}
+    \xikq  &= \frac{1}{2} \frac{(t+\xi_0)^2-1}{t+\xi_0} = \frac{1}{2} \frac{x^2-1}{x} & 
+    \epskq &= \frac{1}{2} \frac{(t+\xi_0)^2+1}{t+\xi_0} = \frac{1}{2} \frac{x^2+1}{x} \\
+    \frac{1}{2} \qty(1+\frac{\xikq}{\epskq}) &= \frac{(t+\xi_0)^2}{(t+\xi_0)^2+1} 
+        = \frac{x^2}{x^2+1} & 
+    \frac{1}{2} \qty(1-\frac{\xikq}{\epskq}) &= \frac{1}{(t+\xi_0)^2+1} = \frac{1}{x^2+1}
+\end{align}
+and
+\begin{equation}
+    \dd{u} = -\frac{1}{4kq} \frac{(t+\xi_0)^2+1}{(t+\xi_0)^2} \dd{t} 
+    = -\frac{1}{4kq} \frac{x^2+1}{x^2} \dd{x}, \qquad
+    t_\pm = t(u=\mp 1) = \epsilon_{k\pm q}\pm 2kq.
+\end{equation}
+Note that, as teh combination $t+\xi_0$ is always repeated, we make another transformation to $x=t+\xi_0$, as depicted in the previous formulas. Then,
+\begin{align}
+    \mathcal{I}_{U^2} &
+    = -\frac{1}{2kq} \int\limits_{x_-}^{x_+} \dd{x} \frac{x}{x^2-2Zx+1-\ii 0^+} 
+    = -\frac{1}{4kq} \qty(I_1 + Z I_2)\\
+    \mathcal{I}_{V^2} &
+    = -\frac{1}{2kq} \int\limits_{x_-}^{x_+} \dd{x} \frac{1}{x} \frac{1}{x^2-2Zx+1-\ii 0^+} 
+    = -\frac{1}{4kq} \qty(-I_1 + Z I_2 + 2 I_3)\\
+    \mathcal{I}_{UV} &
+    = -\frac{1}{2kq} \int\limits_{x_-}^{x_+} \dd{x} \frac{1}{x^2-2Zx+1-\ii 0^+}
+    = -\frac{1}{4kq} I_2,
+\end{align}
+with $x_\pm = \epsilon_{k\pm q}+\xi_{k\pm q}$. The roots of the denominator of the integrand are
+\begin{equation}
+    x_1 + \ii 0^+ = Z + \sqrt{Z^2-1} + \ii 0^+ \quad \text{en} \quad 
+    x_2 - \ii 0^+ = Z - \sqrt{Z^2-1} - \ii 0^+, 
+\end{equation}
+which are real for $\abs{Z}\geq 1$. The integrals $I_j$ are then given by
+\begin{align}
+    I_1 &= \int\limits_{x_-}^{x_+} \dd{x} \qty(
+        \frac{1}{x-x_1-\ii 0^+} + \frac{1}{x-x_2+\ii 0^+}
+    ) \\ &= \log \abs{
+        \frac{(x_+-x_1)(x_+-x_2)}{(x_--x_1)(x_--x_2)}
+    } +\ii \pi \qty[
+        \Theta(x_+-x_1)\Theta(x_1-x_-)-\Theta(x_+-x_2)\Theta(x_2-x_-)
+    ] \\
+    I_2 &= \int\limits_{x_-}^{x_+} \dd{x} \frac{1}{\sqrt{Z^2-1}} \qty(
+        \frac{1}{x-x_1-\ii 0^+} - \frac{1}{x-x_2+\ii 0^+}
+    ) \\ &= \left\lbrace \mqty{
+        \frac{2}{\sqrt{1-Z^2}} \qty[
+            \arctan(\frac{x_+-Z}{\sqrt{1-Z^2}}) - \arctan(\frac{x_- -Z}{\sqrt{1-Z^2}})
+        ] & \abs{Z} < 1 \\
+        \frac{1}{\sqrt{1-Z^2}} \qty[
+            \log \abs{
+                \frac{(x_+-x_1)(x_--x_2)}{(x_--x_1)(x_+-x_2)}
+            } +\ii \pi \qty[
+                \Theta(x_+-x_1)\Theta(x_1-x_-)+\Theta(x_+-x_2)\Theta(x_2-x_-)
+            ]
+        ] & \abs{Z} > 1
+    } \right. \\
+    I_3 &= \int\limits_{x_-}^{x_+} \dd{x} \frac{1}{x} 
+    = \log \frac{x_+}{x_-}
+\end{align}
+
+
+\end{document}
