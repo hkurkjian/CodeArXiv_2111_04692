@@ -4,32 +4,20 @@ USE dspec
 USE modsim
 IMPLICIT NONE
 REAL(QP) EPSom,EPSu,EPSq
-LOGICAL lecture,ecriture,bla0
+LOGICAL lecture,ecriture,bla0,st
 INTEGER profondeur
 CHARACTER(len=15) donnees
-CHARACTER(len=17) fichierlec1,fichierlec2,fichierlec3
+CHARACTER(len=30) fichierlec1,fichierlec2,fichierlec3
 CHARACTER(len=9) donneesq
 CHARACTER(len=5) suffixe
+REAL(QP) q1,q2,q3,q4
 CONTAINS
-!FUNCTION grille(qmin,qmax)
-!REAL(QP) qmin,qmax
-!call mat_pairfield(ome,e,det,Mat,Gam)
-!END FUNCTION grille
 FUNCTION selfE(k,zk)
  REAL(QP), INTENT(IN) :: k,zk
- REAL(QP) selfE(1:3)
- REAL(QP) Iq1(1:3),Iq2(1:3),Iq3(1:3)
+ COMPLEX(QPC) selfE(1:6)
+ COMPLEX(QPC) Iq1(1:6),Iq2(1:6),Iq3(1:6)
  REAL(QP) argq(1:1),e
- REAL(QP) q1,q2,q3,q4
  LOGICAL err
-
-! !Read input file
-! open(10,file="intldc.inp")
-!  read(10,*)suffixe
-!  read(10,*)x0
-!  read(10,*)k
-!  read(10,*)zk
-! close(10)
 
  temperaturenulle=.TRUE.
 
@@ -51,29 +39,21 @@ FUNCTION selfE(k,zk)
 ! varchange=racinfvq when b -> +oo and f decays as 1/x^(3/2)
 ! varchange=midsquvq/midsqlvq f has a 1/sqrt(b-x) or 1/sqrt(x-a) (integrable) divergence at the upper/lower bound of the integration interval
 
- q1=0.0_qp
- q2=10.0_qp
- q3=100.0_qp
- q4=100000.0_qp
-
- fichierlec1="grillex0_10_1.dat"
- fichierlec2="grillex0_10_2.dat"
- fichierlec3="grillex0_10_3.dat"
  if(lecture)then
-  open(11,file=fichierlec1)
-  read(11,*)
-  open(12,file=fichierlec2)
+!  open(11,file=trim(fichierlec1))
+!  read(11,*)
+  open(12,file=trim(fichierlec2))
   read(12,*)
-  open(13,file=fichierlec3)
-  read(13,*)
+!  open(13,file=trim(fichierlec3))
+!  read(13,*)
  endif
 
  if(ecriture)then
-  open (16,file=fichierlec1)
+  open (16,file=trim(fichierlec1))
   write(16,*)"! grille de valeur de q,om et Mat de qmin=",q1,"à qmax=",q2," avec profondeur=",profondeur
-  open (17,file=fichierlec2)
+  open (17,file=trim(fichierlec2))
   write(17,*)"! grille de valeur de q,om et Mat de qmin=",q2,"à qmax=",q3," avec profondeur=",profondeur
-  open (18,file=fichierlec3)
+  open (18,file=trim(fichierlec3))
   write(18,*)"! grille de valeur de q,om et Mat de qmin=",q3,"à qmax=",q4," avec profondeur=",profondeur
  endif
 
@@ -82,19 +62,23 @@ FUNCTION selfE(k,zk)
  Iq3(:)=0.0_qp
 
  argq(1)=1.5_qp 
-! Iq1=qromovqfixed(intq,q1 ,   q2,   3,argq,midpntvq,EPSq,profondeur,err)
- write(6,*)"Iq1=",Iq1
- if(err) write(6,*) "convergence non atteinte dans l’intégrale sur q"
+! Iq1=qromovfixed(intq,q1 ,   q2,   6,argq,midpntvcq,EPSq,profondeur,err)
+! write(6,*)"Iq1=",Iq1
+ write(6,*)"re Iq1=",real(Iq1)
+ write(6,*)"im Iq1=",imag(Iq1)
+! if(err)  call erreur("q")
 
  argq(1)=2.5_qp 
- Iq2=qromovqfixed(intq,q2,    q3,   3,argq,midpntvq,EPSq,profondeur,err)
- write(6,*)"Iq2=",Iq2
- if(err) write(6,*) "convergence non atteinte dans l’intégrale sur q"
+ Iq2=qromovfixed(intq,q2,    q3,   6,argq,midpntvcq,EPSq,profondeur,err)
+ write(6,*)"re Iq2=",real(Iq2)
+ write(6,*)"im Iq2=",imag(Iq2)
+ if(err)  call erreur("q")
 
  argq(1)=3.5_qp 
- Iq3=qromovqfixed(intq,q3,    q4,   3,argq,midinfvq,EPSq,profondeur,err)
- write(6,*)"Iq3=",Iq3
- if(err) write(6,*) "convergence non atteinte dans l’intégrale sur q"
+! Iq3=qromovfixed(intq,q3,    q4,   6,argq,midinfvcq,EPSq,profondeur,err)
+ write(6,*)"re Iq3=",real(Iq3)
+ write(6,*)"im Iq3=",imag(Iq3)
+ if(err)  call erreur("q")
 
  selfE=2.0_qp*PI*(Iq1+Iq2+Iq3) !Integration sur phi
 
@@ -116,10 +100,10 @@ CONTAINS
   USE nrutil
   INTEGER,  INTENT(IN) :: m !Always called with m=3: the 3 coefficients of the self-energy matrix
   REAL(QP), INTENT(IN), DIMENSION(:)  ::  q,argq
-  REAL(QP)  intq(size(q),m)
+  COMPLEX(QPC)  intq(size(q),m)
 
-  REAL(QP), DIMENSION(1:3) ::  I,Ia,Ib,Ic,Id,Ie,fich
-  REAL(QP) bmax,qs
+  COMPLEX(QPC), DIMENSION(1:6) ::  I,Ia,Ib,Ic,Id,Ie
+  REAL(QP) bmax,qs,fich
   INTEGER is
  
   fich=argq(1)
@@ -145,38 +129,38 @@ CONTAINS
    bmax=1.e6_qp
   
     if(ptbranchmtpp==1)then !BEC-like behavior: integrated from branch cut lower-edge opp(1) to infinity
-      Ib=qromovqfixed(intom,opp(1)         ,bmax                ,3,(/qs,fich/),racinfvq,EPSom,profondeur,err) !deals with the 1/om^(3/2) decay at large om
+      Ib=qromovfixed(intom,opp(1)         ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err) !deals with the 1/om^(3/2) decay at large om
       call ecrit(bla0,'Ib=',Ib)
-      if(err) write(6,*) "convergence non atteinte dans l’intégrale sur omega"
+      if(err)  call erreur("omega")
     elseif(ptbranchmtpp==2)then !One angular point opp(2) besides the lower-edge
-      Ib=qromovqfixed(intom,opp(1)         ,opp(2)              ,3,(/qs,fich/),midpntvq,EPSom,profondeur,err) !Integrate from the edge to the angular point
+      Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err) !Integrate from the edge to the angular point
       call ecrit(bla0,'Ib=',Ib)
-      if(err) write(6,*) "convergence non atteinte dans l’intégrale sur omega"
-      Ic=qromovqfixed(intom,opp(2)         ,2.0_qp*opp(2)       ,3,(/qs,fich/),midpntvq,EPSom,profondeur,err) !then from opp(2) to 2*opp(2), this circumscribes the numerical difficulty around opp(2)
+      if(err)  call erreur("omega")
+      Ic=qromovfixed(intom,opp(2)         ,2.0_qp*opp(2)       ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err) !then from opp(2) to 2*opp(2), this circumscribes the numerical difficulty around opp(2)
       call ecrit(bla0,'Ic=',Ic)
-      if(err) write(6,*) "convergence non atteinte dans l’intégrale sur omega"
-      Id=qromovqfixed(intom,2.0_qp*opp(2)  ,bmax                ,3,(/qs,fich/),racinfvq,EPSom,profondeur,err) !then from 2*opp(2) to infinity
+      if(err)  call erreur("omega")
+      Id=qromovfixed(intom,2.0_qp*opp(2)  ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err) !then from 2*opp(2) to infinity
       call ecrit(bla0,'Id=',Id)
-      if(err) write(6,*) "convergence non atteinte dans l’intégrale sur omega"
+      if(err)  call erreur("omega")
     elseif(ptbranchmtpp==3)then !Two angular points opp(2) and opp(3) besides the lower-edge
-      Ib=qromovqfixed(intom,opp(1)         ,opp(2)              ,3,(/qs,fich/),midpntvq,EPSom,profondeur,err)
+      Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
       call ecrit(bla0,'Ib=',Ib)
-      if(err) write(6,*) "convergence non atteinte dans l’intégrale sur omega"
-      Ic=qromovqfixed(intom,opp(2)         ,opp(3)              ,3,(/qs,fich/),midpntvq,EPSom,profondeur,err)
+      if(err)  call erreur("omega")
+      Ic=qromovfixed(intom,opp(2)         ,opp(3)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
       call ecrit(bla0,'Ic=',Ic)
-      if(err) write(6,*) "convergence non atteinte dans l’intégrale sur omega"
-      Id=qromovqfixed(intom,opp(3)         ,2.0_qp*opp(3)       ,3,(/qs,fich/),midpntvq,EPSom,profondeur,err)
+      if(err)  call erreur("omega")
+      Id=qromovfixed(intom,opp(3)         ,2.0_qp*opp(3)       ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
       call ecrit(bla0,'Id=',Id)
-      if(err) write(6,*) "convergence non atteinte dans l’intégrale sur omega"
-      Ie=qromovqfixed(intom,2.0_qp*opp(3)         ,bmax         ,3,(/qs,fich/),racinfvq,EPSom,profondeur,err)
+      if(err)  call erreur("omega")
+      Ie=qromovfixed(intom,2.0_qp*opp(3)  ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err)
       call ecrit(bla0,'Ie=',Ie)
-      if(err) write(6,*) "convergence non atteinte dans l’intégrale sur omega"
+      if(err)  call erreur("omega")
     else
      STOP "Erreur de ptbranchmntpp"
     endif
   
    I=Ib+Ic+Id+Ie !Combines the integration intervals
-   write(6,*)"qs,I=",qs,I
+   write(6,*)"qs,I=",qs,real(I)
 
    open(20,file="intq"//suffixe//".dat",POSITION="APPEND")
     write(20,*)qs,I
@@ -191,11 +175,12 @@ CONTAINS
   IMPLICIT NONE
   INTEGER,  INTENT(IN) :: m !m=3 here
   REAL(QP), INTENT(IN), DIMENSION(:)  ::  om,arg !arg(1) should be the value of q
-  REAL(QP), DIMENSION(size(om),m)       ::  intom
+  COMPLEX(QPC), DIMENSION(size(om),m)       ::  intom
 
   COMPLEX(QPC) Gam(1:2,1:2),Mat(1:2,1:2),Mat2(1:2,1:2),MatCat(1:2,1:2),det
   REAL(QP) reM11,reM22,reM12,reM21,imM11,imM22,imM12,imM21,omfi,xqfi
-  REAL(QP) q,Iu(1:3),Iu2(1:3),argintu(1:2),rho(1:2,1:2),ome
+  REAL(QP) q,argintu(1:2),rho(1:2,1:2),ome,enM,enP
+  COMPLEX(QPC) IuP(1:3),IuM(1:3)
   REAL(QP) deb,fin
   INTEGER is,fich
 
@@ -207,15 +192,19 @@ CONTAINS
   do is=1,size(om)
    ome=om(is)
 
-   argintu(1)=ome-zk !value of the energy denominator passed on to the intu function
+!value of the energy denominator passed on to the intu and Iuanaly functions
+   enM= ome-zk
+   enP= ome+zk
 
-   Iu(:)=0.0_qp
+   IuP(:)=0.0_qp
+   IuM(:)=0.0_qp
 !   call cpu_time(deb)
 !   Iu=qromovq(intu,-1.0_qp,1.0_qp,3,argintu,midpntvq,EPSu) !computes int_-1^1 du (V^2,U^2,UV)/(ome-z+eps)
-   Iu=real(Iuanaly(argintu(1),argintu(2)))
-   if(isnan(real(Iu(1))))then
-    write(6,*)"isnan(Iu2))"
-    write(6,*) "en,q=",argintu(1),argintu(2)
+   IuM=Iuanaly(q,enM)
+   IuP=Iuanaly(q,enP)
+   if((isnan(real(IuM(1))).OR.isnan(real(IuP(1)))))then
+    write(6,*)"isnan(IuP/M))"
+    write(6,*) "enM,enP,q=",enM,enP,q
     stop
    endif
 
@@ -258,12 +247,18 @@ CONTAINS
    Gam(1,2)=-MatCat(1,2)/det
 
    rho=-imag(Gam)/PI
-   intom(is,1)=rho(1,1)*Iu(1)
-   intom(is,2)=rho(2,2)*Iu(2)
-   intom(is,3)=rho(1,2)*Iu(3)
+   intom(is,1)=-rho(1,1)*IuM(1)
+   intom(is,2)=-rho(2,2)*IuM(2)
+   intom(is,3)=-rho(1,2)*IuM(3)
+
+   intom(is,4)= rho(2,2)*IuP(2)
+   intom(is,5)= rho(1,1)*IuP(1)
+   intom(is,6)=-rho(1,2)*IuP(3)
 !   call cpu_time(fin)
+
 !   write(6,*)"lecture, temps écoulé=",deb-fin
-   write(6,*)"q,ome,intom=",q,ome,intom(is,:)!*ome**(3.0_qp/2.0_qp)
+   write(6,FMT="(A20,8G20.10)")"q,ome,real(intom)=",q,ome,real(intom(is,:))!*ome**(3.0_qp/2.0_qp)
+!   write(6,FMT="(A11,3G20.10)")"imag(intom)=",imag(intom(is,:))!*ome**(3.0_qp/2.0_qp)
 
 
   enddo
@@ -307,11 +302,14 @@ CONTAINS
    if((tmax>real(t1)).AND.(tmin<real(t1)))then
     imI1=imI1-PI
     imI2=imI2-PI
+    write(6,*)"en,q=",en,q
+    stop
    endif
    if((tmax>real(t2)).AND.(tmin<real(t2)))then
-    imI1=imI1-PI
-    imI2=imI2+PI
+    imI1=imI1+PI
+    imI2=imI2-PI
    endif
+   imI2=imI2*abs(en)/rac
   endif
 !  write(6,*)"I1,I2,I3=",I1,I2,I3
   Iuanaly(1)=( (I1+iiq*imI1)-sign(1.0_qp,en)*(I2+iiq*imI2))          /(4*k*q)
@@ -352,4 +350,13 @@ CONTAINS
  END FUNCTION intu
 
 END FUNCTION selfE
+ SUBROUTINE erreur(var)
+ CHARACTER(len=*), INTENT(IN) :: var
+  if(st)then
+   write(6,*) "convergence non atteinte dans l’intégrale sur "//var
+   stop
+  else
+   write(6,*) "convergence non atteinte dans l’intégrale sur "//var
+  endif
+ END SUBROUTINE erreur
 END MODULE intldc

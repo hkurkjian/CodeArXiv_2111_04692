@@ -9,7 +9,7 @@ MODULE modsim
         MODULE PROCEDURE polints,polintd,polintq,polintc,polintcq
        END INTERFACE polint
        INTERFACE midpnt
-        MODULE PROCEDURE midpnts,midpntd,midpntq,midpntc,midpntcq
+        MODULE PROCEDURE midpnts,midpntd,midpntq,midpntc,midpntcq,midpntvcq
        END INTERFACE midpnt
        INTERFACE midinf
         MODULE PROCEDURE midinfs,midinfd,midinfq,midinfc,midinfcq
@@ -24,11 +24,14 @@ MODULE modsim
         MODULE PROCEDURE midexps,midexpd,midexpq,midexpc,midexpcq
        END INTERFACE midexp
        INTERFACE racinf
-        MODULE PROCEDURE racinfs,racinfd,racinfq,racinfc,racinfcq
+        MODULE PROCEDURE racinfs,racinfd,racinfq,racinfc,racinfcq,racinfvcq
        END INTERFACE racinf
        INTERFACE qromo
-        MODULE PROCEDURE qromos,qromod,qromoq,qromoc,qromocq
+        MODULE PROCEDURE qromos,qromod,qromoq,qromoc,qromocq,qromovq,qromovcq
        END INTERFACE qromo
+       INTERFACE qromovfixed
+        MODULE PROCEDURE qromovqfixed,qromovcqfixed
+       END INTERFACE qromovfixed
        INTERFACE qromochoix
         MODULE PROCEDURE qromochoixs,qromochoixd,qromochoixq,qromochoixc,qromochoixcq
        END INTERFACE qromochoix
@@ -73,6 +76,13 @@ MODULE modsim
           REAL(QP), DIMENSION(:), INTENT(IN) :: arg
           REAL(QP), DIMENSION(size(x),mm) :: funcvq
          END FUNCTION funcvq
+         FUNCTION funcvcq(x,arg,mm)
+          USE nrtype
+          INTEGER, INTENT(IN) ::  mm
+          REAL(QP), DIMENSION(:), INTENT(IN) :: x
+          REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+          COMPLEX(QPC), DIMENSION(size(x),mm) :: funcvcq
+         END FUNCTION funcvcq
        END INTERFACE
  CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1719,4 +1729,180 @@ MODULE modsim
        END FUNCTION qromovqfixed
 
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SUBROUTINE midpntvcq(func,a,b,m,arg,s,n)
+       REAL(QP), INTENT(IN) :: a,b
+       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
+       COMPLEX(QPC), INTENT(INOUT), DIMENSION(m) :: s
+       INTEGER(I4B), INTENT(IN) :: m,n
+       PROCEDURE(funcvcq) :: func
+       !
+       REAL(QP) :: del
+       INTEGER(I4B) :: it
+       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       if (n == 1) then
+        s(:)=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg,m ),dim=1)
+       else
+        it=3**(n-2)
+        del=(b-a)/(3.0_qp*it) 
+        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it) 
+        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
+        s(:)=s(:)/3.0_qp+del*sum(func(x,arg,m),dim=1) 
+       end if 
+       END SUBROUTINE midpntvcq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SUBROUTINE midinfvcq(funk,aa,bb,m,arg,s,n)
+       REAL(QP), INTENT(IN) :: aa,bb
+       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
+       COMPLEX(QPC), INTENT(INOUT), DIMENSION(m) :: s
+       INTEGER(I4B), INTENT(IN) :: m,n
+       PROCEDURE(funcvcq) :: funk
+       !
+       REAL(QP) :: a,b,del
+       INTEGER(I4B) :: it
+       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       if(aa*bb <= 0.0) STOP 'bornes dans midinf'
+       b=1.0_qp/aa
+       a= 1.0_qp/bb
+       if (n == 1) then
+        s(:)=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg,m ),dim=1)
+       else
+        it=3**(n-2)
+        del=(b-a)/(3.0_qp*it)
+        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it) 
+        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
+        s(:)=s(:)/3.0_qp+del*sum(func(x,arg,m),dim=1)
+       end if
+       CONTAINS
+        FUNCTION func(x,arg,mm)
+        INTEGER, INTENT(IN) ::  mm
+        REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
+        COMPLEX(QPC), DIMENSION(size(x),mm) :: func
+        INTEGER is
+        func=funk(1.0_qp/x,arg,mm)
+        do is=1,size(x)
+         func(is,:)=func(is,:)/x(is)**2
+        enddo
+        END FUNCTION func
+       END SUBROUTINE midinfvcq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SUBROUTINE racinfvcq(funk,aa,bb,m,arg,s,n)
+       REAL(QP), INTENT(IN) :: aa,bb
+       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
+       COMPLEX(QPC), INTENT(INOUT), DIMENSION(m) :: s
+       INTEGER(I4B), INTENT(IN) :: m,n
+       PROCEDURE(funcvcq) :: funk
+       !
+       REAL(QP) :: a,b,del
+       INTEGER(I4B) :: it
+       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       if(aa*bb <= 0.0) STOP 'bornes dans racinf'
+       b=1.0_qp/sqrt(aa)
+       a= 1.0_qp/sqrt(bb)
+       if (n == 1) then
+        s(:)=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg,m ),dim=1)
+       else
+        it=3**(n-2)
+        del=(b-a)/(3.0_qp*it)
+        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it) 
+        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
+        s(:)=s(:)/3.0_qp+del*sum(func(x,arg,m),dim=1)
+       end if
+       CONTAINS
+        FUNCTION func(x,arg,mm)
+        INTEGER, INTENT(IN) ::  mm
+        REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
+        COMPLEX(QPC), DIMENSION(size(x),mm) :: func
+        INTEGER is
+        func=funk(1.0_qp/x**2,arg,mm)
+        do is=1,size(x)
+         func(is,:)=2.0_qp*func(is,:)/x(is)**3
+        enddo
+        END FUNCTION func
+       END SUBROUTINE racinfvcq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       FUNCTION qromovcq(func,a,b,m,arg,choose,EPS)
+       INTEGER,  INTENT(IN) :: m !Dimension du vecteur à intégrer
+       REAL(QP), INTENT(IN) :: a,b
+       REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+       COMPLEX(QPC), DIMENSION(m) :: qromovcq
+       REAL(QP), INTENT(IN)  :: EPS
+       PROCEDURE(funcvcq) :: func
+       INTERFACE
+         SUBROUTINE choose(funk,aa,bb,mm,arg,s,n)
+         USE nrtype
+         INTEGER, INTENT(IN) :: mm
+         REAL(QP), INTENT(IN) :: aa,bb
+         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+         COMPLEX(QPC), DIMENSION(mm), INTENT(INOUT) :: s
+         INTEGER(I4B), INTENT(IN) :: n
+         PROCEDURE(funcvcq) :: funk
+         END SUBROUTINE choose
+       END INTERFACE
+       INTEGER(I4B), PARAMETER :: JMAX=16,JMAXP=JMAX+1,K=5,KM=K-1
+       !
+       COMPLEX(QPC), DIMENSION(JMAXP,m) :: s
+       REAL(QP), DIMENSION(JMAXP,m) :: h
+       COMPLEX(QPC) :: dqromo(m)
+       INTEGER(I4B) :: j,im
+       LOGICAL conv(m)
+       h(1,:)=1.0
+       do j=1,JMAX
+        call choose(func,a,b,m,arg,s(j,:),j)
+        if (j >= K) then
+         do im=1,m
+          call polint(h(j-KM:j,im),s(j-KM:j,im),0.0_qp,qromovcq(im),dqromo(im))
+          conv(im)=abs(dqromo(im)) <= EPS*abs(qromovcq(im))
+         enddo
+         if (all(conv)) RETURN
+        end if
+        s(j+1,:)=s(j,:)
+        h(j+1,:)=h(j,:)/9.0_qp
+       end do
+       write(6,*) 'Nombre d itération dépassé dans qromovcq'
+       END FUNCTION qromovcq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       FUNCTION qromovcqfixed(func,a,b,m,arg,choose,EPS,JMAX,err)
+       INTEGER,  INTENT(IN) :: m !Dimension du vecteur à intégrer
+       REAL(QP), INTENT(IN) :: a,b
+       REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+       COMPLEX(QPC), DIMENSION(m) :: qromovcqfixed
+       REAL(QP), INTENT(IN)  :: EPS
+       INTEGER,  INTENT(IN)  :: JMAX
+       LOGICAL, INTENT(OUT)  :: err
+       PROCEDURE(funcvcq) :: func
+       INTERFACE
+         SUBROUTINE choose(funk,aa,bb,mm,arg,s,n)
+         USE nrtype
+         INTEGER, INTENT(IN) :: mm
+         REAL(QP), INTENT(IN) :: aa,bb
+         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+         COMPLEX(QPC), DIMENSION(mm), INTENT(INOUT) :: s
+         INTEGER(I4B), INTENT(IN) :: n
+         PROCEDURE(funcvcq) :: funk
+         END SUBROUTINE choose
+       END INTERFACE
+       !
+       COMPLEX(QPC), DIMENSION(JMAX+1,m) :: s
+       REAL(QP), DIMENSION(JMAX+1,m) :: h
+       COMPLEX(QPC) :: dqromo(m)
+       INTEGER(I4B) :: j,im
+       LOGICAL conv(m)
+       err=.FALSE.
+       h(1,:)=1.0
+       do j=1,JMAX
+        call choose(func,a,b,m,arg,s(j,:),j)
+        if (j >= JMAX) then
+         do im=1,m
+          call polint(h(j-(JMAX-1):j,im),s(j-(JMAX-1):j,im),0.0_qp,qromovcqfixed(im),dqromo(im))
+          conv(im)=abs(dqromo(im)) <= EPS*abs(qromovcqfixed(im))
+         enddo
+         if (all(conv)) RETURN
+        end if
+        s(j+1,:)=s(j,:)
+        h(j+1,:)=h(j,:)/9.0_qp
+       end do
+       write(6,*) 'Nombre d itération dépassé dans qromovcqfixed'
+       err=.TRUE.
+       END FUNCTION qromovcqfixed
 END MODULE modsim

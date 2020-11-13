@@ -1,9 +1,9 @@
-10.0      !  read(10,*)x0
 3.3333       !  read(10,*)kmin
 3.3333       !  read(10,*)kmax
 0            !  read(10,*)nk
 3.51         !  read(10,*)zkmin
 3.51         !  read(10,*)zkmax
-0           !  read(10,*)nzk
-bido2     !  read(10,*)suffixe
-T         !  read(10,*)bla0
+0            !  read(10,*)nzk
+bido2        !  read(10,*)suffixe
+T            !  read(10,*)bla0
+"DONNEES/grillex0_10.info"                                    !read(10,*) grille
