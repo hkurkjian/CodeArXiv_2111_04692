@@ -18,6 +18,7 @@ FUNCTION selfE(k,zk)
  COMPLEX(QPC) Iq1(1:6),Iq2(1:6),Iq3(1:6)
  REAL(QP) argq(1:1),e
  LOGICAL err
+ CHARACTER(len=250) chainebidon
 
  temperaturenulle=.TRUE.
 
@@ -39,11 +40,16 @@ FUNCTION selfE(k,zk)
 ! varchange=racinfvq when b -> +oo and f decays as 1/x^(3/2)
 ! varchange=midsquvq/midsqlvq f has a 1/sqrt(b-x) or 1/sqrt(x-a) (integrable) divergence at the upper/lower bound of the integration interval
 
+ write(6,*)"fichierlec1,fichierlec2:",fichierlec1,fichierlec2
  if(lecture)then
-!  open(11,file=trim(fichierlec1))
-!  read(11,*)
+  open(11,file=trim(fichierlec1))
+  read(11,*)chainebidon
+  write(6,*)chainebidon
+  read(*,*)
   open(12,file=trim(fichierlec2))
-  read(12,*)
+  read(12,*)chainebidon
+  write(6,*)chainebidon
+  read(*,*)
 !  open(13,file=trim(fichierlec3))
 !  read(13,*)
  endif
@@ -62,8 +68,8 @@ FUNCTION selfE(k,zk)
  Iq3(:)=0.0_qp
 
  argq(1)=1.5_qp 
-! Iq1=qromovfixed(intq,q1 ,   q2,   6,argq,midpntvcq,EPSq,profondeur,err)
-! write(6,*)"Iq1=",Iq1
+ Iq1=qromovfixed(intq,q1 ,   q2,   6,argq,midpntvcq,EPSq,profondeur,err)
+ write(6,*)"Iq1=",Iq1
  write(6,*)"re Iq1=",real(Iq1)
  write(6,*)"im Iq1=",imag(Iq1)
 ! if(err)  call erreur("q")
@@ -163,7 +169,7 @@ CONTAINS
    write(6,*)"qs,I=",qs,real(I)
 
    open(20,file="intq"//suffixe//".dat",POSITION="APPEND")
-    write(20,*)qs,I
+    write(20,*)qs,real(I(1:3))
    close(20)
 
    intq(is,:)=I(:)*qs**2 !Jacobian of the q integration
@@ -181,7 +187,7 @@ CONTAINS
   REAL(QP) reM11,reM22,reM12,reM21,imM11,imM22,imM12,imM21,omfi,xqfi
   REAL(QP) q,argintu(1:2),rho(1:2,1:2),ome,enM,enP
   COMPLEX(QPC) IuP(1:3),IuM(1:3)
-  REAL(QP) deb,fin
+  REAL(QP) deb,fin,Iu(1:3)
   INTEGER is,fich
 
   q=arg(1) !value of q passed on to the intu function
@@ -199,9 +205,14 @@ CONTAINS
    IuP(:)=0.0_qp
    IuM(:)=0.0_qp
 !   call cpu_time(deb)
+!   argintu(1)=enM
 !   Iu=qromovq(intu,-1.0_qp,1.0_qp,3,argintu,midpntvq,EPSu) !computes int_-1^1 du (V^2,U^2,UV)/(ome-z+eps)
-   IuM=Iuanaly(q,enM)
-   IuP=Iuanaly(q,enP)
+   IuM=Iuanaly(enM,q)
+!   write(6,*)"Iu(1),IuM(1)=",Iu(1),real(IuM(1))
+!   IuM(1)=cmplx(Iu(1),0.0_qp)
+!   IuM(2)=cmplx(Iu(2),0.0_qp)
+!   IuM(3)=cmplx(Iu(3),0.0_qp)
+   IuP=Iuanaly(enP,q)
    if((isnan(real(IuM(1))).OR.isnan(real(IuP(1)))))then
     write(6,*)"isnan(IuP/M))"
     write(6,*) "enM,enP,q=",enM,enP,q
@@ -229,8 +240,13 @@ CONTAINS
     Mat(1,2)=cmplx(reM12,imM12,kind=qpc)
     Mat(2,1)=Mat(1,2)
     det=Mat(1,1)*Mat(2,2)-Mat(1,2)**2
-    if(abs(xq -xqfi)>1.e-20_qp)stop "xq -xqfi"
-    if(abs(ome-omfi)>1.e-20_qp)stop "ome-omfi"
+    if(abs(xq -xqfi)>1.e-13_qp)then
+     stop "xq -xqfi"
+    endif
+    if(abs(ome-omfi)>1.e-13_qp)then
+     write(6,*)"ome,omfi=",ome,omfi
+     stop "ome-omfi"
+    endif
    else
     call mat_pairfield(ome,e,det,Mat,Gam)
     if(ecriture)then

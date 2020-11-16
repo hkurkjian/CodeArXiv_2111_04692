@@ -65,11 +65,6 @@ EPSq  =1.0e-5_qp
 
 temperaturenulle=.TRUE.
 
-lecture =.FALSE.
-lecture =.TRUE.
-ecriture=.FALSE.
-st=.TRUE.
-profondeur=7
 
 write(6,*)trim(grille)
 open(15,file=trim(grille))
@@ -80,11 +75,17 @@ open(15,file=trim(grille))
  write(6,*)"profondeur=",profondeur
 close(15)
 !stop
-bla1=.FALSE.
+!bla1=.FALSE.
+!bla1=.TRUE.
 x0crit=9.0_qp
 
+lecture =.FALSE.
 lecture =.TRUE.
+ecriture=.TRUE.
 ecriture=.FALSE.
+st=.FALSE.
+st=.TRUE.
+profondeur=7
 
 do ik=0,nk
  k=kmin+dk*ik
@@ -95,7 +96,7 @@ do ik=0,nk
   sE=selfE(k,zk)
 
   open(14,file="selfE"//suffixe//".dat",POSITION="APPEND")
-   write(14,*)zk,k,sE
+   write(14,*)zk,k,real(sE),imag(sE)
   close(14)
 
  enddo
