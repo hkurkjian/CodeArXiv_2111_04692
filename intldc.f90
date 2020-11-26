@@ -45,11 +45,9 @@ FUNCTION selfE(k,zk)
   open(11,file=trim(fichierlec1))
   read(11,*)chainebidon
   write(6,*)chainebidon
-  read(*,*)
   open(12,file=trim(fichierlec2))
   read(12,*)chainebidon
   write(6,*)chainebidon
-  read(*,*)
 !  open(13,file=trim(fichierlec3))
 !  read(13,*)
  endif
@@ -273,7 +271,9 @@ CONTAINS
 !   call cpu_time(fin)
 
 !   write(6,*)"lecture, temps écoulé=",deb-fin
-   write(6,FMT="(A20,8G20.10)")"q,ome,real(intom)=",q,ome,real(intom(is,:))!*ome**(3.0_qp/2.0_qp)
+   if(bla0)then
+    write(6,FMT="(A20,8G20.10)")"q,ome,real(intom)=",q,ome,real(intom(is,:))!*ome**(3.0_qp/2.0_qp)
+   endif
 !   write(6,FMT="(A11,3G20.10)")"imag(intom)=",imag(intom(is,:))!*ome**(3.0_qp/2.0_qp)
 
 
@@ -319,7 +319,6 @@ CONTAINS
     imI1=imI1-PI
     imI2=imI2-PI
     write(6,*)"en,q=",en,q
-    stop
    endif
    if((tmax>real(t2)).AND.(tmin<real(t2)))then
     imI1=imI1+PI

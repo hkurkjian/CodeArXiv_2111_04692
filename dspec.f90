@@ -19,7 +19,7 @@ MODULE vars
  INTEGER ptbranchmtpp,ptbranchmtpt !Number of angular points on the qp-qp and qp-qh branch cuts, written by oangpp and oangpt
  REAL(QP) opp(1:4)   !angular points om1,om2,om3 of the qp-qp branch cut and k such that om2=E(k+q/2)+E(k-q/2), written by oangpp
  REAL(QP) opt(1:2)   !angular points om_ph of the qp-qh branch cut and k such that om_ph=E(k+q/2)-E(k-q/2), written by oangpt
- REAL(QP) x0crit!x0crit: critical value of x0 after which msqu and msql should be used to integrate the function around opp(3) 
+ REAL(QP) x0crit     !In the far BCS regime (x0>x0crit) use an optimized routine for the omega integral
 
 ! Parameters
  REAL(QP), PARAMETER :: bidon=-1.0e300_qp
@@ -195,6 +195,7 @@ if(axer)then
   if(floor(num)<4)then !energy cutoff in the integrals
    db=100.0_qp
    bmax=max(9.0e6_qp,2*om0-opp(3)+db,2*opp(3)+db,4*x0+db,2*om0-2*x0+db,2*om0+db) !In case 2*om0-opp or 2*opp overflows bmax. This formula works whatever the value of ptbranchmtpp
+   write(6,*)"bmax=",bmax
   else
    bmax=1.0e55_qp
   endif

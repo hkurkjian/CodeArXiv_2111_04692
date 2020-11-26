@@ -36,10 +36,6 @@ write(6,*)'zkmin=',zkmin
 write(6,*)'zkmax=',zkmax
 write(6,*)'nzk=',nzk
 
-call system("rm "// "selfE"//suffixe//".dat")
-open(14,file="selfE"//suffixe//".dat",POSITION="APPEND")
- write(14,*)"!Valeurs de k,zk et sE (l’autoénergie) pour x0=",x0
-close(14)
 
 
 if(nk==0)then
@@ -79,6 +75,11 @@ close(15)
 !bla1=.TRUE.
 x0crit=9.0_qp
 
+call system("rm "// "selfE"//suffixe//".dat")
+open(14,file="selfE"//suffixe//".dat",POSITION="APPEND")
+ write(14,*)"!Valeurs de k,zk et sE (l’autoénergie) pour x0=",x0
+close(14)
+
 lecture =.FALSE.
 lecture =.TRUE.
 ecriture=.TRUE.
@@ -96,7 +97,7 @@ do ik=0,nk
   sE=selfE(k,zk)
 
   open(14,file="selfE"//suffixe//".dat",POSITION="APPEND")
-   write(14,*)zk,k,real(sE),imag(sE)
+   write(14,*)k,zk,real(sE),imag(sE)
   close(14)
 
  enddo

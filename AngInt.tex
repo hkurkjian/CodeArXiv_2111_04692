@@ -101,57 +101,182 @@
 
 \maketitle
 
+%\section{Variable $t$}
+%
+%In this note, I derive analytic formulas for the angular integrals appearing in the single-particle self-energies:
+%\bea
+%I_{\pm\pm}(\omega)&=&\int_{-1}^1 \frac{\dd u}{2}\bb{1\pm\frac{\xi_{\kk-\qq}}{\epsilon_{\kk-\qq}}} \frac{\Delta}{\omega+\epsilon_{\kk-\qq}}\\ 
+%I_{+-}(\omega)&=&\int_{-1}^1 \frac{\dd u}{2}{\frac{\Delta}{\epsilon_{\kk-\qq}}} \frac{\Delta}{\omega+\epsilon_{\kk-\qq}} 
+%\eea
+%We work here in units of $|\omega|$, setting $\check k^2=k^2/2m|\omega|$, $\check q^2=q^2/2m|\omega|$ and
+%\be
+%\check{\xi}_{\kk-\qq}=\frac{{\xi}_{\kk-\qq}}{|\omega|}=\xi_0-2\check k \check q u \quad \text{with} \quad  \xi_0=\check k^2+\check q^2-\mu/|\omega|
+%\ee
+%I use a Euler substitution to rationalize the integrand, setting
+%\be
+%\check{\epsilon}_{\kk-\qq}=t-2\check k\check q u \quad \Longleftrightarrow \quad u=\frac{\epsilon_0^2-t}{4\check k\check q (\xi_0-t)} 
+%\ee
+%\be
+%\dd u = \frac{t^2-2t\xi_0+\epsilon_0^2}{4\check k\check q (\xi_0-t)^2} \dd t
+%\ee
+%where I use $\epsilon_0=\sqrt{\xi_0^2+\check\Delta^2}$. Note in passing that this change of variable is monotonous (and increasing) since $t^2-2t\xi_0+\epsilon_0^2>0$.
+%In the new variable $t$, the integrals become
+%\bea
+%I_{++}&=&\frac{\check \Delta^3}{2\check k\check q }\int_{t_{\rm min}}^{t_{\rm max}}  \frac{\dd t}{(t-\xi_0)P(t)}\\ 
+%I_{--}&=&\frac{\check \Delta}{2\check k\check q }\int_{t_{\rm min}}^{t_{\rm max}} \dd t \frac{t-\xi_0}{P(t)} \\
+%I_{+-}&=&\frac{\check \Delta^2}{2\check k\check q }\int_{t_{\rm min}}^{t_{\rm max}} \frac{\dd t}{P(t)}
+%\eea
+%with the new integration boundaries $t_{\rm min}=\check\epsilon_{k+q}-2\check k \check q$ and $t_{\rm max}=\check\epsilon_{k-q}+2\check k \check q$ and the polynomial
+%\be
+%P(t)=t^2-2t(\xi_0-\text{sg}\omega)+\epsilon_0^2-2\text{sg}\omega\xi_0
+%\ee
+%whose roots are
+%\bea
+%t_1 &=& \xi_0-\text{sg}\omega+\sqrt{1-\check\Delta^2} \\
+%t_2 &=& \xi_0-\text{sg}\omega-\sqrt{1-\check\Delta^2} 
+%\eea
+%Effecting the partial fraction decomposition of the integrals, we get
+%\bea
+%I_{++}&=&\frac{\check \Delta}{4\check k\check q} (-I_1 -\text{sg}\omega I_2 +2I_3) \\ 
+%I_{--}&=& \frac{\check \Delta}{4\check k\check q}  (I_1-\text{sg}\omega I_2)\\
+%I_{+-}&=& \frac{\check \Delta^2}{4\check k\check q} I_2
+%\eea
+%with
+%\be
+%I_1\equiv \int_{t_{\rm min}}^{t_{\rm max}} \dd t \bb{\frac{1}{t-t_1}+\frac{1}{t-t_2}} =\text{ln} \left\vert\frac{(t_{\rm max}-t_1)(t_{\rm max}-t_2)}{(t_{\rm min}-t_1)(t_{\rm min}-t_2)}\right\vert-\ii\pi \bb{\Theta(t_{\rm max}-t_1)\Theta(t_1-t_{\rm min})+\Theta(t_{\rm max}-t_2)\Theta(t_2-t_{\rm min})}
+%\ee
+%\begin{multline}
+%I_2\equiv \int_{t_{\rm min}}^{t_{\rm max}} \frac{\dd t}{\sqrt{1-\check\Delta^2}} \bb{\frac{1}{t-t_1}-\frac{1}{t-t_2}} \\ 
+%=\begin{cases} \frac{1}{\sqrt{1-\check\Delta^2}} \text{ln} {\frac{(t_{\rm max}-t_1)(t_{\rm min}-t_2)}{(t_{\rm max}-t_2)(t_{\rm min}-t_1)}} \quad  \text{if} \quad \Delta>|\omega| \\
+% \frac{1}{\sqrt{1-\check\Delta^2}} \bbcro{\text{ln} \left\vert{\frac{(t_{\rm max}-t_1)(t_{\rm min}-t_2)}{(t_{\rm max}-t_2)(t_{\rm min}-t_1)}}\right\vert -\ii\pi \bb{\Theta(t_{\rm max}-t_1)\Theta(t_1-t_{\rm min})-\Theta(t_{\rm max}-t_2)\Theta(t_2-t_{\rm min})}\quad  \text{if} \quad  \Delta<|\omega|}
+%\end{cases}
+%\end{multline}
+%\be
+%I_3\equiv \int_{t_{\rm min}}^{t_{\rm max}} \frac{\dd t}{t-\xi_0}=\text{ln}\frac{\epsilon_{k-q}-\xi_{k-q}}{\epsilon_{k+q}-\xi_{k+q}}
+%\ee
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Analytic calculation of the angular integral}
+
 In this note, I derive analytic formulas for the angular integrals appearing in the single-particle self-energies:
 \bea
-I_{\pm\pm}(\omega)&=&\int_{-1}^1 \frac{\dd u}{2}\bb{1\pm\frac{\xi_{\kk-\qq}}{\epsilon_{\kk-\qq}}} \frac{\Delta}{\omega+\epsilon_{\kk-\qq}}\\ 
-I_{+-}(\omega)&=&\int_{-1}^1 \frac{\dd u}{2}{\frac{\Delta}{\epsilon_{\kk-\qq}}} \frac{\Delta}{\omega+\epsilon_{\kk-\qq}} 
+I_{U^2|V^2}(\omega)&=&\int_{-1}^1 \frac{\dd u}{2}\bb{1\pm\frac{\xi_{\kk-\qq}}{\epsilon_{\kk-\qq}}} \frac{\Delta}{\omega+\epsilon_{\kk-\qq}}\\ 
+I_{UV}(\omega)&=&\int_{-1}^1 \frac{\dd u}{2}{\frac{\Delta}{\epsilon_{\kk-\qq}}} \frac{\Delta}{\omega+\epsilon_{\kk-\qq}} 
 \eea
-We work here in units of $|\omega|$, setting $\check k^2=k^2/2m|\omega|$, $\check q^2=q^2/2m|\omega|$ and
+We work here in units of $\Delta$, setting $\check k^2=k^2/2m\Delta$, $\check q^2=q^2/2m\Delta$ and
 \be
-\check{\xi}_{\kk-\qq}=\frac{{\xi}_{\kk-\qq}}{|\omega|}=\xi_0-2\check k \check q u \quad \text{with} \quad  \xi_0=\check k^2+\check q^2-\mu/|\omega|
+\check{\xi}_{\kk-\qq}=\frac{{\xi}_{\kk-\qq}}{\Delta}=\xi_0-2\check k \check q u \quad \text{with} \quad  \xi_0=\check k^2+\check q^2-\mu/\Delta
 \ee
-I use a Euler substitution to rationalize the integrand, setting
+We use a Euler substitution to rationalize the integrand, setting
 \be
-\check{\epsilon}_{\kk-\qq}=t-2\check k\check q u \quad \Longleftrightarrow \quad u=\frac{\epsilon_0^2-t}{4\check k\check q (\xi_0-t)} 
+\check{\epsilon}_{\kk-\qq}-\check{\xi}_{\kk-\qq}=x \quad \Longleftrightarrow \quad u=\frac{x^2+2\xi_0 x-1}{4\check k\check q x} 
 \ee
 \be
-\dd u = \frac{t^2-2t\xi_0+\epsilon_0^2}{4\check k\check q (\xi_0-t)^2} \dd t
+\dd u = \frac{x^2+1}{4\check k\check q x^2} \dd x
 \ee
-where I use $\epsilon_0=\sqrt{\xi_0^2+\check\Delta^2}$. Note in passing that this change of variable is monotonous (and increasing) since $t^2-2t\xi_0+\epsilon_0^2>0$.
-In the new variable $t$, the integrals become
+Note in passing that this change of variable is monotonous (and increasing).
+In the new variable $x$, the integrals become
 \bea
-I_{++}&=&\frac{\check \Delta^3}{2\check k\check q }\int_{t_{\rm min}}^{t_{\rm max}}  \frac{\dd t}{(t-\xi_0)P(t)}\\ 
-I_{--}&=&\frac{\check \Delta}{2\check k\check q }\int_{t_{\rm min}}^{t_{\rm max}} \dd t \frac{t-\xi_0}{P(t)} \\
-I_{+-}&=&\frac{\check \Delta^2}{2\check k\check q }\int_{t_{\rm min}}^{t_{\rm max}} \frac{\dd t}{P(t)}
+I_{U^2}&=&\frac{1}{2\check k\check q }\int_{x_{\rm min}}^{x_{\rm max}}  \frac{\dd x}{xP(x)}\\ 
+I_{V^2}&=&\frac{1}{2\check k\check q }\int_{t_{\rm min}}^{x_{\rm max}} \dd x \frac{x}{P(x)} \\
+I_{UV}&=&\frac{1}{2\check k\check q  }\int_{x_{\rm min}}^{x_{\rm max}} \frac{\dd x}{P(x)}
 \eea
-with the new integration boundaries $t_{\rm min}=\check\epsilon_{k+q}-2\check k \check q$ and $t_{\rm max}=\check\epsilon_{k-q}+2\check k \check q$ and the polynomial
+with the new integration boundaries $x_{\rm min}=\check\epsilon_{k+q}-\check\xi_{k+q}$ and $x_{\rm max}=\check\epsilon_{k-q}-\check\xi_{k-q}$ and the polynomial
 \be
-P(t)=t^2-2t(\xi_0-\text{sg}\omega)+\epsilon_0^2-2\text{sg}\omega\xi_0
+P(x)=x^2+2\check\omega x+1
 \ee
 whose roots are
 \bea
-t_1 &=& \xi_0-\text{sg}\omega+\sqrt{1-\check\Delta^2} \\
-t_2 &=& \xi_0-\text{sg}\omega-\sqrt{1-\check\Delta^2} 
+x_1 &=& -\check\omega+\sqrt{1-\frac{1}{\check\omega^2}} +\ii\text{sg}(\omega)0^+\\
+x_2 &=& -\check\omega-\sqrt{1-\frac{1}{\check\omega^2}}  -\ii\text{sg}(\omega)0^+
 \eea
 Effecting the partial fraction decomposition of the integrals, we get
 \bea
-I_{++}&=&\frac{\check \Delta}{4\check k\check q} (-I_1 -\text{sg}\omega I_2 +2I_3) \\ 
-I_{--}&=& \frac{\check \Delta}{4\check k\check q}  (I_1-\text{sg}\omega I_2)\\
-I_{+-}&=& \frac{\check \Delta^2}{4\check k\check q} I_2
+I_{U^2}&=&\frac{-I_1 -\check\omega I_2 +2I_3}{4\check k\check q}  \\ 
+I_{V^2}&=& \frac{I_1-\check\omega I_2}{4\check k\check q}  \\
+I_{UV}&=& \frac{I_2}{4\check k\check q } 
 \eea
 with
-\be
-I_1\equiv \int_{t_{\rm min}}^{t_{\rm max}} \dd t \bb{\frac{1}{t-t_1}+\frac{1}{t-t_2}} =\text{ln} \left\vert\frac{(t_{\rm max}-t_1)(t_{\rm max}-t_2)}{(t_{\rm min}-t_1)(t_{\rm min}-t_2)}\right\vert-\ii\pi \bb{\Theta(t_{\rm max}-t_1)\Theta(t_1-t_{\rm min})+\Theta(t_{\rm max}-t_2)\Theta(t_2-t_{\rm min})}
-\ee
 \begin{multline}
-I_2\equiv \int_{t_{\rm min}}^{t_{\rm max}} \frac{\dd t}{\sqrt{1-\check\Delta^2}} \bb{\frac{1}{t-t_1}-\frac{1}{t-t_2}} \\ 
-=\begin{cases} \frac{1}{\sqrt{1-\check\Delta^2}} \text{ln} {\frac{(t_{\rm max}-t_1)(t_{\rm min}-t_2)}{(t_{\rm max}-t_2)(t_{\rm min}-t_1)}} \quad  \text{if} \quad \Delta>|\omega| \\
- \frac{1}{\sqrt{1-\check\Delta^2}} \bbcro{\text{ln} \left\vert{\frac{(t_{\rm max}-t_1)(t_{\rm min}-t_2)}{(t_{\rm max}-t_2)(t_{\rm min}-t_1)}}\right\vert -\ii\pi \bb{\Theta(t_{\rm max}-t_1)\Theta(t_1-t_{\rm min})-\Theta(t_{\rm max}-t_2)\Theta(t_2-t_{\rm min})}\quad  \text{if} \quad  \Delta<|\omega|}
+I_1\equiv \int_{x_{\rm min}}^{x_{\rm max}} \dd x \bb{\frac{1}{x-x_1}+\frac{1}{x-x_2}} =\text{ln} \left\vert\frac{(x_{\rm max}-x_1)(x_{\rm max}-x_2)}{(x_{\rm min}-x_1)(x_{\rm min}-x_2)}\right\vert\\+\ii\pi \text{sg}(\omega)\bb{\Theta(x_{\rm max}-x_1)\Theta(x_1-x_{\rm min})-\Theta(x_{\rm max}-x_2)\Theta(x_2-x_{\rm min})}
+\end{multline}
+\begin{multline}
+I_2\equiv \int_{x_{\rm min}}^{x_{\rm max}} \frac{\check\omega\dd x}{\sqrt{\check\omega^2-1}} \bb{\frac{1}{x-x_1}-\frac{1}{x-x_2}} \\ 
+=\begin{cases} \frac{|\check\omega|}{\ii\sqrt{1-\check\omega^2}} \text{ln} {\frac{(x_{\rm max}-x_1)(x_{\rm min}-x_2)}{(x_{\rm max}-x_2)(x_{\rm min}-x_1)}}= \frac{2|\check\omega|}{\sqrt{1-\check\omega^2}}\bb{\text{arg}(x_{\rm max}-x_1)-\text{arg}(x_{\rm min}-x_1)} \quad  \text{if} \quad \Delta>|\omega| \\
+ \frac{|\check\omega|}{\sqrt{\check\omega^2-1}} \bbcro{\text{ln} \left\vert{\frac{(x_{\rm max}-x_1)(x_{\rm min}-x_2)}{(x_{\rm max}-x_2)(x_{\rm min}-x_1)}}\right\vert +\ii\pi \text{sg}(\omega) \bb{\Theta(x_{\rm max}-x_1)\Theta(x_1-x_{\rm min})+\Theta(x_{\rm max}-x_2)\Theta(x_2-x_{\rm min})}}\quad  \text{if} \quad  \Delta<|\omega|
 \end{cases}
 \end{multline}
 \be
-I_3\equiv \int_{t_{\rm min}}^{t_{\rm max}} \frac{\dd t}{t-\xi_0}=\text{ln}\frac{\epsilon_{k-q}-\xi_{k-q}}{\epsilon_{k+q}-\xi_{k+q}}
+I_3\equiv\text{ln}\frac{x_{\rm max}}{x_{\rm min}}
 \ee
+
+\section{UV behavior of the angular integral}
+
+At $\omega\gg q^2,k^2,|\mu|,\Delta$, one has
+\bea
+I_{U^2}&\sim& \frac{{\frac{1}{x_{\rm min}}-\frac{1}{x_{\rm max}}}}{4\check k \check q \check \omega}\\
+I_{V^2}&\sim& \frac{{x_{\rm max}-x_{\rm min}}}{4\check k \check q \check \omega} \\
+I_{UV}&\sim& \frac{\log\frac{x_{\rm max}}{x_{\rm min}}}{4\check k \check q \check \omega} 
+\eea
+and at $\omega\approx q^2\gg k^2,|\mu|,\Delta$, one has
+\bea
+I_{U^2}&\sim& \frac{2}{\check \omega+\check q^2}\\
+I_{V^2}&\sim& \frac{1}{2(\check \omega+\check q^2)\check q^4} \\
+I_{UV}&\sim& \frac{1}{(\check \omega+\check q^2)\check q^2} 
+\eea
+\section{UV behavior of the spectral density}
+
+We recall the pair-fluctuation matrix in the cartesian basis (in Randeria and Senne’s notations):
+\bea
+N_{++}(z,\qq)&=&M_{11}(z,\qq)=-\frac{mV}{4\pi  a}+\sum_{\kk}\bbcro{\frac{U_+^2U_-^2}{z-\epsilon_+-\epsilon_-}-\frac{V_+^2 V_-^2}{z+\epsilon_+ + \epsilon_-}+\frac{1}{2k^2}} \\
+N_{--}(z,\qq)&=&M_{22}(z,\qq)=-\frac{mV}{4\pi  a}+\sum_{\kk}\bbcro{\frac{V_+^2V_-^2}{z-\epsilon_+-\epsilon_-}-\frac{U_+^2 U_-^2}{z+\epsilon_+ + \epsilon_-}+\frac{1}{2k^2}} \\
+N_{+-}(z,\qq)&=&M_{12}(z,\qq)=\sum_{\kk}\bbcro{\frac{U_+ U_- V_+ V_- }{z+\epsilon_+ + \epsilon_-}-\frac{U_+ U_- V_+ V_- }{z-\epsilon_+-\epsilon_-}} 
+\eea
+At large $\omega$, those integrals are dominated by the large-$k$ region. We thus expand at $k^2\gg1,|\mu|/\Delta$ (but a priori $q\approx k$):
+\bea
+U_{\kk}&=&1+O(k^{-4}) \\
+V_{\kk}&=&\frac{1}{2k^2}+O(k^{-4}) \\
+\epsilon_{\kk+\qq/2} + \epsilon_{\kk-\qq/2}&=&2k^2+q^2/2 +O(1)
+\eea
+Here and in the followings, we drop the $\check \ $ denoting the dimensionless quantities. Everywhere, we use  the units of $\Delta$ (for instance $\check a =k_\Delta a$), except for $\check M_{i,j}=(2\pi)^3\Delta M_{i,j}/k_\Delta^3$).
+\bea
+\text{Re}  M_{22}(\omega,\qq)&=&2\pi(2\omega+q^2) \int_0^{+\infty}\frac{\dd k}{4k^2+2\omega+q^2} -\frac{\pi^2}{ a}+O(q^{-1})=\pi^2\bbcro{\frac{\sqrt{2\omega+q^2}}{2}-\frac{1}{\check a}} \\
+\text{Im}  M_{22}(\omega+\ii 0^+,\qq)&=& 2\pi\text{Im}\sum_{\kk} \frac{V_+^2V_-^2}{\omega-\epsilon_+-\epsilon_-+\ii 0^+} +O(q^{-9}) \\
+ &=& -2\pi  \text{Im} \int_0^{+\infty}\frac{\dd k}{(4k^2+q^2)^3(k+k_0)(k-k_0-\ii 0^+)}\bbcro{\frac{4}{(2k-q^2)}+\frac{4}{(2k+q^2)}+\frac{1}{kq}\text{ln}\frac{(2k+q)^2}{(2k-q)^2}}  \notag \\
+  &=& \frac{\pi^2}{q^7} m_{22}\bb{\frac{2\omega}{q^2}} \quad \text{with} \quad  m_{11}(\alpha)=-\frac{4\sqrt{\alpha-1}}{(\alpha-2)^2 \alpha^2}  -\frac{\text{ln}\bbcro{\frac{\sqrt{\alpha-1}+1}{\sqrt{\alpha-1}-1}}^2}{ \alpha^3} \notag \\
+M_{11}(\omega+\ii 0^+,\qq)&=&-2\pi(2\omega-q^2) \int_0^{+\infty}\frac{\dd k}{4k^2+q^2-2\omega-\ii 0^+} -\frac{\pi^2}{ a} +O(q^{-1})=-\pi^2\bbcro{\ii\frac{\sqrt{2\omega-q^2}}{2}+\frac{1}{\check a}}\\
+M_{12}(\omega+\ii 0^+,\qq)&=&\sum_\kk \bbcro{\frac{ V_+ V_- }{z+\epsilon_+ + \epsilon_-}-\frac{ V_+ V_- }{z-\epsilon_+-\epsilon_-}}  +O(q^5)\\
+&=&4\pi \int_0^{+\infty} \dd k\bbcro{\frac{1}{4k^2+2\omega+q^2}-\frac{1}{2\omega-4k^2-q^2+\ii 0^+}} \int_{-1}^1 \dd u \bbcro{\frac{1}{(k^2+kq+q^2/4)(k^2-kq+q^2/4)}} \notag \\
+&=&\frac{\pi^2}{q^3}m_{12}\bb{\frac{2\omega}{q^2}} \quad \text{with} \quad m_{12}(\alpha)=\frac{4}{\pi}\mathcal{P}\int_0^{+\infty}\frac{t\dd t\text{Argth}\bb{\frac{2t}{t^2+1}}}{(1+t)^2-\alpha^2}+\frac{\ii}{\alpha}\text{Argth}\bb{\frac{2\sqrt{\alpha-1}}{\alpha}} \notag
+\eea
+For the pair-propagator $\Gamma$, this leads to
+\bea
+\text{Re}\Gamma_{22}(\omega,\qq) &=& \frac{1}{\pi^2\bbcro{\frac{\sqrt{2\omega+q^2}}{2}-\frac{1}{\check a}}} +O(q^{-3})\\
+\text{Im}\Gamma_{22}(\omega+\ii0^+,\qq) &=& \frac{1}{\pi^2q^9}\gamma_{22}\bb{{2\omega}/{q^2}} +O(q^{-10})\quad\text{with}\quad\gamma_{22}(\alpha)=-\frac{4}{\alpha+1}\bb{m_{22}(\alpha)-\frac{2\text{Re}m_{12}^2(\alpha)}{\sqrt{\alpha-1}}}\\
+\Gamma_{11}(\omega+\ii 0^+,\qq) &=& -\frac{1}{\pi^2\bbcro{\ii\frac{\sqrt{2\omega-q^2}}{2}+\frac{1}{\check a}}} +O(q^{-2})\\
+\Gamma_{12}(\omega+\ii 0^+,\qq) &=& \frac{1}{\pi^2 q^5} \frac{m_{12}(2\omega/{q^2})}{\sqrt{4\omega^2/{q^4}-1}} +O(q^{-6})\\
+\eea
+
+In the more stringent limiting case $z\gg q^2$ (even in the regime $q^2\approx 1,|\mu|$ {\color{red} (show this)}), those asymptotic behaviors simplify to
+\bea
+\text{Re} M_{22} &=& \frac{\pi^2\sqrt{\omega}}{\sqrt{2}}+O(1) \\
+\text{Im} M_{22} &=& -\frac{\pi^2{\omega}^{7/2}}{\sqrt{2}}+O(\omega^4) \\
+\text{Re} M_{11} &=& -\frac{\pi^2}{a}+O(\sqrt{\omega}) \\
+\text{Im} M_{11} &=& \frac{\pi^2\sqrt{\omega}}{\sqrt{2}}+O(1) \\
+M_{12} &=& \frac{\pi^2{\omega}^{3/2}}{\sqrt{2}}(\ii-1)+O(\omega^2) 
+\eea
+
+\bea
+\text{Re} \Gamma_{22} &=& \frac{\sqrt{2}}{\pi^2\omega}+O({\omega}^{-1}) \\
+\text{Im} \Gamma_{22} &=& \frac{\sqrt{2}}{\pi^2\omega^{9/2}}+O({\omega}^{-5}) \\
+\text{Re} \Gamma_{11} &=&-\frac{2}{\pi^2 a\omega}+O(\omega^{-3/2}) \\
+\text{Im} \Gamma_{11} &=&\frac{\sqrt{2}}{\pi^2\sqrt{\omega}}+ O(\omega^{-1}) \\
+\Gamma_{12} &=& \frac{\sqrt{2}}{\pi^2\omega^{5/2}}(1+\ii)+O(\omega^{-3}) 
+\eea
+
+\section{UV behavior of the self-energy integrande}
+
 \bibliographystyle{unsrt}
 \bibliography{/Users/hkurkjian/Documents/biblio}
 
