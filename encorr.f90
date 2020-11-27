@@ -70,9 +70,8 @@ open(15,file=trim(grille))
  write(6,*)"fichiers=",fichierlec1,fichierlec2,fichierlec3
  write(6,*)"profondeur=",profondeur
 close(15)
-!stop
-!bla1=.FALSE.
-!bla1=.TRUE.
+bla1=.TRUE.
+bla1=.FALSE.
 x0crit=9.0_qp
 
 call system("rm "// "selfE"//suffixe//".dat")
@@ -84,8 +83,8 @@ lecture =.FALSE.
 lecture =.TRUE.
 ecriture=.TRUE.
 ecriture=.FALSE.
-st=.FALSE.
 st=.TRUE.
+st=.FALSE.
 profondeur=7
 
 do ik=0,nk

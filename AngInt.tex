@@ -188,8 +188,8 @@ P(x)=x^2+2\check\omega x+1
 \ee
 whose roots are
 \bea
-x_1 &=& -\check\omega+\sqrt{1-\frac{1}{\check\omega^2}} +\ii\text{sg}(\omega)0^+\\
-x_2 &=& -\check\omega-\sqrt{1-\frac{1}{\check\omega^2}}  -\ii\text{sg}(\omega)0^+
+x_1 &=& -\check\omega+\sqrt{\check\omega^2-1} +\ii\text{sg}(\omega)0^+\\
+x_2 &=& -\check\omega-\sqrt{\check\omega^2-1}  -\ii\text{sg}(\omega)0^+
 \eea
 Effecting the partial fraction decomposition of the integrals, we get
 \bea
@@ -202,9 +202,9 @@ with
 I_1\equiv \int_{x_{\rm min}}^{x_{\rm max}} \dd x \bb{\frac{1}{x-x_1}+\frac{1}{x-x_2}} =\text{ln} \left\vert\frac{(x_{\rm max}-x_1)(x_{\rm max}-x_2)}{(x_{\rm min}-x_1)(x_{\rm min}-x_2)}\right\vert\\+\ii\pi \text{sg}(\omega)\bb{\Theta(x_{\rm max}-x_1)\Theta(x_1-x_{\rm min})-\Theta(x_{\rm max}-x_2)\Theta(x_2-x_{\rm min})}
 \end{multline}
 \begin{multline}
-I_2\equiv \int_{x_{\rm min}}^{x_{\rm max}} \frac{\check\omega\dd x}{\sqrt{\check\omega^2-1}} \bb{\frac{1}{x-x_1}-\frac{1}{x-x_2}} \\ 
-=\begin{cases} \frac{|\check\omega|}{\ii\sqrt{1-\check\omega^2}} \text{ln} {\frac{(x_{\rm max}-x_1)(x_{\rm min}-x_2)}{(x_{\rm max}-x_2)(x_{\rm min}-x_1)}}= \frac{2|\check\omega|}{\sqrt{1-\check\omega^2}}\bb{\text{arg}(x_{\rm max}-x_1)-\text{arg}(x_{\rm min}-x_1)} \quad  \text{if} \quad \Delta>|\omega| \\
- \frac{|\check\omega|}{\sqrt{\check\omega^2-1}} \bbcro{\text{ln} \left\vert{\frac{(x_{\rm max}-x_1)(x_{\rm min}-x_2)}{(x_{\rm max}-x_2)(x_{\rm min}-x_1)}}\right\vert +\ii\pi \text{sg}(\omega) \bb{\Theta(x_{\rm max}-x_1)\Theta(x_1-x_{\rm min})+\Theta(x_{\rm max}-x_2)\Theta(x_2-x_{\rm min})}}\quad  \text{if} \quad  \Delta<|\omega|
+I_2\equiv \int_{x_{\rm min}}^{x_{\rm max}} \frac{\dd x}{\sqrt{\check\omega^2-1}} \bb{\frac{1}{x-x_1}-\frac{1}{x-x_2}} \\ 
+=\begin{cases} \frac{1}{\ii\sqrt{1-\check\omega^2}} \text{ln} {\frac{(x_{\rm max}-x_1)(x_{\rm min}-x_2)}{(x_{\rm max}-x_2)(x_{\rm min}-x_1)}}= \frac{2}{\sqrt{1-\check\omega^2}}\bb{\text{arg}(x_{\rm max}-x_1)-\text{arg}(x_{\rm min}-x_1)} \quad  \text{if} \quad \Delta>|\omega| \\
+ \frac{1}{\sqrt{\check\omega^2-1}} \bbcro{\text{ln} \left\vert{\frac{(x_{\rm max}-x_1)(x_{\rm min}-x_2)}{(x_{\rm max}-x_2)(x_{\rm min}-x_1)}}\right\vert +\ii\pi \text{sg}(\omega) \bb{\Theta(x_{\rm max}-x_1)\Theta(x_1-x_{\rm min})+\Theta(x_{\rm max}-x_2)\Theta(x_2-x_{\rm min})}}\quad  \text{if} \quad  \Delta<|\omega|
 \end{cases}
 \end{multline}
 \be
@@ -244,7 +244,7 @@ Here and in the followings, we drop the $\check \ $ denoting the dimensionless q
 \text{Re}  M_{22}(\omega,\qq)&=&2\pi(2\omega+q^2) \int_0^{+\infty}\frac{\dd k}{4k^2+2\omega+q^2} -\frac{\pi^2}{ a}+O(q^{-1})=\pi^2\bbcro{\frac{\sqrt{2\omega+q^2}}{2}-\frac{1}{\check a}} \\
 \text{Im}  M_{22}(\omega+\ii 0^+,\qq)&=& 2\pi\text{Im}\sum_{\kk} \frac{V_+^2V_-^2}{\omega-\epsilon_+-\epsilon_-+\ii 0^+} +O(q^{-9}) \\
  &=& -2\pi  \text{Im} \int_0^{+\infty}\frac{\dd k}{(4k^2+q^2)^3(k+k_0)(k-k_0-\ii 0^+)}\bbcro{\frac{4}{(2k-q^2)}+\frac{4}{(2k+q^2)}+\frac{1}{kq}\text{ln}\frac{(2k+q)^2}{(2k-q)^2}}  \notag \\
-  &=& \frac{\pi^2}{q^7} m_{22}\bb{\frac{2\omega}{q^2}} \quad \text{with} \quad  m_{11}(\alpha)=-\frac{4\sqrt{\alpha-1}}{(\alpha-2)^2 \alpha^2}  -\frac{\text{ln}\bbcro{\frac{\sqrt{\alpha-1}+1}{\sqrt{\alpha-1}-1}}^2}{ \alpha^3} \notag \\
+  &=& \frac{\pi^2}{q^7} m_{22}\bb{\frac{2\omega}{q^2}} \quad \text{with} \quad  m_{22}(\alpha)=-\frac{4\sqrt{\alpha-1}}{(\alpha-2)^2 \alpha^2}  -\frac{\text{ln}\bbcro{\frac{\sqrt{\alpha-1}+1}{\sqrt{\alpha-1}-1}}^2}{ \alpha^3} \notag \\
 M_{11}(\omega+\ii 0^+,\qq)&=&-2\pi(2\omega-q^2) \int_0^{+\infty}\frac{\dd k}{4k^2+q^2-2\omega-\ii 0^+} -\frac{\pi^2}{ a} +O(q^{-1})=-\pi^2\bbcro{\ii\frac{\sqrt{2\omega-q^2}}{2}+\frac{1}{\check a}}\\
 M_{12}(\omega+\ii 0^+,\qq)&=&\sum_\kk \bbcro{\frac{ V_+ V_- }{z+\epsilon_+ + \epsilon_-}-\frac{ V_+ V_- }{z-\epsilon_+-\epsilon_-}}  +O(q^5)\\
 &=&4\pi \int_0^{+\infty} \dd k\bbcro{\frac{1}{4k^2+2\omega+q^2}-\frac{1}{2\omega-4k^2-q^2+\ii 0^+}} \int_{-1}^1 \dd u \bbcro{\frac{1}{(k^2+kq+q^2/4)(k^2-kq+q^2/4)}} \notag \\
@@ -276,7 +276,30 @@ M_{12} &=& \frac{\pi^2{\omega}^{3/2}}{\sqrt{2}}(\ii-1)+O(\omega^2)
 \eea
 
 \section{UV behavior of the self-energy integrande}
+At large $\omega$ but finite $q^2$, one has
+\bea
+-\rho_{++}(\omega) I_{V^2}(\omega\pm z_k)&\sim&\frac{\sqrt{2}\bb{x_{\rm max}-x_{\rm min}}}{4\pi^3 kq\omega^{3/2}}\\
+-\rho_{--}(\omega) I_{U^2}(\omega\pm z_k)&\sim&\frac{\sqrt{2}\bb{x_{\rm min}^{-1}-x_{\rm max}^{-1}}}{4\pi^3 kq\omega^{11/2}}\\
+-\rho_{+-}(\omega) I_{UV}(\omega\pm z_k)&\sim&\frac{\sqrt{2}\bb{\text{log}(x_{\rm max}/x_{\rm min})}}{4\pi^3 kq\omega^{7/2}} 
+\eea
+from which we get
+\bea
+J_{++}(q)&\equiv&-\int_{\omega_{0}}^{+\infty}\rho_{++}(\omega) I_{V^2}(\omega\pm z_k)=\frac{\sqrt{2}\bb{x_{\rm max}-x_{\rm min}}}{2\pi^3 kq\omega_0^{1/2}} \\
+J_{--}(q)&\equiv&-\int_{\omega_{0}}^{+\infty}\rho_{--}(\omega) I_{U^2}(\omega\pm z_k)=\frac{\sqrt{2}\bb{x_{\rm min}^{-1}-x_{\rm max}^{-1}}}{18\pi^3 kq\omega_0^{9/2}} \\
+J_{+-}(q)&\equiv&-\int_{\omega_{0}}^{+\infty}\rho_{+-}(\omega) I_{UV}(\omega\pm z_k)=\frac{\sqrt{2}\bb{\text{log}(x_{\rm max}/x_{\rm min})}}{10\pi^3 kq\omega_0^{5/2}} 
+\eea
 
+Then, at $\omega\approx q^2$, the integral over energies runs from $\omega_0=q^2/2$ ($\alpha=1$) to infinity. One has:
+\bea
+q^2J_{++}(q)&=&\frac{2}{\sqrt{3}\pi^3q^5} \quad \text{such that} \quad \int_{q_{\rm max}}^{+\infty} q^2J_{++}(q)=\frac{1}{2\sqrt{3}\pi^3 q_{\rm max}^4} \\
+q^2J_{--}(q)&=&\frac{c_{--}}{q^9} \quad \text{with} \quad c_{--}=\int_1^{+\infty} \frac{4\gamma_{22}(\alpha)}{\pi^3(\alpha+2)}=\infty \quad \text{(divergence in } \alpha=2 ) \\
+q^2J_{+-}(q)&=&\frac{c_{+-}}{q^7} \quad \text{with} \quad c_{+-}=\int_1^{+\infty} \frac{4\text{Im}\, m_{12}(\alpha)}{\pi^3(\alpha+2)\sqrt{\alpha^2-1}} \simeq 0.0432101
+\eea
+hence
+\bea
+%\int_{q_{\rm 0}}^{+\infty}q^2J_{++}(q)&=& \frac{2c_{--}}{7q_0^7} \\
+\int_{q_{\rm max}}^{+\infty}q^2J_{+-}(q)&=& \frac{c_{+-}}{6q_{\rm max}^6}
+\eea
 \bibliographystyle{unsrt}
 \bibliography{/Users/hkurkjian/Documents/biblio}
 

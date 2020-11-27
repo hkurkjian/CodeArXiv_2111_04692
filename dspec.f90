@@ -194,8 +194,7 @@ if(axer)then
 
   if(floor(num)<4)then !energy cutoff in the integrals
    db=100.0_qp
-   bmax=max(9.0e6_qp,2*om0-opp(3)+db,2*opp(3)+db,4*x0+db,2*om0-2*x0+db,2*om0+db) !In case 2*om0-opp or 2*opp overflows bmax. This formula works whatever the value of ptbranchmtpp
-   write(6,*)"bmax=",bmax
+   bmax=max(2.0e8_qp,2*om0-opp(3)+db,2*opp(3)+db,4*x0+db,2*om0-2*x0+db,2*om0+db) !In case 2*om0-opp or 2*opp overflows bmax. This formula works whatever the value of ptbranchmtpp
   else
    bmax=1.0e55_qp
   endif
