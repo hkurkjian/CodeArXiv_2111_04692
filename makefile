@@ -8,6 +8,9 @@ LIB_PERSO=-L./libperso -lmalib
 encorr: dspec.o intldc.o encorr.o
 	$(COMP) -fcheck=bounds -O3 $^ $(LIB_PERSO) -o encorr
 
+Zerodspec: dspec.o Zerodspec.o
+	$(COMP) -fcheck=bounds -O3 $^ $(LIB_PERSO) -o Zerodspec
+
 test: dspec.o test.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o test
 
