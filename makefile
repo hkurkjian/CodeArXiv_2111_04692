@@ -8,14 +8,11 @@ LIB_PERSO=-L./libperso -lmalib
 encorr: dspec.o intldc.o encorr.o
 	$(COMP) -fcheck=bounds -O3 $^ $(LIB_PERSO) -o encorr
 
-Zerodspec: dspec.o Zerodspec.o
-	$(COMP) -fcheck=bounds -O3 $^ $(LIB_PERSO) -o Zerodspec
-
-test: dspec.o test.o
+test: dspec.o Zerom.o intldc.o intpole.o test.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o test
 
-test2: dspec2.o test2.o
-	$(COMP) -O3 $^ $(LIB_PERSO) -o test2
+spectre: dspec.o Zerom.o spectre.o
+	$(COMP) -O3 $^ $(LIB_PERSO) -o spectre
 
 propre : 
 	rm -f *.o 
@@ -25,3 +22,4 @@ propre :
 	rm -f encorr
 	rm -f *.aux
 	rm -f *.syntec.gz
+	rm -f spectre

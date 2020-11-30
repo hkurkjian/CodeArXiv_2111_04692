@@ -93,7 +93,7 @@ do ik=0,nk
  do izk=0,nzk
   zk=zkmin+dzk*izk
   write(6,*)"zk=",zk
-  sE=selfE(k,zk)
+  sE=selfEldc(k,zk)
 
   open(14,file="selfE"//suffixe//".dat",POSITION="APPEND")
    write(14,*)k,zk,real(sE),imag(sE)

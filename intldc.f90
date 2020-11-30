@@ -13,9 +13,9 @@ CHARACTER(len=5) suffixe
 REAL(QP) q1,q2,q3,q4
 REAL(QP) xi0,xiP,xiM,epsP,epsM,xmin,xmax
 CONTAINS
-FUNCTION selfE(k,zk)
+FUNCTION selfEldc(k,zk)
  REAL(QP), INTENT(IN) :: k,zk
- COMPLEX(QPC) selfE(1:6)
+ COMPLEX(QPC) selfEldc(1:6)
  COMPLEX(QPC) Iq1(1:6),Iq2(1:6),Iq3(1:6)
  REAL(QP) Iqinf(1:6)
  REAL(QP) argq(1:1),e
@@ -90,7 +90,7 @@ FUNCTION selfE(k,zk)
  Iqinf(5)=-Iqinf(1)
 ! For the other integrals, the large q contribution (vanishing at least of 1/q3**6) is neglected
 
- selfE=2.0_qp*PI*(Iq1+Iq2+Iq3+Iqinf) !Integration sur phi
+ selfEldc=2.0_qp*PI*(Iq1+Iq2+Iq3+Iqinf) !Integration sur phi
 
  open(20,file="intq"//suffixe//".dat",POSITION="APPEND")
   write(20,*)
@@ -108,7 +108,7 @@ CONTAINS
 
  FUNCTION intq(q,argq,m) !Computes size(q) points of the function to be integrate over q
   USE nrutil
-  INTEGER,  INTENT(IN) :: m !Always called with m=3: the 3 coefficients of the self-energy matrix
+  INTEGER,  INTENT(IN) :: m !m=6: the 3 coefficients of the 1<->3 self-energy matrix and the 3 coeff of the 4<->0 process
   REAL(QP), INTENT(IN), DIMENSION(:)  ::  q,argq
   COMPLEX(QPC)  intq(size(q),m)
 
@@ -158,34 +158,34 @@ CONTAINS
     write(6,*)"Iinf=",Iinf
    endif
   
-    if(ptbranchmtpp==1)then !BEC-like behavior: integrated from branch cut lower-edge opp(1) to infinity
-      Ib=qromovfixed(intom,opp(1)         ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err) !deals with the 1/om^(3/2) decay at large om
-      call ecrit(bla0,'Ib=',Ib)
-      if(err)  call erreur("omega")
-    elseif(ptbranchmtpp==2)then !One angular point opp(2) besides the lower-edge
-     Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err) !Integrate from the edge to the angular point
+   if(ptbranchmtpp==1)then !BEC-like behavior: integrated from branch cut lower-edge opp(1) to infinity
+     Ib=qromovfixed(intom,opp(1)         ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err) !deals with the 1/om^(3/2) decay at large om
      call ecrit(bla0,'Ib=',Ib)
      if(err)  call erreur("omega")
-     Ic=qromovfixed(intom,opp(2)         ,2.0_qp*opp(2)       ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err) !then from opp(2) to 2*opp(2), this circumscribes the numerical difficulty around opp(2)
-     call ecrit(bla0,'Ic=',Ic)
-     if(err)  call erreur("omega")
-     Id=qromovfixed(intom,2.0_qp*opp(2)  ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err) !then from 2*opp(2) to infinity
-     call ecrit(bla0,'Id=',Id)
-     if(err)  call erreur("omega")
-    elseif(ptbranchmtpp==3)then !Two angular points opp(2) and opp(3) besides the lower-edge
-     Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
-     call ecrit(bla0,'Ib=',Ib)
-     if(err)  call erreur("omega")
-     Ic=qromovfixed(intom,opp(2)         ,opp(3)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
-     call ecrit(bla0,'Ic=',Ic)
-     if(err)  call erreur("omega")
-     Id=qromovfixed(intom,opp(3)         ,2.0_qp*opp(3)       ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
-     call ecrit(bla0,'Id=',Id)
-     if(err)  call erreur("omega")
-     Ie=qromovfixed(intom,2.0_qp*opp(3)  ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err)
-     call ecrit(bla0,'Ie=',Ie)
-     if(err)  call erreur("omega")
-    endif
+   elseif(ptbranchmtpp==2)then !One angular point opp(2) besides the lower-edge
+    Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err) !Integrate from the edge to the angular point
+    call ecrit(bla0,'Ib=',Ib)
+    if(err)  call erreur("omega")
+    Ic=qromovfixed(intom,opp(2)         ,2.0_qp*opp(2)       ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err) !then from opp(2) to 2*opp(2), this circumscribes the numerical difficulty around opp(2)
+    call ecrit(bla0,'Ic=',Ic)
+    if(err)  call erreur("omega")
+    Id=qromovfixed(intom,2.0_qp*opp(2)  ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err) !then from 2*opp(2) to infinity
+    call ecrit(bla0,'Id=',Id)
+    if(err)  call erreur("omega")
+   elseif(ptbranchmtpp==3)then !Two angular points opp(2) and opp(3) besides the lower-edge
+    Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
+    call ecrit(bla0,'Ib=',Ib)
+    if(err)  call erreur("omega")
+    Ic=qromovfixed(intom,opp(2)         ,opp(3)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
+    call ecrit(bla0,'Ic=',Ic)
+    if(err)  call erreur("omega")
+    Id=qromovfixed(intom,opp(3)         ,2.0_qp*opp(3)       ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
+    call ecrit(bla0,'Id=',Id)
+    if(err)  call erreur("omega")
+    Ie=qromovfixed(intom,2.0_qp*opp(3)  ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err)
+    call ecrit(bla0,'Ie=',Ie)
+    if(err)  call erreur("omega")
+   endif
   
    I=Ib+Ic+Id+Ie+Iinf !Combine the integration intervals
    if(bla0)then
@@ -205,7 +205,7 @@ CONTAINS
 
  FUNCTION intom(om,arg,m) !Computes size(om) points of the function  to be integrate over om
   IMPLICIT NONE
-  INTEGER,  INTENT(IN) :: m !m=3 here
+  INTEGER,  INTENT(IN) :: m !m=6 here
   REAL(QP), INTENT(IN), DIMENSION(:)  ::  om,arg !arg(1) should be the value of q
   COMPLEX(QPC), DIMENSION(size(om),m)       ::  intom
 
@@ -232,8 +232,8 @@ CONTAINS
    IuM(:)=0.0_qp
    argintu(1)=enM
 !   Iu=qromovq(intu,-1.0_qp,1.0_qp,3,argintu,midpntvq,EPSu) !computes int_-1^1 du (V^2,U^2,UV)/(ome-z+eps)
-   IuM=Iuanaly(enM,q)
-   IuP=Iuanaly(enP,q)
+   IuM=Iuanaly(enM,k,q)
+   IuP=Iuanaly(enP,k,q)
 
    if(lecture)then
     read(10+fich,*)xqfi,omfi,reM11,reM12,reM21,reM22,imM11,imM12,imM21,imM22
@@ -280,51 +280,6 @@ CONTAINS
 
   enddo
  END FUNCTION intom
-
- FUNCTION Iuanaly(en,q) !Computes Iu analytically
-  USE recettes
-  IMPLICIT NONE
-  REAL(QP), INTENT(IN) :: en,q
-  COMPLEX(QPC) Iuanaly(1:3)
-  COMPLEX(QPC) x1,x2
-
-  REAL(QP) I1,I2,I3,imI1,imI2,rac
-
-  Iuanaly(:)=0.0_qp
-  imI1=0.0_qp
-  imI2=0.0_qp
-  
-  if(abs(en)>1.0_qp)then
-   rac=sqrt(en**2-1.0_qp)
-   x1=cmplx(-en+rac,0.0_qp,kind=qpc)
-   x2=cmplx(-en-rac,0.0_qp,kind=qpc)
-  else
-   rac=sqrt(1.0_qp-en**2)
-   x1=cmplx(-en,+rac,kind=qpc)
-   x2=cmplx(-en,-rac,kind=qpc)
-  endif
-  I1=log(abs((xmax-x1)*(xmax-x2)/(xmin-x1)/(xmin-x2)))
-  I3=log(xmax/xmin)
-  if(abs(en)<1.0_qp)then
-   I2=2.0_qp*(argum(xmax-x1)-argum(xmin-x1))/rac
-  else
-   I2=log(abs((xmax-x1)*(xmin-x2)/(xmax-x2)/(xmin-x1)))/rac
-   if((xmax>real(x1)).AND.(xmin<real(x1)))then
-    imI1=imI1+PI*sign(1.0_qp,en)
-    imI2=imI2+PI*sign(1.0_qp,en)
-   endif
-   if((xmax>real(x2)).AND.(xmin<real(x2)))then
-    imI1=imI1-PI*sign(1.0_qp,en)
-    imI2=imI2+PI*sign(1.0_qp,en)
-   endif
-   imI2=imI2/rac
-  endif
-  Iuanaly(1)=( (I1+iiq*imI1)-en*(I2+iiq*imI2))          /(4*k*q) !I_V^2
-  Iuanaly(2)=(-(I1+iiq*imI1)-en*(I2+iiq*imI2)+2.0_qp*I3)/(4*k*q) !I_U^2
-  Iuanaly(3)=  (I2+iiq*imI2)                            /(4*k*q) !I_UV
-
-  
- END FUNCTION Iuanaly
 
 !FUNCTION IuanalyVieux(en,q) !Computes Iu analytically
 ! USE recettes
@@ -401,7 +356,50 @@ CONTAINS
   enddo
  END FUNCTION intu
 
-END FUNCTION selfE
+END FUNCTION selfEldc
+
+FUNCTION Iuanaly(en,k,q) !Computes Iu analytically
+ USE recettes
+ IMPLICIT NONE
+ REAL(QP), INTENT(IN) :: en,k,q
+ COMPLEX(QPC) Iuanaly(1:3)
+ COMPLEX(QPC) x1,x2
+
+ REAL(QP) I1,I2,I3,imI1,imI2,rac
+
+ Iuanaly(:)=0.0_qp
+ imI1=0.0_qp
+ imI2=0.0_qp
+ 
+ if(abs(en)>1.0_qp)then
+  rac=sqrt(en**2-1.0_qp)
+  x1=cmplx(-en+rac,0.0_qp,kind=qpc)
+  x2=cmplx(-en-rac,0.0_qp,kind=qpc)
+ else
+  rac=sqrt(1.0_qp-en**2)
+  x1=cmplx(-en,+rac,kind=qpc)
+  x2=cmplx(-en,-rac,kind=qpc)
+ endif
+ I1=log(abs((xmax-x1)*(xmax-x2)/(xmin-x1)/(xmin-x2)))
+ I3=log(xmax/xmin)
+ if(abs(en)<1.0_qp)then
+  I2=2.0_qp*(argum(xmax-x1)-argum(xmin-x1))/rac
+ else
+  I2=log(abs((xmax-x1)*(xmin-x2)/(xmax-x2)/(xmin-x1)))/rac
+  if((xmax>real(x1)).AND.(xmin<real(x1)))then
+   imI1=imI1+PI*sign(1.0_qp,en)
+   imI2=imI2+PI*sign(1.0_qp,en)
+  endif
+  if((xmax>real(x2)).AND.(xmin<real(x2)))then
+   imI1=imI1-PI*sign(1.0_qp,en)
+   imI2=imI2+PI*sign(1.0_qp,en)
+  endif
+  imI2=imI2/rac
+ endif
+ Iuanaly(1)=( (I1+iiq*imI1)-en*(I2+iiq*imI2))          /(4*k*q) !I_V^2
+ Iuanaly(2)=(-(I1+iiq*imI1)-en*(I2+iiq*imI2)+2.0_qp*I3)/(4*k*q) !I_U^2
+ Iuanaly(3)=  (I2+iiq*imI2)                            /(4*k*q) !I_UV
+END FUNCTION Iuanaly
 
 SUBROUTINE erreur(var)
 CHARACTER(len=*), INTENT(IN) :: var

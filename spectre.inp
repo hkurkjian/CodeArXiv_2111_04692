@@ -1,0 +1,6 @@
+10.0  !read(10,*) x0
+0.1 !read(10,*)xq
+3.0 !read(10,*)xq
+500                  !read(10,*) nxq
+0.1 !read(10,*) zdep(1) 
+x010deb     !read(10,*) fichier

@@ -116,6 +116,30 @@ fr(2,1)=fr(1,2)
 
 END SUBROUTINE mat_pairfield
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE der_mat(om0,e,M,dM)
+
+IMPLICIT NONE
+REAL(QP), DIMENSION(1:2,1:2), INTENT(OUT) :: M,dM
+REAL(QP), INTENT(IN)  :: om0,e
+
+call oangpp
+call oangpt
+
+M(:,:)=0.0_qp
+M(1,1)=real(elementmat(1.5_qp,om0,e))
+M(2,2)=real(elementmat(2.5_qp,om0,e))
+M(1,2)=real(elementmat(3.5_qp,om0,e))
+M(2,1)=M(1,2)
+
+dM(:,:)=0.0_qp
+dM(1,1)=deriveepp(1.5_qp,om0,e,-1.0_qp)
+dM(2,2)=deriveepp(2.5_qp,om0,e,-1.0_qp)
+dM(1,2)=deriveepp(3.5_qp,om0,e,-1.0_qp)
+
+dM(2,1)=dM(1,2)
+
+END SUBROUTINE der_mat
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION elementmat(num,om0,e)
 !Computes one of the 3*3 matrix element
 !input:
@@ -480,15 +504,129 @@ CONTAINS
     write(6,*)"ome,om0,num,T,r,r0,inter(is),opp=",ome,om0,num,T,r,r0,inter(is),opp
     stop
    endif
-   open(11,file="donnees.dat",POSITION="APPEND")
-!    write(11,*)ome,inter(is)
-!   if(ome>opp(3)) write(11,*)ome,inter(is)
-   close(11)
-!   if(is==10write(6,*)"ome,om0,num,T,r,r0,inter(is),opp=",ome,om0,inter(is)
 
   enddo
   END FUNCTION inter
 END FUNCTION intpp
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+FUNCTION deriveepp(num,om0,e,T)
+USE recettes
+IMPLICIT NONE
+REAL(QP), INTENT(IN)  :: num,om0,e,T
+REAL(QP) deriveepp
+REAL(QP) r0 !spectral density in om0
+REAL(QP) bmax,bmax2,db,omcrit!bmax: energy cutoff, omcrit: critical value of om after which racinfq should be used to integrate the tail
+REAL(QP) Icomp,Iinf,Iinf2!partial integrals
+REAL(QP) arg(1:1,1:10),bornes(1:10)
+REAL(QP) ag(1:4)
+INTEGER choix(1:10)
+
+
+if(bla1)then
+ write(6,*)
+ write(6,*)"deriveepp avec num, om0, T=",floor(num),om0,T
+ write(6,*)
+endif
+
+arg(:,:)=bidon
+omcrit=100.0_qp !at om0>omcrit switch from midpntq to racinfq to integration the ~1/om^(3/2) tail between om(3) and 2.0_qp*om0-opp(3)
+
+if(T<0.0_qp)then ! Intégrale du "+1" de 1+nP+nM
+
+ if(floor(num)<4)then !energy cutoff in the integrals
+  db=100.0_qp
+  bmax=max(2.0e7_qp,2*om0-opp(3)+db,2*opp(3)+db,4*x0+db,2*om0-2*x0+db,2*om0+db) !In case 2*om0-opp or 2*opp overflows bmax. This formula works whatever the value of ptbranchmtpp
+ else
+  bmax=1.0e55_qp
+ endif
+
+ Iinf=0.0_qp
+ Iinf=intinfini(bmax) !analytic integration of the 1/om^(5/2) tail from bmax to +oo for dM11, dM22 and 1/om^(3/2) for M12
+
+ call ecrit(bla1,'Iinf=',Iinf)
+
+ r0=rhopp(num,om0,T)
+ if(x0<x0crit)then
+   if(ptbranchmtpp==1)then
+    choix(1:1)=             (/rinf/)
+    deriveepp=decoupe(inter,(/opp(1),bmax/),arg(1:1,1:1),choix(1:1),EPSpp,bla1)
+   elseif(ptbranchmtpp==2)then
+    choix(1:3)=             (/mpnt,   msql,   rinf/)
+    deriveepp=decoupe(inter,(/opp(1), opp(2), 2*opp(2),bmax/),arg(1:1,1:3),choix(1:3),EPSpp,bla1)
+   elseif(ptbranchmtpp==3)then
+    choix(1:3)=             (/mpnt,   msql,   rinf/)
+    deriveepp=decoupe(inter,(/opp(1), opp(2), opp(3),bmax/),arg(1:1,1:3),choix(1:3),EPSpp,bla1)
+   endif
+ else!x0>x0crit
+   if(ptbranchmtpp==1)then
+    ag=(/opp(1),2*x0,-bidon,-bidon/)
+    call tri(ag)
+    choix(1:4)=             (/msql,  msqu,                 msql, rinf/)
+    deriveepp=decoupe(inter,(/ag(1), (ag(1)+ag(2))/2.0_qp, ag(2),2*ag(2),bmax/),arg(1:1,1:4),choix(1:4),EPSpp,bla1)
+   elseif(ptbranchmtpp==2)then
+    ag=(/opp(1),opp(2),2*x0,-bidon/)
+    call tri(ag)
+    choix(1:5)=             (/msqu, msql, msqu,                msql, rinf/)
+    deriveepp=decoupe(inter,(/ag(1),ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),2*ag(3),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+   elseif(ptbranchmtpp==3)then
+    ag=(/opp(1),opp(2),opp(3),2*x0/)
+    call tri(ag)
+    choix(1:8)=  (/mpnt, msqu,                msql, msqu,                msql, msqu,                msql, rinf/)
+    if(floor(num)==5) choix(2)=msql
+    bornes(1:9)= (/ag(1),(ag(1)+ag(2))/2.0_qp,ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),(ag(3)+ag(4))/2.0_qp,ag(4),2*ag(4),bmax/)
+    deriveepp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
+   endif
+ endif
+ deriveepp=deriveepp+Icomp+Iinf
+ call ecrit(bla1,'deriveepp=',deriveepp)
+elseif(T>0.0_qp)then ! Intégrale du terme en nP+nM de 1+nP+nM
+ bmax=1111840.0_qp
+ r0=rhopp(num,om0,T)
+ if(ptbranchmtpp==1)then
+  choix(1:2)=         (/mpnt,   minf/)
+  deriveepp=decoupe(inter,(/0.0_qp, opp(1),bmax/),arg(1:1,1:2),choix(1:2),EPSpp,bla1)
+ elseif(ptbranchmtpp==2)then
+  choix(1:3)=         (/mpnt,   mpnt,   minf/)
+  deriveepp=decoupe(inter,(/0.0_qp, opp(1), opp(2),bmax/),arg(1:1,1:3),choix(1:3),EPSpp,bla1)
+ elseif(ptbranchmtpp==3)then
+  choix(1:4)=         (/mpnt,   mpnt,   msql,   minf/)
+  deriveepp=decoupe(inter,(/0.0_qp, opp(1), opp(2), opp(3), bmax/),     arg(1:1,1:4),choix(1:4),EPSpp,bla1)
+ endif
+ deriveepp=deriveepp+Icomp
+ call ecrit(bla1,'deriveepp=',deriveepp)
+endif
+
+CONTAINS
+  FUNCTION intinfini(bm) !analytically integrates the 1/om^(3/2) tail from bm to +oo for M11, M22 and M12
+  REAL(QP), INTENT(IN)  :: bm
+  REAL(QP) :: intinfini
+
+  if((floor(num)==1).OR.(floor(num)==2))then
+   intinfini= -4.0_qp*PI*om0/(3.0_qp*sqrt(2.0_qp)*bm**(3.0_qp/2.0_qp))
+  elseif(floor(num)==3)then
+!   intinfini= -2.0_qp*PI/(sqrt(2.0_qp*bm))-2.0_qp*PI*(x0-xq**2/4.0_qp)/(3.0_qp*sqrt(2.0_qp*bm**3)) !Subleading order in der_+-
+   intinfini= -2.0_qp*PI/(sqrt(2.0_qp*bm))
+  endif
+  END FUNCTION intinfini
+
+  FUNCTION inter(om,arg)
+! energy integrand
+  IMPLICIT NONE
+  
+  REAL(QP), INTENT(IN), DIMENSION(:)  ::  om,arg
+  REAL(QP), DIMENSION(size(om))       ::  inter
+  REAL(QP) r,s,ome,cterm
+  INTEGER is
+  
+  inter(:)=0.0_qp
+
+  do is=1,size(om)
+   ome=om(is)
+   r =rhopp(num,ome,T)
+   inter(is)=sig(floor(num))*r/(om0+ome)**2-r     /(om0-ome)**2
+  enddo
+  END FUNCTION inter
+END FUNCTION deriveepp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION rhopp(num,om,T)
 !Computes quasip-quasip spectral densities on the real axis
@@ -813,10 +951,6 @@ CONTAINS
      inter(is)=r/(om0-ome)-sig(floor(num))*r/(om0+ome)
    endif
    if(isnan(inter(is)))STOP 'isnan(inter(is))'
-!   write(6,*)ome,inter(is)
-   open(11,file="donnees.dat",POSITION="APPEND")
-!    write(11,*)ome,inter(is)
-   close(11)
   enddo
   END FUNCTION inter
 END FUNCTION intpt

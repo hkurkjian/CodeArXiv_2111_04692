@@ -1,9 +1,0 @@
-10.     !read(10,*) x0
-10.     !read(10,*) x0
-0     !read(10,*) x0
-0.1 !read(10,*)xq
-0.01 !read(10,*)xq
-50                  !read(10,*) nxq
-1.52 !read(10,*) zdep(1) 
-1.00000000 !read(10,*) coup
-Zero10tebi.dat     !read(10,*) fichier
