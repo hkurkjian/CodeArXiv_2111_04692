@@ -7,12 +7,26 @@ USE Zerom
 USE intpole
 IMPLICIT NONE
 
-REAL(QP) om,dom,M(1:2,1:2),dM(1:2,1:2),A(1:6)
+REAL(QP) om,dom,M(1:2,1:2),dM(1:2,1:2),A(1:6),Mm(1:3),dMm(1:3)
 REAL(QP) :: xik,epsk,Uk2,Vk2,k
 COMPLEX(QPC) Gam(1:2,1:2),Matt(1:2,1:2),det,Gamp(1:2,1:2),Matp(1:2,1:2),Gamm(1:2,1:2),Matm(1:2,1:2)
 COMPLEX(QPC) Gam3(1:3,1:3),Mat3(1:3,1:3)
 
 x0=0.860436686125678599999999999999999961_qp
+xq=0.5_qp
+om=0.5_qp
+bla2=.TRUE.
+
+EPSpp=1.0e-8_qp
+EPSrpp=1.0e-10_qp
+EPSpt=1.0e-6_qp
+EPSrpt=1.0e-7_qp
+
+call Zero(om,Mm,dMm)
+
+write(6,*) "om=",om
+stop
+
 fichier="lu"
 A=selfEpole(sqrt(x0),1.0_qp)
 

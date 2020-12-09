@@ -8,7 +8,7 @@
 *.o
 *.mod
 *.dat
-dspec2.f90
+*.info
 example
 encorr
 intldc

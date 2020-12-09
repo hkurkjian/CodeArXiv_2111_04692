@@ -2,6 +2,9 @@ COMP=gfortran
 MOD=./libperso
 LIB_PERSO=-L./libperso -lmalib
 
+%.eps : %.gp
+	gnuplot $<
+
 %.o : %.f90
 	$(COMP) -I$(MOD) -O3 -c $< -o $@
 
@@ -23,3 +26,7 @@ propre :
 	rm -f *.aux
 	rm -f *.syntec.gz
 	rm -f spectre
+
+sectors: sectorI.eps sectorII.eps sectorIII.eps sectorIV.eps
+	pdflatex texenpdf.tex
+	open texenpdf.tex
