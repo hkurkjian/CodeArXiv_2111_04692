@@ -1670,7 +1670,7 @@ CONTAINS
         if ((fl > 0.0 .and. fh > 0.0) .or. &
             (fl < 0.0 .and. fh < 0.0)) then
            write(6,*)'nerreur: racine pas encadrée dans rtsafed'
-           STOP
+           stop
         endif
         if (fl == 0.0) then
            rtsafed=x1
@@ -1743,7 +1743,6 @@ CONTAINS
         if ((fl > 0.0 .and. fh > 0.0) .or. &
             (fl < 0.0 .and. fh < 0.0)) then
            write(6,*)'nerreur: racine pas encadrée dans rtsafeq'
-           STOP
         endif
         if (fl == 0.0) then
            rtsafeq=x1

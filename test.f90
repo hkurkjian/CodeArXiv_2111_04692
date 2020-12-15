@@ -5,12 +5,55 @@ USE dspec
 USE vars
 USE Zerom
 USE intpole
+USE intldc
 IMPLICIT NONE
 
 REAL(QP) om,dom,M(1:2,1:2),dM(1:2,1:2),A(1:6),Mm(1:3),dMm(1:3)
-REAL(QP) :: xik,epsk,Uk2,Vk2,k
-COMPLEX(QPC) Gam(1:2,1:2),Matt(1:2,1:2),det,Gamp(1:2,1:2),Matp(1:2,1:2),Gamm(1:2,1:2),Matm(1:2,1:2)
-COMPLEX(QPC) Gam3(1:3,1:3),Mat3(1:3,1:3)
+REAL(QP) :: xik,epsk,Uk2,Vk2,k,zk,zkmax,le(1:8),bq(1:10)
+CHARACTER(len=90) fichdep
+CHARACTER(len=2)  reg,regvieux
+INTEGER izk,taille,config(1:7)
+
+x0=4.0_qp
+
+fichom2 ="DONNEES/Tom1.dat"
+fichom2p="DONNEES/Tom1p.dat"
+
+call bornesk
+k=(k11+k12)/2.
+k=1.5*k12
+write(6,*)"k=",k
+
+call lignesenergie(k)
+le=(/l1,l2,l3,l4,l5,l6,l7,l8/)
+call tri_q(le)
+write(6,FMT="(A30,8G20.10)")"lignes d’énergie=",le
+write(6,*)
+zkmax=400.0_qp
+bla0=.TRUE.
+do izk=1,200
+ zk=3+izk*(zkmax-1.0_qp)/200
+ Mm=intim(k,zk) 
+! if(reg.NE.regvieux)then
+!  write(6,*)
+!  write(6,*)"zk,reg,taille=",zk,reg,taille,ecritconfig(taille,config)
+! endif
+!! call ecritconfig(taille,config)
+! call bornesq(k,zk,taille,bq(1:taille)) 
+! write(6,*)"zk,reg=",real(zk,SP),real(bq(1:taille),SP)
+! regvieux=reg
+enddo
+stop
+
+fichdep="DONNEES/Tom1.dat"
+om=solom2(1.5_qp*k0,"DONNEES/Tom1.dat")
+write(6,*)"om=",om
+
+fichdep="DONNEES/Tom1p.dat"
+om=solom2(3.5_qp*k0,"DONNEES/Tom1p.dat")
+write(6,*)"om=",om
+
+stop
 
 x0=0.860436686125678599999999999999999961_qp
 xq=0.5_qp
@@ -44,76 +87,4 @@ stop
 
 
 
-
-
-
-
-
-
-
-
-
-
-om=7.12_qp
-xq=0.5_qp
-x0=10._qp
-beta=0.0_qp
-
-bla1=.FALSE.
-bla1=.TRUE.
-
-temperaturenulle=.TRUE.
-!temperaturenulle=.FALSE.
-
-EPSpp=1.0e-8_qp
-EPSrpp=1.0e-10_qp
-EPSpt=1.0e-6_qp
-EPSrpt=1.0e-7_qp
-
-xq=12.11111111111111111111111111111111154_qp
-om=150.095123261642178399749904036442505_qp
-
-x0crit=19.0_qp
-xq=1.0_qp
-om=1.995123261642178399749904036442505_qp
-dom=1.0e-4_qp
-bla1=.FALSE.
-bla2=.TRUE.
-
-call Zero(om,M,dM)
-call Zero(om,M,dM)
-write(6,*)"om,M,dM=",om,M,dM
-stop
-
-call der_mat(om,0.0_qp,M,dM)
-write(6,*)"quasip-quasip    angular points=",opp(1:3)
-write(6,*)"quasip-quasihole angular point =",opt(1)
-write(6,*)"dM   =",dM(1,1),dM(2,2),dM(1,2)
-
-stop
-call mat_pairfield(om    ,0.0_qp,det,Matt,Gam )
-call mat_pairfield(om+dom,0.0_qp,det,Matp,Gamp)
-call mat_pairfield(om-dom,0.0_qp,det,Matm,Gamm)
-
-write(6,*)"dM1   =",(Matp(1,1)-Matm(1,1))/dom/2,(Matp(2,2)-Matm(2,2))/dom/2,(Matp(1,2)-Matm(1,2))/dom/2
-write(6,*)"dM2   =",dM(1,1),dM(2,2),dM(1,2)
-
-stop
-
-call mat(om,0.0_qp,det,Mat3,Gam3)
-write(6,*)"quasip-quasip    angular points=",opp(1:3)
-write(6,*)"quasip-quasihole angular point =",opt(1)
-write(6,*)"re Mat Delta  =",real(Mat3(1,1)),real(Mat3(1,2)),real(Mat3(2,2))
-write(6,*)"re Mat density=",real(Mat3(3,3)),real(Mat3(1,3)),real(Mat3(2,3))
-write(6,*)"im Mat Delta  =",imag(Mat3(1,1)),imag(Mat3(1,2)),imag(Mat3(2,2))
-write(6,*)"im Mat density=",imag(Mat3(3,3)),imag(Mat3(1,3)),imag(Mat3(2,3))
-
-write(6,*)
-write(6,*)
-x0crit=19.0_qp
-call mat(om,0.0_qp,det,Mat3,Gam3)
-write(6,*)"re Mat Delta  =",real(Mat3(1,1)),real(Mat3(1,2)),real(Mat3(2,2))
-write(6,*)"re Mat density=",real(Mat3(3,3)),real(Mat3(1,3)),real(Mat3(2,3))
-write(6,*)"im Mat Delta  =",imag(Mat3(1,1)),imag(Mat3(1,2)),imag(Mat3(2,2))
-write(6,*)"im Mat density=",imag(Mat3(3,3)),imag(Mat3(1,3)),imag(Mat3(2,3))
 end program
