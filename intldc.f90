@@ -357,14 +357,13 @@ END FUNCTION Iuanaly
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE erreur(var)
 CHARACTER(len=*), INTENT(IN) :: var
-  if(st)then
-   write(6,*) "convergence non atteinte dans l’intégrale sur "//var
-   stop
-  else
-   write(6,*) "convergence non atteinte dans l’intégrale sur "//var
-  endif
+ if(st)then
+  write(6,*) "convergence non atteinte dans l’intégrale sur "//var
+  stop
+ else
+  write(6,*) "convergence non atteinte dans l’intégrale sur "//var
+ endif
 END SUBROUTINE erreur
-
 ! @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION intim(k,zk)
@@ -375,7 +374,7 @@ FUNCTION intim(k,zk)
  REAL(QP) argq(1:1),e,bq(1:8)
  CHARACTER(len=250) chainebidon
 
- INTEGER taille
+ INTEGER taille,grecque,igr
  INTEGER, DIMENSION(1:7) :: config
 
  CHARACTER(len=2) reg
@@ -394,24 +393,174 @@ FUNCTION intim(k,zk)
  endif
  call bornesq(k,zk,bq)
  if(bla0)then
-  write(6,"(A15,8G20.10)")"zk,bq=",zk,bq(1:taille)
+  write(6,"(A10,8G20.10)")"zk,bq=",zk,bq(1:taille)
   write(6,*)
  endif
-!itai=1
-!grecque=config(itai)
-!Iq1=qromovq(intimq,bq(itai),
+ do igr=1,taille-1
+  grecque=config(igr)
+  Iq1=qromovcq(intimq,bq(igr),bq(igr+1),3,(/bidon/),midpntvcq,EPSq)
+ enddo
+ CONTAINS
+  FUNCTION intimq(q,argq,m)
+  USE nrutil
+  USE recettes
+  USE modsim
+  INTEGER,  INTENT(IN) :: m 
+  REAL(QP), INTENT(IN), DIMENSION(:)  ::  q,argq
+  COMPLEX(QPC)  intimq(size(q),m)
 
+  COMPLEX(QPC), DIMENSION(1:3) ::  I,Ia,Ib,Ic,Id,Ie,It
+  REAL(QP)    , DIMENSION(1:3) ::  Iinf
+  REAL(QP)    qs,bmax
+  REAL(QP) bom(1:3),bom2(1:6),bomf(1:10),arg(1:1,1:10)
+  INTEGER is,tailletot,tailleres,taillerout,res(1:2),pos_bom(1:6),routint(1:10),p1,p2
+  INTEGER itai,jtai
+  COMPLEX(QPC)  intmax(m)
+
+  do is=1,size(q)
+  
+   qs=q(is)
+   xq=qs
+   call oangpp
+   call bornesom(k,zk,qs,grecque,res,bom,tailleres)
+ 
+   if(bla0)then
+    write(6,*)"qs=",qs
+    write(6,*)"grecque=",ecritc(grecque)
+    write(6,*)"ptbranchmtpp=",ptbranchmtpp
+    write(6,*)"opp=",opp
+    write(6,*)"res=",res
+    write(6,*)"bom=",bom
+   endif
+
+   bom2(:)=1.e100_qp
+   bomf(:)=1.e100_qp
+   routint(:)=1000
+   if((grecque==al).OR.(grecque==alti).OR.(grecque==bet).OR.(grecque==betti).OR.(grecque==gam))then
+    tailletot=tailleres+ptbranchmtpp
+    bom2(1:ptbranchmtpp)=opp(1:ptbranchmtpp)
+    bom2(ptbranchmtpp+1:ptbranchmtpp+tailleres)=bom(2:tailleres+1)
+   else
+    tailletot=tailleres+ptbranchmtpp+1
+    bom2(1:ptbranchmtpp)=opp(1:ptbranchmtpp)
+    bom2(ptbranchmtpp+1:ptbranchmtpp+tailleres+1)=bom(1:tailleres+1)
+   endif
+   call tri_pos(bom2,pos_bom)
+!   write(6,*)"tailletot=",tailletot
+!   write(6,*)"pos_bom=",pos_bom
+!   write(6,*)"bom2=",bom2
+ 
+   bomf(1:6)=bom2
+   taillerout=tailletot-1
+   do itai=tailletot-1,1,-1
+    p1=pos_bom(itai)
+    p2=pos_bom(itai+1)
+!    write(6,*)"itai=",itai
+!    write(6,*)"p1,p2=",p1,p2
+    if((p1>ptbranchmtpp).AND.(p2.LE.ptbranchmtpp))then
+     routint(itai)=msql
+    elseif((p1.LE.ptbranchmtpp).AND.(p2>ptbranchmtpp))then
+     routint(itai)=msqu
+    elseif((p1.LE.ptbranchmtpp).AND.(p2.LE.ptbranchmtpp))then
+     routint(itai)=mpnt
+    elseif((p1>ptbranchmtpp).AND.(p2>ptbranchmtpp))then
+     taillerout=taillerout+1
+     do jtai=tailletot+3,itai+1,-1
+      bomf(jtai+1)=bomf(jtai)
+      routint(jtai+1)=routint(jtai)
+     enddo
+     bomf(itai+1)=(bom2(itai)+bom2(itai+1))/2
+     routint(itai+1)=msqu
+     routint(itai)  =msql
+    endif
+!    write(6,*)"bomf=",bomf(1:6)
+!    write(6,*)"routint=",routint(1:5)
+   enddo
+    
+   if(bla0)then
+    write(6,*)"bomf=",bomf(1:taillerout+1)
+    write(6,*)"routint=",ecritrout(taillerout,routint(1:taillerout))
+!   write(6,*)"routint=",routint
+   endif
+    
+   xi0=k**2+qs**2-x0
+   xiP=k**2+qs**2+2.0_qp*k*qs-x0
+   xiM=k**2+qs**2-2.0_qp*k*qs-x0
+   epsP=sqrt(xiP**2+1.0_qp)
+   epsM=sqrt(xiM**2+1.0_qp)
+ 
+   xmin=epsP-xiP
+   xmax=epsM-xiM
+
+   bmax =1.e6_qp
+   arg(1:1,1:10)=qs
+   intmax(:)   =qromovcq(intimom,bomf(taillerout+1),bmax,3,(/qs/),racinfvcq,EPSom)
+   intimq(is,:)=decoupevcq(intimom,bomf(1:taillerout+1),3,arg(1:1,1:taillerout),routint(1:taillerout),EPSom,bla0)
+   if(bla0)then
+    write(6,*)"Imax(1)=",intmax(1)
+    write(6,*)"Imax(2)=",intmax(2)
+    write(6,*)"Imax(3)=",intmax(3)
+   endif
+   intimq(is,:)=intimq(is,:)+intmax(:)
+  enddo
+  END FUNCTION intimq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  FUNCTION intimom(om,arg,m) !Computes size(om) points of the function  to be integrate over om
+   IMPLICIT NONE
+   INTEGER,  INTENT(IN) :: m !m=3 here
+   REAL(QP), INTENT(IN), DIMENSION(:)  ::  om,arg !arg(1) should be the value of q
+   COMPLEX(QPC), DIMENSION(size(om),m)       ::  intimom
+
+   COMPLEX(QPC) Gam(1:2,1:2),Mat(1:2,1:2),MatCat(1:2,1:2),det
+   REAL(QP) q,rho(1:2,1:2),ome,enM,enP
+   COMPLEX(QPC) IuP(1:3),IuM(1:3)
+   INTEGER is,fich
+
+   q=arg(1) !value of q passed on to the intu function
+   intimom(:,:)=0.0_qp
+
+   do is=1,size(om)
+    ome=om(is)
+
+!value of the energy denominator passed on to the intu and Iuanaly functions
+    enM= ome-zk
+  
+    IuM(:)=0.0_qp
+    IuM=Iuanaly(enM,k,q)
+  
+    call mat_pairfield(ome,e,det,Mat,Gam)
+    
+    MatCat(1,1)=(Mat(1,1)+Mat(2,2))/2.0_qp+Mat(1,2)
+    MatCat(2,2)=(Mat(1,1)+Mat(2,2))/2.0_qp-Mat(1,2)
+    MatCat(1,2)=(Mat(2,2)-Mat(1,1))/2.0_qp
+  
+    Gam(1,1)= MatCat(2,2)/det
+    Gam(2,2)= MatCat(1,1)/det
+    Gam(1,2)=-MatCat(1,2)/det
+  
+    rho=-imag(Gam)/PI
+  
+    intimom(is,1)=-rho(1,1)*IuM(1)
+    intimom(is,2)=-rho(2,2)*IuM(2)
+    intimom(is,3)=-rho(1,2)*IuM(3)
+  
+    if(bla0)then
+     write(6,FMT="(A20,8G20.10)")"q,ome,real(intimom)=",q,ome,real(intimom(is,1)),imag(intimom(is,1))!*ome**(3.0_qp/2.0_qp)
+    endif
+
+  enddo
+  END FUNCTION intimom
 END FUNCTION intim
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE bornesom(k,zk,q,grecque,res,bom)
+SUBROUTINE bornesom(k,zk,q,grecque,res,bom,tailleres)
 USE recettes
 REAL(QP), INTENT(IN) :: k,zk,q
 INTEGER, INTENT(IN) :: grecque
-INTEGER, INTENT(OUT) :: res(1:4)
-REAL(QP), INTENT(OUT) :: bom(1:4)
+INTEGER, INTENT(OUT) :: res(1:2),tailleres
+REAL(QP), INTENT(OUT) :: bom(1:3)
 REAL(QP) s
 
-bom(1)=max(2.0_qp,2*epsBCS(q/2))
+bom(:)=1.e100_qp
 
 if(grecque<6)then 
  s=+1.0_qp
@@ -420,28 +569,34 @@ else
 endif
 
 if((grecque==al).OR.(grecque==alti))then
+ tailleres=1
+ bom(1)=ec(q)
  res(1)=1
  bom(2)=zk-epsBCS(k-s*q)
 elseif((grecque==bet).OR.(grecque==betti))then
+ tailleres=2
+ bom(1)=ec(q)
  res(1)=1
  bom(2)=zk-epsBCS(k-s*q)
  res(2)=2
  bom(3)=zk-1.0_qp
 elseif(grecque==gam)then
+ tailleres=1
+ bom(1)=ec(q)
  res(1)=2
  bom(2)=zk-1.0_qp
 elseif((grecque==delt).OR.(grecque==deltti))then
- res(1)=0
- bom(2)=zk-epsBCS(k+s*q)
- res(2)=1
- bom(3)=zk-epsBCS(k-s*q)
+ tailleres=1
+ bom(1)=zk-epsBCS(k+s*q)
+ res(1)=1
+ bom(2)=zk-epsBCS(k-s*q)
 elseif((grecque==epsi).OR.(grecque==epsiti))then
- res(1)=0
- bom(2)=zk-epsBCS(k+s*q)
- res(2)=1
- bom(3)=zk-epsBCS(k-s*q)
- res(3)=2
- bom(4)=zk-1.0_qp
+ tailleres=2
+ bom(1)=zk-epsBCS(k+s*q)
+ res(1)=1
+ bom(2)=zk-epsBCS(k-s*q)
+ res(2)=2
+ bom(3)=zk-1.0_qp
 endif
 
 END SUBROUTINE bornesom
@@ -605,55 +760,55 @@ if(k<k0)then
   taille=0
  elseif(min(l1,l4)>zkt)then
   reg="A0"
-  taille=6
+  taille=7
   config(1:taille)=(/0,alti,betti,gam,bet,al/)
  elseif((zkt>l1).AND.(min(l2,l4)>zkt))then
   reg="B0"
-  taille=6
+  taille=7
   config(1:taille)=(/deltti,alti,betti,gam,bet,al/)
  elseif((zkt>l4).AND.(min(l1,l2)>zkt))then
   reg="B1"
-  taille=7
+  taille=8
   config(1:taille)=(/0,alti,betti,epsiti,epsi,bet,al/)
  elseif((zkt>l2).AND.(l4>zkt))then
   reg="C0"
-  taille=6
+  taille=7
   config(1:taille)=(/deltti,epsiti,betti,gam,bet,al/)
  elseif((l2>zkt).AND.(zkt>max(l1,l4)))then
   reg="C1"
-  taille=7
+  taille=8
   config(1:taille)=(/deltti,alti,betti,epsiti,epsi,bet,al/)
  elseif((min(l1,l3)>zkt).AND.(zkt>l2))then
   reg="C2"
-  taille=7
+  taille=8
   config(1:taille)=(/0,alti,deltti,epsiti,epsi,bet,al/)
  elseif((zkt>l4).AND.(l5>zkt).AND.(k>k1))then
   reg="D0"
-  taille=7
+  taille=8
   config(1:taille)=(/deltti,epsiti,epsi,bet,gam,bet,al/)
  elseif((zkt>max(l2,l4)).AND.(l5>zkt).AND.(k>k3))then
   reg="D1"
-  taille=7
+  taille=8
   config(1:taille)=(/deltti,epsiti,betti,epsiti,epsi,bet,al/)
  elseif((zkt>max(l1,l2)).AND.(min(l3,l5)>zkt).AND.(k>k7))then
   reg="D2"
-  taille=7
+  taille=8
   config(1:taille)=(/deltti,alti,deltti,epsiti,epsi,bet,al/)
  elseif((l1>zkt).AND.(zkt> l3))then
   reg="D3"
-  taille=7
+  taille=8
   config(1:taille)=(/0,alti,deltti,epsiti,epsi,delt,al/)
  elseif((l3>zkt).AND.(zkt>l5))then
   reg="E0"
-  taille=5
+  taille=6
   config(1:taille)=(/deltti,epsiti,epsi,bet,al/)
  elseif((l5>zkt).AND.(zkt>max(l1,l3)))then
   reg="E1"
-  taille=7
+  taille=8
   config(1:taille)=(/deltti,alti,deltti,epsiti,epsi,delt,al/)
  elseif(zkt>max(l3,l5))then
   reg="F0"
-  taille=5
+  taille=6
   config(1:taille)=(/deltti,epsiti,epsi,delt,al/)
  else
   stop "Erreur dans region k<k0"
@@ -665,95 +820,57 @@ else
   taille=0
  elseif((min(l1,l5)>zkt).AND.(zkt>l6))then
   reg="A0"
-  taille=6
+  taille=7
   config(1:taille)=(/0,al,bet,gam,bet,al/)
  elseif((min(l2,l5)>zkt).AND.(zkt>l1))then
   reg="B0"
-  taille=6
+  taille=7
   config(1:taille)=(/delt,al,bet,gam,bet,al/)
  elseif((zkt>max(l6,l5)).AND.(l1>zkt))then
   reg="B1"
-  taille=4
+  taille=5
   config(1:taille)=(/0,al,bet,al/)
  elseif((zkt>l2).AND.(l5>zkt))then
   reg="D0"
-  taille=6
+  taille=7
   config(1:taille)=(/delt,epsi,bet,gam,bet,al/)
  elseif((l2>zkt).AND.(zkt>max(l1,l5)))then
   reg="D1"
-  taille=4
+  taille=5
   config(1:taille)=(/delt,al,bet,al/)
  elseif((zkt>max(l2,l5)).AND.(l3>zkt))then
   reg="E0"
-  taille=4
+  taille=5
   config(1:taille)=(/delt,epsi,bet,al/)
  elseif(zkt>l3)then
   reg="F0"
-  taille=4
+  taille=5
   config(1:taille)=(/delt,epsi,delt,al/)
  elseif((k<k11).AND.((zkt<l4).OR.((zkt>l5).AND.(l6>zkt))))then
   reg="G0"
-  taille=4
+  taille=5
   config(1:taille)=(/0,al,bet,gam/)
  elseif((k>k11).AND.(k12>k).AND.(l6>zkt))then
   reg="G0"
-  taille=4
+  taille=5
   config(1:taille)=(/0,al,bet,gam/)
  elseif((k>k12).AND.(l6>zkt).AND.(zkt>l7))then
   reg="G0"
-  taille=4
+  taille=5
   config(1:taille)=(/0,al,bet,gam/)
  elseif((k>k12).AND.(l7>zkt).AND.(zkt>l8))then
   reg="H0"
-  taille=2
+  taille=3
   config(1:taille)=(/0,al/)
  elseif((k<k11).AND.(min(l5,l6)>zkt).AND.(zkt>l4))then
   reg="J0"
-  taille=6
+  taille=7
   config(1:taille)=(/0,al,bet,gam,bet,gam/)
  else 
   stop "Erreur dans region k>k0"
  endif
 endif
 END SUBROUTINE region
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION ecritconfig(taille,config)
-INTEGER, INTENT(IN) :: taille
-INTEGER, DIMENSION(:), INTENT(IN) :: config
-CHARACTER(len=90) :: ecritconfig
-
-INTEGER itai
-ecritconfig=trim(ecritc(config(1)))
-do itai=2,taille
- ecritconfig=trim(ecritconfig)//"  "//trim(ecritc(config(itai)))
-enddo
-CONTAINS 
-  FUNCTION ecritc(c)
-  INTEGER, INTENT(IN) :: c
-  CHARACTER(len=7) :: ecritc
-  if(c==0)then
-   ecritc="0"
-  elseif(c==1)then
-   ecritc="al"
-  elseif(c==2)then
-   ecritc="bet"
-  elseif(c==3)then
-   ecritc="gam"
-  elseif(c==4)then
-   ecritc="delt"
-  elseif(c==5)then
-   ecritc="epsi"
-  elseif(c==6)then
-   ecritc="al_ti"
-  elseif(c==7)then
-   ecritc="bet_ti"
-  elseif(c==8)then
-   ecritc="delt_ti"
-  elseif(c==9)then
-   ecritc="epsi_ti"
-  endif
-  END FUNCTION ecritc
-END FUNCTION ecritconfig
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE lignesenergie(k)
 
@@ -881,4 +998,42 @@ CONTAINS
 
  END SUBROUTINE solP
 END FUNCTION solom2
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+FUNCTION ecritconfig(taille,config)
+INTEGER, INTENT(IN) :: taille
+INTEGER, DIMENSION(:), INTENT(IN) :: config
+CHARACTER(len=90) :: ecritconfig
+
+INTEGER itai
+ecritconfig=trim(ecritc(config(1)))
+do itai=2,taille
+ ecritconfig=trim(ecritconfig)//"  "//trim(ecritc(config(itai)))
+enddo
+END FUNCTION ecritconfig
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+FUNCTION ecritc(c)
+INTEGER, INTENT(IN) :: c
+CHARACTER(len=7) :: ecritc
+if(c==0)then
+ ecritc="0"
+elseif(c==1)then
+ ecritc="al"
+elseif(c==2)then
+ ecritc="bet"
+elseif(c==3)then
+ ecritc="gam"
+elseif(c==4)then
+ ecritc="delt"
+elseif(c==5)then
+ ecritc="epsi"
+elseif(c==6)then
+ ecritc="al_ti"
+elseif(c==7)then
+ ecritc="bet_ti"
+elseif(c==8)then
+ ecritc="delt_ti"
+elseif(c==9)then
+ ecritc="epsi_ti"
+endif
+END FUNCTION ecritc
 END MODULE intldc

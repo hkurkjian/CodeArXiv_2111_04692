@@ -23,8 +23,8 @@ PROGRAM spectre
 
  bla1=.TRUE.
  bla1=.FALSE.
- bla2=.FALSE.
- bla2=.TRUE.
+ bla3=.FALSE.
+ bla3=.TRUE.
 
  EPSpp=1.0e-8_qp
  EPSrpp=1.0e-10_qp

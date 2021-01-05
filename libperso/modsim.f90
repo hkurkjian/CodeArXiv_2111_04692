@@ -33,10 +33,10 @@ MODULE modsim
         MODULE PROCEDURE qromovqfixed,qromovcqfixed
        END INTERFACE qromovfixed
        INTERFACE qromochoix
-        MODULE PROCEDURE qromochoixs,qromochoixd,qromochoixq,qromochoixc,qromochoixcq
+        MODULE PROCEDURE qromochoixs,qromochoixd,qromochoixq,qromochoixc,qromochoixcq,qromochoixvcq
        END INTERFACE qromochoix
        INTERFACE decoupe
-        MODULE PROCEDURE decoupes,decouped,decoupeq,decoupec,decoupecq
+        MODULE PROCEDURE decoupes,decouped,decoupeq,decoupec,decoupecq,decoupevcq
        END INTERFACE decoupe
        ABSTRACT INTERFACE
          FUNCTION funcs(x,arg)
@@ -100,43 +100,20 @@ MODULE modsim
        REAL(SP) :: del
        INTEGER(I4B) :: it
        REAL(SP), DIMENSION(2*3**(n-2)) :: x
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_sp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_sp*it) !The added points alternate in spacing between del and 2*del.
-        x(1:2*it-1:2)=arth(a+0.5_sp*del,3.0_sp*del,it) 
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_sp*del
-        s=s/3.0_sp+del*sum(func(x,arg)) !The new sum is combined with the old integral
-       end if !to give a refined integral.
+       INCLUDE "somme.f90"
        END SUBROUTINE midpnts
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midinfs(funk,aa,bb,arg,s,n)
-       REAL(SP), INTENT(IN) :: aa,bb
-       REAL(SP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(SP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcs) :: funk
 !       This routine is an exact replacement for midpnt, i.e., returns as s the nth stage of refinement
 !       of the integral of funk from aa to bb, except that the function is evaluated at evenly spaced
 !       points in 1/x rather than in x. This allows the upper limit bb to be as large and positive
 !       as the computer allows, or the lower limit aa to be as large and negative, but not both.
 !       aa and bb must have the same sign.
-       REAL(SP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(SP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "decls.f90"
        if(aa*bb <= 0.0) STOP 'bornes dans midinf'
        b=1.0_sp/aa !These two statements change the limits of integration accordingly
        a= 1.0_sp/bb
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_sp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_sp*it) !The added points alternate in spacing between del and 2*del.
-        x(1:2*it-1:2)=arth(a+0.5_sp*del,3.0_sp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_sp*del
-        s=s/3.0_sp+del*sum(func(x,arg)) !The new sum is combined with the old integral
-       end if !to give a refined integral.
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg) !This internal function effects the change of variable.
         REAL(SP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -146,30 +123,13 @@ MODULE modsim
        END SUBROUTINE midinfs
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midsqus(funk,aa,bb,arg,s,n)
-       REAL(SP), INTENT(IN) :: aa,bb
-       REAL(SP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(SP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcs) :: funk
 !       This routine is an exact replacement for midpnt, i.e., returns as s the nth stage of refinement
 !       of the integral of funk from aa to bb, except that the function is evaluated at evenly spaced
-!       points in 1/x rather than in x. This allows the upper limit bb to be as large and positive
-!       as the computer allows, or the lower limit aa to be as large and negative, but not both.
-!       aa and bb must have the same sign.
-       REAL(SP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(SP), DIMENSION(2*3**(n-2)) :: x
+!       points in sqrt(bb-x) rather than in x. This allows to handle squareroot divergences in the upper bound
+       INCLUDE "decls.f90"
        b=sqrt(bb-aa)!These two statements change the limits of integration accordingly
        a= 0.0
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_sp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it)!The added points alternate in spacing between del and 2*del.
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg))!The new sum is combined with the old integral
-       end if !to give a refined integral.
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)!This internal function effects the change of variable.
         REAL(SP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -179,30 +139,13 @@ MODULE modsim
        END SUBROUTINE midsqus
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midsqls(funk,aa,bb,arg,s,n)
-       REAL(SP), INTENT(IN) :: aa,bb
-       REAL(SP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(SP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcs) :: funk
 !       This routine is an exact replacement for midpnt, i.e., returns as s the nth stage of refinement
 !       of the integral of funk from aa to bb, except that the function is evaluated at evenly spaced
-!       points in 1/x rather than in x. This allows the upper limit bb to be as large and positive
-!       as the computer allows, or the lower limit aa to be as large and negative, but not both.
-!       aa and bb must have the same sign.
-       REAL(SP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(SP), DIMENSION(2*3**(n-2)) :: x
+!       points in sqrt(x-aa) rather than in x. This allows to handle squareroot divergences in the lower bound
+       INCLUDE "decls.f90"
        b=sqrt(bb-aa)
        a= 0.0
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_sp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_sp*it)
-        x(1:2*it-1:2)=arth(a+0.5_sp*del,3.0_sp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_sp*del
-        s=s/3.0_sp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(SP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -212,30 +155,14 @@ MODULE modsim
        END SUBROUTINE midsqls
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midexps(funk,aa,bb,arg,s,n)
-       USE nrtype; USE nrutil, ONLY :arth
-       REAL(SP), INTENT(IN) :: aa,bb
-       REAL(SP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(SP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcs) :: funk
        !This routine is an exact replacement for midpnt, i.e., returns as s the nth stage of refinement
        !of the integral of funk from aa to bb, except that bb is assumed to be infinite (value passed
        !not actually used). It is assumed that the function funk decreases exponentially rapidly at
        !infinity.
-       REAL(SP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(SP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "decls.f90"
        b=exp(-aa) !These two statements change the limits of integration accordingly
        a=0.0 
-       if (n == 1) then !From this point on, the routine is exactly identical to midpnt.
-        s=(b-a)*sum(func( (/0.5_sp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_sp*it)
-        x(1:2*it-1:2)=arth(a+0.5_sp*del,3.0_sp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_sp*del
-        s=s/3.0_sp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg) !This internal function effects the change of variable.
         REAL(SP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -245,27 +172,14 @@ MODULE modsim
        END SUBROUTINE midexps
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE racinfs(funk,aa,bb,arg,s,n)
-       REAL(SP), INTENT(IN) :: aa,bb
-       REAL(SP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(SP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcs) :: funk
-       !
-       REAL(SP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(SP), DIMENSION(2*3**(n-2)) :: x
+!       This routine is an exact replacement for midpnt, i.e., returns as s the nth stage of refinement
+!       of the integral of funk from aa to bb, except that the function is evaluated at evenly spaced
+!       points in 1/sqrt(x) rather than in x. This allows to handle 1/x**(3/2) tails at large x
+       INCLUDE "decls.f90"
        if(aa*bb <= 0.0) STOP 'bornes dans racinf'
        b=1.0_sp/sqrt(aa)
        a= 1.0_sp/sqrt(bb)
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_sp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_sp*it)
-        x(1:2*it-1:2)=arth(a+0.5_sp*del,3.0_sp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_sp*del
-        s=s/3.0_sp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(SP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -360,46 +274,15 @@ MODULE modsim
        END FUNCTION decoupes
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE polints(xa,ya,x,y,dy)
-       REAL(SP), DIMENSION(:), INTENT(IN) :: xa,ya
-       REAL(SP), INTENT(IN) :: x
-       REAL(SP), INTENT(OUT) :: y,dy
 !       Given arrays xa and ya of length N, and given a value x, this routine returns a value y,
 !       and an error estimate dy. If P(x) is the polynomial of degree N − 1 such that P(xai) =
 !       yai, i = 1, . . . ,N, then the returned value y = P(x).
+       REAL(SP), DIMENSION(:), INTENT(IN) :: xa,ya
+       REAL(SP), INTENT(IN) :: x
+       REAL(SP), INTENT(OUT) :: y,dy
        INTEGER(I4B) :: m,n,ns
        REAL(SP), DIMENSION(size(xa)) :: c,d,den,ho
-       n=size(xa)
-       if(size(xa).NE.size(ya)) STOP 'Taille des entrees dans polint'
-       c=ya !Initialize the tableau of c’s and d’s.
-       d=ya
-       ho=xa-x
-       ns=iminloc(abs(x-xa)) !Find index ns of closest table entry.
-       y=ya(ns) !This is the initial approximation to y.
-       ns=ns-1
-       do m=1,n-1 !For each column of the tableau,
-        den(1:n-m)=ho(1:n-m)-ho(1+m:n) !we loop over the current c’s and d’s and upidate them.
-        if(any(den(1:n-m) == 0.0)) STOP 'polint: entrées dégénérées'
-!       This error can occur only if two input xa’s are (to within roundoff) identical.
-        den(1:n-m)=(c(2:n-m+1)-d(1:n-m))/den(1:n-m)
-        d(1:n-m)=ho(1+m:n)*den(1:n-m) !Here the c’s and d’s are updated.
-        c(1:n-m)=ho(1:n-m)*den(1:n-m)
-        if (2*ns < n-m) then 
-!       After each column in the tableau is completed, we decide
-!       which correction, c or d, we want to add to our accumulating
-!       value of y, i.e., which path to take through
-!       the tableau—forking up or down. We do this in such a
-!       way as to take the most “straight line” route through the
-!       tableau to its apex, updating ns accordingly to keep track
-!       of where we are. This route keeps the partial approximations
-!       centered (insofar as possible) on the target x. The
-!       last dy added is thus the error indication.
-         dy=c(ns+1)
-        else
-         dy=d(ns)
-         ns=ns-1
-        end if
-        y=y+dy
-       end do
+       INCLUDE "polint.f90"
        END SUBROUTINE polints
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        FUNCTION iminloc_s(arr)
@@ -421,39 +304,15 @@ MODULE modsim
        REAL(DP) :: del
        INTEGER(I4B) :: it
        REAL(DP), DIMENSION(2*3**(n-2)) :: x
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_dp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it) 
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it) 
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg)) 
-       end if 
+       INCLUDE "somme.f90"
        END SUBROUTINE midpntd
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midinfd(funk,aa,bb,arg,s,n)
-       REAL(DP), INTENT(IN) :: aa,bb
-       REAL(DP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(DP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcd) :: funk
-       !
-       REAL(DP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(DP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "decld.f90"
        if(aa*bb <= 0.0) STOP 'bornes dans midinf'
        b=1.0_dp/aa 
        a= 1.0_dp/bb
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_dp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it) 
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg)) 
-       end if 
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg) 
         REAL(DP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -463,26 +322,10 @@ MODULE modsim
        END SUBROUTINE midinfd
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midsqud(funk,aa,bb,arg,s,n)
-       REAL(DP), INTENT(IN) :: aa,bb
-       REAL(DP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(DP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcd) :: funk
-       !
-       REAL(DP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(DP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "decld.f90"
        b=sqrt(bb-aa)
        a= 0.0
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_dp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it)
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(DP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -492,26 +335,10 @@ MODULE modsim
        END SUBROUTINE midsqud
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midsqld(funk,aa,bb,arg,s,n)
-       REAL(DP), INTENT(IN) :: aa,bb
-       REAL(DP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(DP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcd) :: funk
-       !
-       REAL(DP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(DP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "decld.f90"
        b=sqrt(bb-aa) 
        a= 0.0
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_dp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it)
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(DP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -521,27 +348,10 @@ MODULE modsim
        END SUBROUTINE midsqld
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midexpd(funk,aa,bb,arg,s,n)
-       USE nrtype; USE nrutil, ONLY :arth
-       REAL(DP), INTENT(IN) :: aa,bb
-       REAL(DP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(DP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcd) :: funk
-       !
-       REAL(DP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(DP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "decld.f90"
        b=exp(-aa) 
        a=0.0 
-       if (n == 1) then 
-        s=(b-a)*sum(func( (/0.5_dp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it)
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg) 
         REAL(DP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -551,27 +361,11 @@ MODULE modsim
        END SUBROUTINE midexpd
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE racinfd(funk,aa,bb,arg,s,n)
-       REAL(DP), INTENT(IN) :: aa,bb
-       REAL(DP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(DP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcd) :: funk
-       !
-       REAL(DP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(DP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "decld.f90"
        if(aa*bb <= 0.0) STOP 'bornes dans racinf'
        b=1.0_dp/sqrt(aa)
        a= 1.0_dp/sqrt(bb)
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_dp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it)
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(DP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -666,28 +460,7 @@ MODULE modsim
        REAL(DP), INTENT(OUT) :: y,dy
        INTEGER(I4B) :: m,n,ns
        REAL(DP), DIMENSION(size(xa)) :: c,d,den,ho
-       n=size(xa)
-       if(size(xa).NE.size(ya)) STOP 'Taille des entrees dans polint'
-       c=ya
-       d=ya
-       ho=xa-x
-       ns=iminloc(abs(x-xa))
-       y=ya(ns)
-       ns=ns-1
-       do m=1,n-1
-        den(1:n-m)=ho(1:n-m)-ho(1+m:n)
-        if(any(den(1:n-m) == 0.0)) STOP 'polint: entrées dégénérées'
-        den(1:n-m)=(c(2:n-m+1)-d(1:n-m))/den(1:n-m)
-        d(1:n-m)=ho(1+m:n)*den(1:n-m)
-        c(1:n-m)=ho(1:n-m)*den(1:n-m)
-        if (2*ns < n-m) then 
-         dy=c(ns+1)
-        else
-         dy=d(ns)
-         ns=ns-1
-        end if
-        y=y+dy
-       end do
+       INCLUDE "polint.f90"
        END SUBROUTINE polintd
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        FUNCTION iminloc_d(arr)
@@ -709,39 +482,15 @@ MODULE modsim
        REAL(QP) :: del
        INTEGER(I4B) :: it
        REAL(QP), DIMENSION(2*3**(n-2)) :: x
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it) 
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it) 
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s=s/3.0_qp+del*sum(func(x,arg)) 
-       end if 
+       INCLUDE "somme.f90"
        END SUBROUTINE midpntq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midinfq(funk,aa,bb,arg,s,n)
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(QP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declq.f90"
        if(aa*bb <= 0.0) STOP 'bornes dans midinf'
        b=1.0_qp/aa
        a= 1.0_qp/bb
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s=s/3.0_qp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -751,26 +500,10 @@ MODULE modsim
        END SUBROUTINE midinfq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midsquq(funk,aa,bb,arg,s,n)
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(QP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declq.f90"
        b=sqrt(bb-aa)
        a= 0.0
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s=s/3.0_qp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -780,26 +513,10 @@ MODULE modsim
        END SUBROUTINE midsquq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midsqlq(funk,aa,bb,arg,s,n)
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(QP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declq.f90"
        b=sqrt(bb-aa)
        a= 0.0
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it) 
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s=s/3.0_qp+del*sum(func(x,arg)) 
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -809,27 +526,10 @@ MODULE modsim
        END SUBROUTINE midsqlq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midexpq(funk,aa,bb,arg,s,n)
-       USE nrtype; USE nrutil, ONLY :arth
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(QP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declq.f90"
        b=exp(-aa) 
        a=0.0 
-       if (n == 1) then 
-        s=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s=s/3.0_qp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg) 
         REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -839,27 +539,11 @@ MODULE modsim
        END SUBROUTINE midexpq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE racinfq(funk,aa,bb,arg,s,n)
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(QP), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declq.f90"
        if(aa*bb <= 0.0) STOP 'bornes dans racinf'
        b=1.0_qp/sqrt(aa)
        a= 1.0_qp/sqrt(bb)
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s=s/3.0_qp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -955,28 +639,7 @@ MODULE modsim
        REAL(QP), INTENT(OUT) :: y,dy
        INTEGER(I4B) :: m,n,ns
        REAL(QP), DIMENSION(size(xa)) :: c,d,den,ho
-       n=size(xa)
-       if(size(xa).NE.size(ya)) STOP 'Taille des entrees dans polint'
-       c=ya
-       d=ya
-       ho=xa-x
-       ns=iminloc(abs(x-xa))
-       y=ya(ns)
-       ns=ns-1
-       do m=1,n-1
-        den(1:n-m)=ho(1:n-m)-ho(1+m:n)
-        if(any(den(1:n-m) == 0.0)) STOP 'polint: entrées dégénérées'
-        den(1:n-m)=(c(2:n-m+1)-d(1:n-m))/den(1:n-m)
-        d(1:n-m)=ho(1+m:n)*den(1:n-m)
-        c(1:n-m)=ho(1:n-m)*den(1:n-m)
-        if (2*ns < n-m) then 
-         dy=c(ns+1)
-        else
-         dy=d(ns)
-         ns=ns-1
-        end if
-        y=y+dy
-       end do
+       INCLUDE "polint.f90"
        END SUBROUTINE polintq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        FUNCTION iminloc_q(arr)
@@ -998,39 +661,15 @@ MODULE modsim
        REAL(DP) :: del
        INTEGER(I4B) :: it
        REAL(DP), DIMENSION(2*3**(n-2)) :: x
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_dp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it) 
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it) 
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg)) 
-       end if 
+       INCLUDE "somme.f90"
        END SUBROUTINE midpntc
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midinfc(funk,aa,bb,arg,s,n)
-       REAL(DP), INTENT(IN) :: aa,bb
-       REAL(DP), INTENT(IN), DIMENSION(:) :: arg
-       COMPLEX(DPC), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcc) :: funk
-       !
-       REAL(DP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(DP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declc.f90"
        if(aa*bb <= 0.0) STOP 'bornes dans midinfc'
        b=1.0_dp/aa
        a= 1.0_dp/bb
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_dp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it)
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(DP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -1040,26 +679,10 @@ MODULE modsim
        END SUBROUTINE midinfc
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midsquc(funk,aa,bb,arg,s,n)
-       REAL(DP), INTENT(IN) :: aa,bb
-       REAL(DP), INTENT(IN), DIMENSION(:) :: arg
-       COMPLEX(DPC), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcc) :: funk
-       !
-       REAL(DP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(DP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declc.f90"
        b=sqrt(bb-aa)
        a= 0.0
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_dp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it)
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(DP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -1069,26 +692,10 @@ MODULE modsim
        END SUBROUTINE midsquc
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midsqlc(funk,aa,bb,arg,s,n)
-       REAL(DP), INTENT(IN) :: aa,bb
-       REAL(DP), INTENT(IN), DIMENSION(:) :: arg
-       COMPLEX(DPC), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcc) :: funk
-       !
-       REAL(DP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(DP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declc.f90"
        b=sqrt(bb-aa)
        a= 0.0
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_dp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it)
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg))
-       end if 
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg) 
         REAL(DP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -1098,27 +705,10 @@ MODULE modsim
        END SUBROUTINE midsqlc
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midexpc(funk,aa,bb,arg,s,n)
-       USE nrtype; USE nrutil, ONLY :arth
-       REAL(DP), INTENT(IN) :: aa,bb
-       REAL(DP), INTENT(IN), DIMENSION(:) :: arg
-       COMPLEX(DPC), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcc) :: funk
-       !
-       REAL(DP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(DP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declc.f90"
        b=exp(-aa) 
        a=0.0 
-       if (n == 1) then 
-        s=(b-a)*sum(func( (/0.5_dp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it)
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg) 
         REAL(DP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -1128,27 +718,10 @@ MODULE modsim
        END SUBROUTINE midexpc
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE racinfc(funk,aa,bb,arg,s,n)
-       REAL(DP), INTENT(IN) :: aa,bb
-       REAL(DP), INTENT(IN), DIMENSION(:) :: arg
-       COMPLEX(DPC), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funcc) :: funk
-       !
-       REAL(DP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(DP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declc.f90"
        if(aa*bb <= 0.0) STOP 'bornes dans racinf'
        b=1.0_dp/sqrt(aa)
        a= 1.0_dp/sqrt(bb)
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_dp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_dp*it)
-        x(1:2*it-1:2)=arth(a+0.5_dp*del,3.0_dp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_dp*del
-        s=s/3.0_dp+del*sum(func(x,arg))
-       end if
        CONTAINS
         FUNCTION func(x,arg)
         REAL(DP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -1215,8 +788,6 @@ MODULE modsim
        END FUNCTION qromochoixc
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        FUNCTION decoupec(func,bornes,arg,choix,EPS,bla) 
-       !Calcule la somme des integrales de func de bornes(m) à bornes(m+1)
-       !avec le changement de variable choix(m) et les arguments arg(m)
        REAL(DP), DIMENSION(:), INTENT(IN) :: bornes
        REAL(DP), DIMENSION(:,:), INTENT(IN) :: arg
        REAL(DP), INTENT(IN) :: EPS
@@ -1246,28 +817,7 @@ MODULE modsim
        INTEGER(I4B) :: m,n,ns
        COMPLEX(DPC), DIMENSION(size(xa)) :: c,d,den
        REAL(DP), DIMENSION(size(xa)) :: ho
-       n=size(xa)
-       if(size(xa).NE.size(ya)) STOP 'Taille des entrees dans polint'
-       c=ya
-       d=ya
-       ho=xa-x
-       ns=iminloc(abs(x-xa))
-       y=ya(ns)
-       ns=ns-1
-       do m=1,n-1
-        den(1:n-m)=ho(1:n-m)-ho(1+m:n)
-        if(any(abs(den(1:n-m)) == 0.0)) STOP 'polint: entrées dégénérées'
-        den(1:n-m)=(c(2:n-m+1)-d(1:n-m))/den(1:n-m)
-        d(1:n-m)=ho(1+m:n)*den(1:n-m)
-        c(1:n-m)=ho(1:n-m)*den(1:n-m)
-        if (2*ns < n-m) then 
-         dy=c(ns+1)
-        else
-         dy=d(ns)
-         ns=ns-1
-        end if
-        y=y+dy
-       end do
+       INCLUDE "polint.f90"
        END SUBROUTINE polintc
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1281,39 +831,15 @@ MODULE modsim
        REAL(QP) :: del
        INTEGER(I4B) :: it
        REAL(QP), DIMENSION(2*3**(n-2)) :: x
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it) 
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it) 
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s=s/3.0_qp+del*sum(func(x,arg)) 
-       end if 
+       INCLUDE "somme.f90"
        END SUBROUTINE midpntcq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midinfcq(funk,aa,bb,arg,s,n)
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       COMPLEX(QPC), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funccq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declcq.f90"
        if(aa*bb <= 0.0) STOP 'bornes dans midinfcq'
        b=1.0_qp/aa
        a= 1.0_qp/bb
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s=s/3.0_qp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -1323,26 +849,10 @@ MODULE modsim
        END SUBROUTINE midinfcq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midsqucq(funk,aa,bb,arg,s,n)
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       COMPLEX(QPC), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funccq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declcq.f90"
        b=sqrt(bb-aa)
        a= 0.0
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s=s/3.0_qp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -1352,26 +862,10 @@ MODULE modsim
        END SUBROUTINE midsqucq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midsqlcq(funk,aa,bb,arg,s,n)
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       COMPLEX(QPC), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funccq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declcq.f90"
        b=sqrt(bb-aa)
        a= 0.0
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s=s/3.0_qp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg) 
         REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -1381,27 +875,10 @@ MODULE modsim
        END SUBROUTINE midsqlcq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midexpcq(funk,aa,bb,arg,s,n)
-       USE nrtype; USE nrutil, ONLY :arth
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       COMPLEX(QPC), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funccq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declcq.f90"
        b=exp(-aa) 
        a=0.0 
-       if (n == 1) then 
-        s=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s=s/3.0_qp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg) 
         REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -1411,27 +888,11 @@ MODULE modsim
        END SUBROUTINE midexpcq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE racinfcq(funk,aa,bb,arg,s,n)
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       COMPLEX(QPC), INTENT(INOUT) :: s
-       INTEGER(I4B), INTENT(IN) :: n
-       PROCEDURE(funccq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declcq.f90"
        if(aa*bb <= 0.0) STOP 'bornes dans racinf'
        b=1.0_qp/sqrt(aa)
        a= 1.0_qp/sqrt(bb)
-       if (n == 1) then
-        s=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg ))
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it)
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s=s/3.0_qp+del*sum(func(x,arg))
-       end if
+       INCLUDE "somme.f90"
        CONTAINS
         FUNCTION func(x,arg)
         REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
@@ -1529,28 +990,7 @@ MODULE modsim
        INTEGER(I4B) :: m,n,ns
        COMPLEX(QPC), DIMENSION(size(xa)) :: c,d,den
        REAL(QP), DIMENSION(size(xa)) :: ho
-       n=size(xa)
-       if(size(xa).NE.size(ya)) STOP 'Taille des entrees dans polint'
-       c=ya
-       d=ya
-       ho=xa-x
-       ns=iminloc(abs(x-xa))
-       y=ya(ns)
-       ns=ns-1
-       do m=1,n-1
-        den(1:n-m)=ho(1:n-m)-ho(1+m:n)
-        if(any(abs(den(1:n-m)) == 0.0)) STOP 'polint: entrées dégénérées'
-        den(1:n-m)=(c(2:n-m+1)-d(1:n-m))/den(1:n-m)
-        d(1:n-m)=ho(1+m:n)*den(1:n-m)
-        c(1:n-m)=ho(1:n-m)*den(1:n-m)
-        if (2*ns < n-m) then 
-         dy=c(ns+1)
-        else
-         dy=d(ns)
-         ns=ns-1
-        end if
-        y=y+dy
-       end do
+       INCLUDE "polint.f90"
        END SUBROUTINE polintcq
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1568,41 +1008,55 @@ MODULE modsim
         s(:)=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg,m ),dim=1)
        else
         it=3**(n-2)
-        del=(b-a)/(3.0_qp*it) 
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it) 
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s(:)=s(:)/3.0_qp+del*sum(func(x,arg,m),dim=1) 
-       end if 
-       END SUBROUTINE midpntvq
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE midinfvq(funk,aa,bb,m,arg,s,n)
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(QP), INTENT(INOUT), DIMENSION(m) :: s
-       INTEGER(I4B), INTENT(IN) :: m,n
-       PROCEDURE(funcvq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
-       if(aa*bb <= 0.0) STOP 'bornes dans midinf'
-       b=1.0_qp/aa
-       a= 1.0_qp/bb
-       if (n == 1) then
-        s(:)=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg,m ),dim=1)
-       else
-        it=3**(n-2)
         del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it) 
+        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it)
         x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
         s(:)=s(:)/3.0_qp+del*sum(func(x,arg,m),dim=1)
        end if
-       CONTAINS
-        FUNCTION func(x,arg,mm)
-        INTEGER, INTENT(IN) ::  mm
-        REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
-        REAL(QP), DIMENSION(size(x),mm) :: func
-        INTEGER is
+       END SUBROUTINE midpntvq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SUBROUTINE midsquvq(funk,aa,bb,m,arg,s,n)
+       INCLUDE "declvq.f90"
+       b=sqrt(bb-aa)
+       a= 0.0
+       INCLUDE "sommevq.f90"
+        func=2.0_qp*funk(bb-x**2,arg,mm)
+        do is=1,size(x)
+         func(is,:)=func(is,:)*x(is)
+        enddo
+        END FUNCTION func
+       END SUBROUTINE midsquvq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SUBROUTINE midsqlvq(funk,aa,bb,m,arg,s,n)
+       INCLUDE "declvq.f90"
+       b=sqrt(bb-aa)
+       a= 0.0
+       INCLUDE "sommevq.f90"
+        func=2.0_qp*funk(aa+x**2,arg,mm)
+        do is=1,size(x)
+         func(is,:)=func(is,:)*x(is)
+        enddo
+        END FUNCTION func
+       END SUBROUTINE midsqlvq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SUBROUTINE midexpvq(funk,aa,bb,m,arg,s,n)
+       INCLUDE "declvq.f90"
+       b=exp(-aa) 
+       a=0.0 
+       INCLUDE "sommevq.f90"
+        func=funk(-log(x),arg,mm)
+        do is=1,size(x)
+         func(is,:)=func(is,:)/x(is)
+        enddo
+        END FUNCTION func
+       END SUBROUTINE midexpvq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SUBROUTINE midinfvq(funk,aa,bb,m,arg,s,n)
+       INCLUDE "declvq.f90"
+       if(aa*bb <= 0.0) STOP 'bornes dans midinf'
+       b=1.0_qp/aa
+       a= 1.0_qp/bb
+       INCLUDE "sommevq.f90"
         func=funk(1.0_qp/x,arg,mm)
         do is=1,size(x)
          func(is,:)=func(is,:)/x(is)**2
@@ -1611,33 +1065,11 @@ MODULE modsim
        END SUBROUTINE midinfvq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE racinfvq(funk,aa,bb,m,arg,s,n)
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       REAL(QP), INTENT(INOUT), DIMENSION(m) :: s
-       INTEGER(I4B), INTENT(IN) :: m,n
-       PROCEDURE(funcvq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declvq.f90"
        if(aa*bb <= 0.0) STOP 'bornes dans racinf'
        b=1.0_qp/sqrt(aa)
        a= 1.0_qp/sqrt(bb)
-       if (n == 1) then
-        s(:)=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg,m ),dim=1)
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it) 
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s(:)=s(:)/3.0_qp+del*sum(func(x,arg,m),dim=1)
-       end if
-       CONTAINS
-        FUNCTION func(x,arg,mm)
-        INTEGER, INTENT(IN) ::  mm
-        REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
-        REAL(QP), DIMENSION(size(x),mm) :: func
-        INTEGER is
+       INCLUDE "sommevq.f90"
         func=funk(1.0_qp/x**2,arg,mm)
         do is=1,size(x)
          func(is,:)=2.0_qp*func(is,:)/x(is)**3
@@ -1728,8 +1160,7 @@ MODULE modsim
        err=.TRUE.
        END FUNCTION qromovqfixed
 
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midpntvcq(func,a,b,m,arg,s,n)
        REAL(QP), INTENT(IN) :: a,b
        REAL(QP), INTENT(IN), DIMENSION(:) :: arg
@@ -1744,41 +1175,55 @@ MODULE modsim
         s(:)=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg,m ),dim=1)
        else
         it=3**(n-2)
-        del=(b-a)/(3.0_qp*it) 
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it) 
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s(:)=s(:)/3.0_qp+del*sum(func(x,arg,m),dim=1) 
-       end if 
-       END SUBROUTINE midpntvcq
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE midinfvcq(funk,aa,bb,m,arg,s,n)
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       COMPLEX(QPC), INTENT(INOUT), DIMENSION(m) :: s
-       INTEGER(I4B), INTENT(IN) :: m,n
-       PROCEDURE(funcvcq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
-       if(aa*bb <= 0.0) STOP 'bornes dans midinf'
-       b=1.0_qp/aa
-       a= 1.0_qp/bb
-       if (n == 1) then
-        s(:)=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg,m ),dim=1)
-       else
-        it=3**(n-2)
         del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it) 
+        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it)
         x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
         s(:)=s(:)/3.0_qp+del*sum(func(x,arg,m),dim=1)
        end if
-       CONTAINS
-        FUNCTION func(x,arg,mm)
-        INTEGER, INTENT(IN) ::  mm
-        REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
-        COMPLEX(QPC), DIMENSION(size(x),mm) :: func
-        INTEGER is
+       END SUBROUTINE midpntvcq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SUBROUTINE midsquvcq(funk,aa,bb,m,arg,s,n)
+       INCLUDE "declvcq.f90"
+       b=sqrt(bb-aa)
+       a= 0.0
+       INCLUDE "sommevcq.f90"
+        func=2.0_qp*funk(bb-x**2,arg,mm)
+        do is=1,size(x)
+         func(is,:)=func(is,:)*x(is)
+        enddo
+        END FUNCTION func
+       END SUBROUTINE midsquvcq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SUBROUTINE midsqlvcq(funk,aa,bb,m,arg,s,n)
+       INCLUDE "declvcq.f90"
+       b=sqrt(bb-aa)
+       a= 0.0
+       INCLUDE "sommevcq.f90"
+        func=2.0_qp*funk(aa+x**2,arg,mm)
+        do is=1,size(x)
+         func(is,:)=func(is,:)*x(is)
+        enddo
+        END FUNCTION func
+       END SUBROUTINE midsqlvcq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SUBROUTINE midexpvcq(funk,aa,bb,m,arg,s,n)
+       INCLUDE "declvcq.f90"
+       b=exp(-aa) 
+       a=0.0 
+       INCLUDE "sommevcq.f90"
+        func=funk(-log(x),arg,mm)
+        do is=1,size(x)
+         func(is,:)=func(is,:)/x(is)
+        enddo
+        END FUNCTION func
+       END SUBROUTINE midexpvcq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SUBROUTINE midinfvcq(funk,aa,bb,m,arg,s,n)
+       INCLUDE "declvcq.f90"
+       if(aa*bb <= 0.0) STOP 'bornes dans midinf'
+       b=1.0_qp/aa
+       a= 1.0_qp/bb
+       INCLUDE "sommevcq.f90"
         func=funk(1.0_qp/x,arg,mm)
         do is=1,size(x)
          func(is,:)=func(is,:)/x(is)**2
@@ -1787,33 +1232,11 @@ MODULE modsim
        END SUBROUTINE midinfvcq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE racinfvcq(funk,aa,bb,m,arg,s,n)
-       REAL(QP), INTENT(IN) :: aa,bb
-       REAL(QP), INTENT(IN), DIMENSION(:) :: arg
-       COMPLEX(QPC), INTENT(INOUT), DIMENSION(m) :: s
-       INTEGER(I4B), INTENT(IN) :: m,n
-       PROCEDURE(funcvcq) :: funk
-       !
-       REAL(QP) :: a,b,del
-       INTEGER(I4B) :: it
-       REAL(QP), DIMENSION(2*3**(n-2)) :: x
+       INCLUDE "declvcq.f90"
        if(aa*bb <= 0.0) STOP 'bornes dans racinf'
        b=1.0_qp/sqrt(aa)
        a= 1.0_qp/sqrt(bb)
-       if (n == 1) then
-        s(:)=(b-a)*sum(func( (/0.5_qp*(a+b)/),arg,m ),dim=1)
-       else
-        it=3**(n-2)
-        del=(b-a)/(3.0_qp*it)
-        x(1:2*it-1:2)=arth(a+0.5_qp*del,3.0_qp*del,it) 
-        x(2:2*it:2)=x(1:2*it-1:2)+2.0_qp*del
-        s(:)=s(:)/3.0_qp+del*sum(func(x,arg,m),dim=1)
-       end if
-       CONTAINS
-        FUNCTION func(x,arg,mm)
-        INTEGER, INTENT(IN) ::  mm
-        REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
-        COMPLEX(QPC), DIMENSION(size(x),mm) :: func
-        INTEGER is
+       INCLUDE "sommevcq.f90"
         func=funk(1.0_qp/x**2,arg,mm)
         do is=1,size(x)
          func(is,:)=2.0_qp*func(is,:)/x(is)**3
@@ -1905,4 +1328,89 @@ MODULE modsim
        write(6,*) 'Nombre d itération dépassé dans qromovcqfixed'
        err=.TRUE.
        END FUNCTION qromovcqfixed
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       FUNCTION qromochoixvcq(func,a,b,m,arg,choix,EPS)
+       REAL(QP), INTENT(IN) :: a,b
+       REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+       INTEGER, INTENT(IN) :: m,choix
+       REAL(QP), INTENT(IN)  :: EPS
+       COMPLEX(QPC) :: qromochoixvcq(1:m)
+       PROCEDURE(funcvcq) :: func
+       if(choix==mpnt)then 
+        qromochoixvcq=qromovcq(func,a,b,m,arg,midpntvcq,EPS)
+       elseif(choix==minf)then
+        qromochoixvcq=qromovcq(func,a,b,m,arg,midinfvcq,EPS)
+       elseif(choix==msql)then
+        qromochoixvcq=qromo(func,a,b,m,arg,midsqlvcq,EPS)
+       elseif(choix==msqu)then
+        qromochoixvcq=qromo(func,a,b,m,arg,midsquvcq,EPS)
+       elseif(choix==mexp)then
+        qromochoixvcq=qromo(func,a,b,m,arg,midexpvcq,EPS)
+       elseif(choix==rinf)then
+        qromochoixvcq=qromo(func,a,b,m,arg,racinfvcq,EPS)
+       endif
+       END FUNCTION qromochoixvcq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       FUNCTION decoupevcq(func,bornes,mm,arg,choix,EPS,bla) 
+       !Calcule la somme des integrales de func de bornes(m) à bornes(m+1)
+       !avec le changement de variable choix(m) et les arguments arg(m)
+       INTEGER, DIMENSION(:), INTENT(IN) :: choix
+       REAL(QP), DIMENSION(size(choix)+1), INTENT(IN) :: bornes
+       REAL(QP), DIMENSION(:,:), INTENT(IN) :: arg
+       REAL(QP), INTENT(IN) :: EPS
+       INTEGER, INTENT(IN) :: mm
+       LOGICAL, INTENT(IN) :: bla
+       PROCEDURE(funcvcq) :: func
+       COMPLEX(QPC) decoupevcq(1:mm)
+       !
+       INTEGER m,imm
+       COMPLEX(QPC) I(1:mm)
+       if(size(arg,  DIM=2).NE.size(bornes)-1) stop "size(arg)   ne correspond pas à size(bornes)-1 dans decoupevcq"
+       decoupevcq(:)=0.0_qp
+       do m=1,size(choix)
+        I=qromochoixvcq(func,bornes(m),bornes(m+1),mm,arg(:,m),choix(m),EPS)
+        decoupevcq=decoupevcq+I
+        if(bla)then
+         do imm=1,mm
+          write(6,FMT="(A1,I1,A1,I1,A3,1P,2G45.35)") "I",m,"(",imm,")=  ",I(imm)
+         enddo
+        endif
+       enddo
+       if(bla)then
+         do imm=1,mm
+          write(6,FMT="(A5,I1,A2,1P,2G45.35)") "Itot(",imm,")=",decoupevcq(imm)
+         enddo
+       endif
+       END FUNCTION decoupevcq
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+       FUNCTION ecritrout(taille,config) 
+       INTEGER, INTENT(IN) :: taille 
+       INTEGER, DIMENSION(:), INTENT(IN) :: config 
+       CHARACTER(len=90) :: ecritrout
+        
+       INTEGER itai 
+       ecritrout=trim(ecritr(config(1))) 
+       do itai=2,taille 
+        ecritrout=trim(ecritrout)//"  "//trim(ecritr(config(itai))) 
+       enddo 
+       END FUNCTION ecritrout 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+       FUNCTION ecritr(r) 
+       INTEGER, INTENT(IN) :: r 
+       CHARACTER(len=7) :: ecritr 
+       if(r==1)then 
+        ecritr="mpnt" 
+       elseif(r==2)then 
+        ecritr="minf" 
+       elseif(r==3)then 
+        ecritr="msql" 
+       elseif(r==4)then 
+        ecritr="msqu" 
+       elseif(r==5)then 
+        ecritr="mexp" 
+       elseif(r==6)then 
+        ecritr="rinf" 
+       endif 
+       END FUNCTION ecritr 
 END MODULE modsim

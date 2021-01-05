@@ -6,6 +6,9 @@ MODULE recettes
         INTERFACE tri
                 MODULE PROCEDURE tri_s,tri_d,tri_q
         END INTERFACE
+        INTERFACE tri_pos
+                MODULE PROCEDURE tri_pos_q
+        END INTERFACE
         INTERFACE indexx
                 MODULE PROCEDURE indexx_sp,indexx_dp,indexx_qp
         END INTERFACE
@@ -1841,6 +1844,27 @@ CONTAINS
           arr(i+1)=a !Insert it.
         end do
         END SUBROUTINE tri_q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        SUBROUTINE tri_pos_q(arr,pos)
+        REAL(QP), DIMENSION(:), INTENT(INOUT) :: arr
+        INTEGER,  DIMENSION(size(arr)), INTENT(OUT) :: pos
+!        Sorts an array arr into ascending numerical order, by straight insertion. arr is replaced
+!        on output by its sorted rearrangement.
+        INTEGER(I4B) :: i,j,n
+        REAL(QP) :: a
+        n=size(arr)
+        pos(:)=1
+        do j=2,n !Pick out each element in turn.
+          a=arr(j)
+          do i=j-1,1,-1 !Look for the place to insert it.
+            if (arr(i) <= a) exit
+            arr(i+1)=arr(i)
+            pos(i+1)=pos(i)
+          end do
+          arr(i+1)=a !Insert it.
+          pos(i+1)=j
+        end do
+        END SUBROUTINE tri_pos_q
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION argum_d(z)

@@ -12,7 +12,7 @@ MODULE vars
  REAL(QP) EPSpp,EPSpt,EPSrpp,EPSrpt !precisions used respectively for the real (EPSpp for quasiparticle-quasiparticle part,EPSpt for the quasiparticle-quasihole part) and imaginary parts (EPSrpp,EPSrpt) of the matrix elements
 !EPSrpp|EPSrpt should be much lower than EPSpp|EPSpt
 !Suggested configuration EPSpp=1.0e-6_qp, EPSrpp=1.0e-10_qp, EPSpt=1.0e-6_qp, EPSrpt=1.e-7_qp
- LOGICAL bla1   !verbose level
+ LOGICAL bla1,bla2   !verbose level
  LOGICAL temperaturenulle ! .TRUE. to compute the matrix at T=0 (beta=+oo), using analytical formulas to speed-up the calculation. .FALSE. otherwise 
 
 ! Internal variables (calculated by oangpp and oangpt subroutines)
@@ -218,7 +218,7 @@ if(axer)then
 
   if(floor(num)<4)then !energy cutoff in the integrals
    db=100.0_qp
-   bmax=max(2.0e8_qp,2*om0-opp(3)+db,2*opp(3)+db,4*x0+db,2*om0-2*x0+db,2*om0+db) !In case 2*om0-opp or 2*opp overflows bmax. This formula works whatever the value of ptbranchmtpp
+   bmax=max(2.0e6_qp,2*om0-opp(3)+db,2*opp(3)+db,4*x0+db,2*om0-2*x0+db,2*om0+db) !In case 2*om0-opp or 2*opp overflows bmax. This formula works whatever the value of ptbranchmtpp
   else
    bmax=1.0e55_qp
   endif
@@ -503,6 +503,9 @@ CONTAINS
     write(6,*)"inter(is)=",inter(is)
     write(6,*)"ome,om0,num,T,r,r0,inter(is),opp=",ome,om0,num,T,r,r0,inter(is),opp
     stop
+   endif
+   if(bla2)then
+    write(6,*)"om0,ome,num,inter(is)=",om0,ome,floor(num),inter(is)*ome**(1.5_qp)
    endif
 
   enddo

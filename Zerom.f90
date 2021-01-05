@@ -3,7 +3,7 @@ MODULE Zerom
 USE dspec
 USE vars
 IMPLICIT NONE
-LOGICAL bla2
+LOGICAL bla3
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE Zero(om,M,dM)
@@ -22,7 +22,7 @@ temperaturenulle=.TRUE.
 
 
 tolx=4.0_qp*xq**2.0_qp*1.e-11_qp
-if(bla2)then
+if(bla3)then
  write(6,*)'--------------------'
  write(6,*)
  write(6,*)'Zerodspec'
@@ -54,7 +54,7 @@ REAL(QP), DIMENSION(:), INTENT(OUT) :: det
 REAL(QP), DIMENSION(:,:), INTENT(OUT) :: Jdet
 REAL(QP) Mr(1:2,1:2),dMbis(1:2,1:2)
 
-if(bla2)then
+if(bla3)then
  write(6,*)'----------------------'
  write(6,*)'oom=',oom
 endif
@@ -63,7 +63,7 @@ call der_mat(oom(1),0.0_qp,Mr,dMbis)
 
 det=Mr(1,1)*Mr(2,2)-Mr(1,2)**2
 Jdet=dMbis(1,1)*Mr(2,2)+Mr(1,1)*dMbis(2,2)-2.0_qp*Mr(1,2)*dMbis(1,2)
-if(bla2)then
+if(bla3)then
  write(6,*)'om,det,Jdet=',oom(1),det,Jdet
  write(6,*)'Jdet=',Jdet(1,1)
 endif

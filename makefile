@@ -14,6 +14,9 @@ encorr: dspec.o intldc.o encorr.o
 test: dspec.o Zerom.o intldc.o intpole.o test.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o test
 
+pointsM: dspec.o pointsM.o
+	$(COMP) -O3 $^ $(LIB_PERSO) -o pointsM
+
 spectre: dspec.o Zerom.o spectre.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o spectre
 
@@ -26,7 +29,4 @@ propre :
 	rm -f *.aux
 	rm -f *.syntec.gz
 	rm -f spectre
-
-sectors: sectorI.eps sectorII.eps sectorIII.eps sectorIV.eps
-	pdflatex texenpdf.tex
-	open texenpdf.tex
+	rm -f pointsM
