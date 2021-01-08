@@ -6,24 +6,45 @@ USE vars
 USE Zerom
 USE intpole
 USE intldc
+USE estM
 IMPLICIT NONE
 
 REAL(QP) om,dom,M(1:2,1:2),dM(1:2,1:2),A(1:6),Mm(1:3),dMm(1:3)
 REAL(QP) vec(1:2000,1:10000)
 REAL(QP) vec2(1:2000,1:10000)
-REAL(QP) :: xik,epsk,Uk2,Vk2,k,zk,zkmax,le(1:8),bq(1:10),arr(1:8),don(1:7,1:1000,0:100),don2(1:7,1:1000)
+REAL(QP) :: xik,epsk,Uk2,Vk2,k,zk,zkmax,le(1:8),bq(1:10),arr(1:8),don(1:7,1:1000,0:100),don2(1:7,1:1000),est(1:6),dest(1:6)
 CHARACTER(len=90) fichdep,fich
 CHARACTER(len=2)  reg,regvieux
-INTEGER izk,taille,config(1:7),pos(1:8),nn,ixq,ixqbis,nxq,compteur
+INTEGER izk,taille,config(1:7),pos(1:8),nn,nn2,ixq,ixqbis,compteur,nxq,iom
 COMPLEX(QPC) Gamm(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
 
+LOGICAL errtype1,errtype2
 !arr=(/6.0_qp,7.0_qp,4.0_qp,3.0_qp,1.0_qp,2.0_qp,8.0_qp,5.0_qp/)
 !write(6,*)"arr=",arr
 !call tri_pos_q(arr,pos)
 !write(6,*)"arr=",arr
 !write(6,*)"pos=",pos
 
+EPSpp=1.0e-8_qp
+bla1=.FALSE.
+temperaturenulle=.TRUE.
+x0=4.0_qp
+
 fich="BCSx04"
+call load_data(fich)
+xq=3.3_qp
+om=2.01_qp
+est=interpolM(xq,om,dest,errtype1,errtype2)
+est=interpolM_recerr(xq,om,dest,errtype1,errtype2)
+
+
+x0=4.0_qp
+
+call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
+write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
+
+
+stop
 nxq=10
 open(12,file=trim(fich)//"grilleq.dat")
 read(12,*)

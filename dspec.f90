@@ -19,6 +19,7 @@ MODULE vars
  INTEGER ptbranchmtpp,ptbranchmtpt !Number of angular points on the qp-qp and qp-qh branch cuts, written by oangpp and oangpt
  REAL(QP) opp(1:4)   !angular points om1,om2,om3 of the qp-qp branch cut and k such that om2=E(k+q/2)+E(k-q/2), written by oangpp
  REAL(QP) opt(1:2)   !angular points om_ph of the qp-qh branch cut and k such that om_ph=E(k+q/2)-E(k-q/2), written by oangpt
+ REAL(QP) xqjoin ! value of xq after which opp(2) and opp(3) coincide (for x0>0)
  REAL(QP) x0crit     !In the far BCS regime (x0>x0crit) use an optimized routine for the omega integral
 
 ! Parameters
@@ -1234,6 +1235,13 @@ else
   opt(1)=abs(Enpt(opt(2),1.0_qp))
 endif
 END SUBROUTINE oangpt
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE calcxqjoin
+!Calcule la valeur de xq où opp(2) et opp(3) se rejoingnent
+IMPLICIT NONE
+if(x0<0)stop "xqjoin n'existe que pour x0>0"
+xqjoin=2*sqrt(x0+(sqrt(1+x0**2)-x0)**(1.0_qp/3.0_qp)-(sqrt(1+x0**2)+x0)**(1.0_qp/3.0_qp))
+END SUBROUTINE calcxqjoin
 END MODULE dspec
 
 !    if(opp(1)>2*x0)then

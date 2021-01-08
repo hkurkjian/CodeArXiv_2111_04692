@@ -1,13 +1,8 @@
 MODULE modsim
  USE nrtype; USE nrutil, ONLY :arth
+ USE modpol
  IMPLICIT NONE
  INTEGER, PARAMETER :: mpnt=1,minf=2,msql=3,msqu=4,mexp=5,rinf=6
-       INTERFACE iminloc
-        MODULE PROCEDURE iminloc_s,iminloc_d,iminloc_q
-       END INTERFACE iminloc
-       INTERFACE polint 
-        MODULE PROCEDURE polints,polintd,polintq,polintc,polintcq
-       END INTERFACE polint
        INTERFACE midpnt
         MODULE PROCEDURE midpnts,midpntd,midpntq,midpntc,midpntcq,midpntvcq
        END INTERFACE midpnt
@@ -272,26 +267,6 @@ MODULE modsim
        enddo
        if(bla) write(6,FMT="(A5,1P,G20.10)") "Itot=",decoupes
        END FUNCTION decoupes
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE polints(xa,ya,x,y,dy)
-!       Given arrays xa and ya of length N, and given a value x, this routine returns a value y,
-!       and an error estimate dy. If P(x) is the polynomial of degree N − 1 such that P(xai) =
-!       yai, i = 1, . . . ,N, then the returned value y = P(x).
-       REAL(SP), DIMENSION(:), INTENT(IN) :: xa,ya
-       REAL(SP), INTENT(IN) :: x
-       REAL(SP), INTENT(OUT) :: y,dy
-       INTEGER(I4B) :: m,n,ns
-       REAL(SP), DIMENSION(size(xa)) :: c,d,den,ho
-       INCLUDE "polint.f90"
-       END SUBROUTINE polints
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       FUNCTION iminloc_s(arr)
-       REAL(SP), DIMENSION(:), INTENT(IN) :: arr
-       INTEGER(I4B), DIMENSION(1) :: imin
-       INTEGER(I4B) :: iminloc_s
-       imin=minloc(arr(:))
-       iminloc_s=imin(1)
-       END FUNCTION iminloc_s
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midpntd(func,a,b,arg,s,n)
@@ -453,23 +428,6 @@ MODULE modsim
        enddo
        if(bla) write(6,FMT="(A5,1P,G20.18)") "Itot=",decouped
        END FUNCTION decouped
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE polintd(xa,ya,x,y,dy)
-       REAL(DP), DIMENSION(:), INTENT(IN) :: xa,ya
-       REAL(DP), INTENT(IN) :: x
-       REAL(DP), INTENT(OUT) :: y,dy
-       INTEGER(I4B) :: m,n,ns
-       REAL(DP), DIMENSION(size(xa)) :: c,d,den,ho
-       INCLUDE "polint.f90"
-       END SUBROUTINE polintd
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       FUNCTION iminloc_d(arr)
-        REAL(DP), DIMENSION(:), INTENT(IN) :: arr
-        INTEGER(I4B), DIMENSION(1) :: imin
-        INTEGER(I4B) :: iminloc_d
-        imin=minloc(arr(:))
-        iminloc_d=imin(1)
-       END FUNCTION iminloc_d
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midpntq(func,a,b,arg,s,n)
@@ -632,23 +590,6 @@ MODULE modsim
        enddo
        if(bla) write(6,FMT="(A5,1P,G45.35)") "Itot=",decoupeq
        END FUNCTION decoupeq
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE polintq(xa,ya,x,y,dy)
-       REAL(QP), DIMENSION(:), INTENT(IN) :: xa,ya
-       REAL(QP), INTENT(IN) :: x
-       REAL(QP), INTENT(OUT) :: y,dy
-       INTEGER(I4B) :: m,n,ns
-       REAL(QP), DIMENSION(size(xa)) :: c,d,den,ho
-       INCLUDE "polint.f90"
-       END SUBROUTINE polintq
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       FUNCTION iminloc_q(arr)
-       REAL(QP), DIMENSION(:), INTENT(IN) :: arr
-       INTEGER(I4B), DIMENSION(1) :: imin
-       INTEGER(I4B) :: iminloc_q
-       imin=minloc(arr(:))
-       iminloc_q=imin(1)
-       END FUNCTION iminloc_q
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midpntc(func,a,b,arg,s,n)
@@ -808,17 +749,6 @@ MODULE modsim
        enddo
        if(bla) write(6,FMT="(A5,1P,2G20.18)") "Itot=",decoupec
        END FUNCTION decoupec
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE polintc(xa,ya,x,y,dy)
-       COMPLEX(DPC), DIMENSION(:), INTENT(IN) :: ya
-       REAL(DP), DIMENSION(:), INTENT(IN) :: xa
-       REAL(DP), INTENT(IN) :: x
-       COMPLEX(DPC), INTENT(OUT) :: y,dy
-       INTEGER(I4B) :: m,n,ns
-       COMPLEX(DPC), DIMENSION(size(xa)) :: c,d,den
-       REAL(DP), DIMENSION(size(xa)) :: ho
-       INCLUDE "polint.f90"
-       END SUBROUTINE polintc
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midpntcq(func,a,b,arg,s,n)
@@ -981,17 +911,6 @@ MODULE modsim
        enddo
        if(bla) write(6,FMT="(A5,1P,2G45.35)") "Itot=",decoupecq
        END FUNCTION decoupecq
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE polintcq(xa,ya,x,y,dy)
-       COMPLEX(QPC), DIMENSION(:), INTENT(IN) :: ya
-       REAL(QP), DIMENSION(:), INTENT(IN) :: xa
-       REAL(QP), INTENT(IN) :: x
-       COMPLEX(QPC), INTENT(OUT) :: y,dy
-       INTEGER(I4B) :: m,n,ns
-       COMPLEX(QPC), DIMENSION(size(xa)) :: c,d,den
-       REAL(QP), DIMENSION(size(xa)) :: ho
-       INCLUDE "polint.f90"
-       END SUBROUTINE polintcq
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midpntvq(func,a,b,m,arg,s,n)

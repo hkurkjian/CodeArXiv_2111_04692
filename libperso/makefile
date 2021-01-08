@@ -3,7 +3,7 @@ COMP=gfortran
 %.o : %.f90
 	$(COMP) -O3 -c $< -o $@
 
-malib: nrtype.o nrutil.o modsim.o recettes.o
+malib: nrtype.o nrutil.o modpol.o modsim.o recettes.o
 	ar rcv libmalib.a $^ 
 
 propre : 

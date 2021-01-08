@@ -1,9 +1,10 @@
-5.0  !read(10,*) x0
-0.02 !read(10,*)xq
-10.01 !read(10,*)xq
-1000                  !read(10,*) nxq
-1000                  !read(10,*) nom1
-1000                  !read(10,*) nom2
-1000                  !read(10,*) nom3
-1000                  !read(10,*) nominf
+4.0  !read(10,*) x0
+0.0  !read(10,*)xq
+10                  !read(10,*) nq1
+10                  !read(10,*) nq2
+10                  !read(10,*) nq3
+10                  !read(10,*) nom1
+10                  !read(10,*) nom2
+10                  !read(10,*) nom3
+10                  !read(10,*) nominf
 BCSx04     !read(10,*) fichier
