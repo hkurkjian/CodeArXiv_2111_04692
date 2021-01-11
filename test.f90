@@ -19,6 +19,9 @@ CHARACTER(len=2)  reg,regvieux
 INTEGER izk,taille,config(1:7),pos(1:8),nn,nn2,ixq,ixqbis,compteur,nxq,iom
 COMPLEX(QPC) Gamm(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
 
+REAL(QP) ptq,ptom,ptM(1:3),ptdM(1:3)
+INTEGER iq
+
 LOGICAL errtype1,errtype2,interpol
 !arr=(/6.0_qp,7.0_qp,4.0_qp,3.0_qp,1.0_qp,2.0_qp,8.0_qp,5.0_qp/)
 !write(6,*)"arr=",arr
@@ -26,68 +29,74 @@ LOGICAL errtype1,errtype2,interpol
 !write(6,*)"arr=",arr
 !write(6,*)"pos=",pos
 
-EPSpp=1.0e-8_qp
-bla1=.FALSE.
-blaM=.TRUE.
-temperaturenulle=.TRUE.
-x0=4.0_qp
+! x0=1.5_qp
+fichier="specx0_1.5"
+k=0.8_qp
+zk=3.0_qp
+A=selfEpole(k,zk)
 
-fich="BCSx04"
-call load_data(fich)
-xq=3.3_qp
-om=2.5_qp
-xq=0.246836093457720227245526778373616163_qp
-om=2.06349219682830205570367348567314184_qp
-om=2.17918908882654135720814517067753354_qp
-!est=interpolM(xq,om,dest,errtype1,errtype2)
-est=interpolM_recerr(xq,om)
+! EPSpp=1.0e-8_qp
+! bla1=.FALSE.
+! blaM=.TRUE.
+! temperaturenulle=.TRUE.
+! x0=4.0_qp
 
-call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
-write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
-write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
-write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
-write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
-write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
-write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
+! fich="BCSx04"
+! call load_data(fich)
+! xq=3.3_qp
+! om=2.5_qp
+! xq=0.246836093457720227245526778373616163_qp
+! om=2.06349219682830205570367348567314184_qp
+! om=2.17918908882654135720814517067753354_qp
+! !est=interpolM(xq,om,dest,errtype1,errtype2)
+! est=interpolM_recerr(xq,om)
 
-om=2.06293425788714868770824920288479181_qp
-om=2.07261645140824848581721061871322156_qp
-xq=0.157710325387454304623498228689020666_qp
+! call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
+! write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
+! write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
+! write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
+! write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
+! write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
+! write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
 
-call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
-write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
-write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
-write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
-write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
-write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
-write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
+! om=2.06293425788714868770824920288479181_qp
+! om=2.07261645140824848581721061871322156_qp
+! xq=0.157710325387454304623498228689020666_qp
 
-call unload_data
+! call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
+! write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
+! write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
+! write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
+! write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
+! write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
+! write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
 
-fichom2 ="DONNEES/Tom1.dat"
-fichom2p="DONNEES/Tom1p.dat"
-k=2.1_qp
-zk=3.4_qp
-x0crit=0.0_qp
-x0=4.0_qp
-bla0=.TRUE.
-bla1=.TRUE.
-bla1=.FALSE.
-bla2=.TRUE.
-bla2=.FALSE.
+! call unload_data
 
-EPSpp=1.0e-8_qp
-EPSom=1.0e-5_qp
-EPSq =1.0e-3_qp
-call bornesk
-!call lignesenergie(k)
-!le=(/l1,l2,l3,l4,l5,l6,l7,l8/)
-!call tri_q(le)
-!write(6,FMT="(A30,8G20.10)")"lignes d’énergie=",le
-!write(6,*)
-interpol=.TRUE.
-Mm=intim(k,zk,interpol,fich)
-stop
+! fichom2 ="DONNEES/Tom1.dat"
+! fichom2p="DONNEES/Tom1p.dat"
+! k=2.1_qp
+! zk=3.4_qp
+! x0crit=0.0_qp
+! x0=4.0_qp
+! bla0=.TRUE.
+! bla1=.TRUE.
+! bla1=.FALSE.
+! bla2=.TRUE.
+! bla2=.FALSE.
+
+! EPSpp=1.0e-8_qp
+! EPSom=1.0e-5_qp
+! EPSq =1.0e-3_qp
+! call bornesk
+! !call lignesenergie(k)
+! !le=(/l1,l2,l3,l4,l5,l6,l7,l8/)
+! !call tri_q(le)
+! !write(6,FMT="(A30,8G20.10)")"lignes d’énergie=",le
+! !write(6,*)
+! interpol=.TRUE.
+! Mm=intim(k,zk,interpol,fich)
+! stop
 
 !
 !k=(k11+k12)/2.
