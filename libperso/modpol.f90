@@ -176,198 +176,198 @@ MODULE modpol
        END SUBROUTINE polintcq
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE phi1 (r,r0,v)
-       
-!! PHI1 evaluates the multiquadric radial basis function.
-!  Parameters:
+!       SUBROUTINE phi1 (r,r0,v)
+!       
+!!! PHI1 evaluates the multiquadric radial basis function.
+!!  Parameters:
+!!
+!!    Input,  real R(N), the radial separation. 0 < R.
+!!    Input,  real R0, a scale factor. Doit ếtre compris entre la distance min et max entre les points à interpoler
+!!    Output, real V(N), the value of the radial basis function.
+!!
+!!  Reference:
+!!
+!!    William Press, Brian Flannery, Saul Teukolsky, William Vetterling,
+!!    Numerical Recipes in FORTRAN: The Art of Scientific Computing,
+!!    Third Edition,
+!!    Cambridge University Press, 2007,
+!!    ISBN13: 978-0-521-88068-8,
+!!    LC: QA297.N866.
 !
-!    Input,  real R(N), the radial separation. 0 < R.
-!    Input,  real R0, a scale factor. Doit ếtre compris entre la distance min et max entre les points à interpoler
-!    Output, real V(N), the value of the radial basis function.
+!       REAL(QP), DIMENSION(:), INTENT(IN) ::  r
+!       REAL(QP), INTENT(INOUT) ::  r0
+!       REAL(QP), DIMENSION(size(r)), INTENT(OUT) :: v 
+!       
+!       v=sqrt(r**2+r0**2)
+!       
+!       END SUBROUTINE phi1
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!       SUBROUTINE phi2 (r,r0,v)
+!       
+!!! PHI2 evaluates the inverse multiquadric radial basis function.
 !
-!  Reference:
+!       REAL(QP), DIMENSION(:), INTENT(IN) ::  r
+!       REAL(QP), INTENT(INOUT) ::  r0
+!       REAL(QP), DIMENSION(size(r)), INTENT(OUT) :: v 
+!       
+!       v=1.0_qp/sqrt(r**2 + r0**2)
+!       
+!       END SUBROUTINE phi2
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!       SUBROUTINE phi3 (r,r0,v)
+!       
+!!! PHI3 evaluates the thin-plate spline radial basis function.
+!!
+!!  Discussion:
+!!
+!!    Note that PHI3(R,R0) is negative if R < R0.  Thus, for this basis function,
+!!    it may be desirable to choose a value of R0 smaller than any possible R.
+!       
+!       REAL(QP), DIMENSION(:), INTENT(IN) ::  r
+!       REAL(QP), INTENT(INOUT) ::  r0
+!       REAL(QP), DIMENSION(size(r)), INTENT(OUT) :: v
+!       
+!       INTEGER it
 !
-!    William Press, Brian Flannery, Saul Teukolsky, William Vetterling,
-!    Numerical Recipes in FORTRAN: The Art of Scientific Computing,
-!    Third Edition,
-!    Cambridge University Press, 2007,
-!    ISBN13: 978-0-521-88068-8,
-!    LC: QA297.N866.
-
-       REAL(QP), DIMENSION(:), INTENT(IN) ::  r
-       REAL(QP), INTENT(INOUT) ::  r0
-       REAL(QP), DIMENSION(size(r)), INTENT(OUT) :: v 
-       
-       v=sqrt(r**2+r0**2)
-       
-       END SUBROUTINE phi1
+!       do it = 1, size(r)
+!        if(r(it).le.0.0_qp)then
+!         v(it) = 0.0_qp
+!        else
+!         v(it) = r(it)**2*log(r(it)/r0)
+!        end if
+!       end do
+!       
+!       END SUBROUTINE phi3
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!       SUBROUTINE phi4 (r,r0,v)
+!       
+!!! PHI4 evaluates the gaussian radial basis function.
+!       REAL(QP), DIMENSION(:), INTENT(IN) ::  r
+!       REAL(QP), INTENT(INOUT) ::  r0
+!       REAL(QP), DIMENSION(size(r)), INTENT(OUT) :: v
+!       
+!       v =exp(-0.5_qp*r**2/r0**2)
+!       
+!       END SUBROUTINE phi4
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE phi2 (r,r0,v)
-       
-!! PHI2 evaluates the inverse multiquadric radial basis function.
-
-       REAL(QP), DIMENSION(:), INTENT(IN) ::  r
-       REAL(QP), INTENT(INOUT) ::  r0
-       REAL(QP), DIMENSION(size(r)), INTENT(OUT) :: v 
-       
-       v=1.0_qp/sqrt(r**2 + r0**2)
-       
-       END SUBROUTINE phi2
+!       SUBROUTINE rbf_weight(xd,r0,phi,fd,w)
+!       USE recettes
+!
+!!! RBF_WEIGHT computes weights for radial basis function interpolation.
+!!
+!!  Discussion:
+!!
+!!    We assume that there are N (nonsingular) equations in N unknowns.
+!!
+!!    However, it should be clear that, if we are willing to do some kind
+!!    of least squares calculation, we could allow for singularity,
+!!    inconsistency, or underdetermine systems.  This could be associated
+!!    with data points that are very close or repeated, a smaller number
+!!    of data points than function values, or some other ill-conditioning
+!!    of the system arising from a peculiarity in the point spacing.
+!!
+!!    Input, real ( kind = 8 ) XD(M,ND), the data points.
+!!
+!!    Input, real ( kind = 8 ) R0, a scale factor.  R0 should be larger than 
+!!    the typical separation between points, but smaller than the maximum 
+!!    separation.  The value of R0 has a significant effect on the resulting 
+!!    interpolant.
+!!
+!!    Input, subroutine PHI ( N, R, R0, V ), a subroutine to evaluate the radial
+!!    basis functions.
+!!
+!!    Input, real ( kind = 8 ) FD(ND), the function values at the data points.
+!!
+!!    Output, real ( kind = 8 ) W(ND), the weights.
+!!
+!       REAL(QP), INTENT(INOUT) ::  r0
+!       INTERFACE 
+!        SUBROUTINE phi(r,rr0,v)
+!        USE nrtype
+!        REAL(QP), DIMENSION(:), INTENT(IN) ::  r
+!        REAL(QP), INTENT(INOUT) ::  rr0
+!        REAL(QP), DIMENSION(size(r)), INTENT(OUT) :: v
+!        END SUBROUTINE phi
+!       END INTERFACE
+!       REAL(QP), DIMENSION(:,:), INTENT(IN) :: xd
+!       REAL(QP), DIMENSION(size(xd,dim=2)), INTENT(IN) :: fd
+!       REAL(QP), DIMENSION(size(fd)), INTENT(OUT) :: w
+!
+!       REAL(QP), DIMENSION(size(fd),size(fd)) :: a
+!       INTEGER i,j,nd
+!       INTEGER(I4B), DIMENSION(size(fd)) :: indx
+!       REAL(QP), DIMENSION(size(fd)) :: r,v
+!       REAL(QP) d
+!       
+!       nd=size(fd)
+!       do i = 1, nd
+!       
+!         do j = 1, nd
+!           r(j) = sqrt(sum((xd(:,i) - xd(:,j))**2))
+!         end do
+!       
+!         call phi(r,r0,v)
+!       
+!         a(i,1:nd) = v(1:nd)
+!       
+!       end do
+!       
+!       w=fd
+!       call ludcmp(a,indx,d)
+!       call lubksb(a,indx,w)
+!       
+!       END SUBROUTINE rbf_weight
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE phi3 (r,r0,v)
-       
-!! PHI3 evaluates the thin-plate spline radial basis function.
+!       SUBROUTINE rbf_interp(xd,r0,phi,w,xi,fi)
+!       
+!!! RBF_INTERP_ND evaluates a radial basis function interpolant.
+!!
+!!  Parameters:
+!!
+!!    Input, real ( kind = 8 ) XD(M,ND), the data points.
+!!
+!!    Input, real ( kind = 8 ) R0, a scale factor.  R0 should be larger than 
+!!    the typical separation between points, but smaller than the maximum 
+!!    separation.  The value of R0 has a significant effect on the resulting 
+!!    interpolant.
+!!
+!!    Input, subroutine PHI ( N, R, R0, V ), a subroutine to evaluate the radial
+!!    basis functions.
+!!
+!!    Input, real ( kind = 8 ) W(ND), the weights, as computed by RBF_WEIGHTS.
+!!
+!!    Input, real ( kind = 8 ) XI(M,NI), the interpolation points.
+!!
+!!    Output, real ( kind = 8 ) FI(NI), the interpolated values.
+!!
+!       REAL(QP), INTENT(INOUT) ::  r0
+!       INTERFACE 
+!        SUBROUTINE phi(r,rr0,v)
+!        USE nrtype
+!        REAL(QP), DIMENSION(:), INTENT(IN) ::  r
+!        REAL(QP), INTENT(INOUT) ::  rr0
+!        REAL(QP), DIMENSION(size(r)), INTENT(OUT) :: v
+!        END SUBROUTINE phi
+!       END INTERFACE
+!       REAL(QP), DIMENSION(:,:), INTENT(IN) :: xd
+!       REAL(QP), DIMENSION(size(xd,dim=2)), INTENT(IN) :: w
+!       REAL(QP), DIMENSION(:,:), INTENT(IN) :: xi
+!       REAL(QP), DIMENSION(size(xi,dim=2)), INTENT(OUT) :: fi
+!       
+!       INTEGER i,j
+!       REAL(QP), DIMENSION(size(xd,dim=2)) :: r,v
 !
-!  Discussion:
-!
-!    Note that PHI3(R,R0) is negative if R < R0.  Thus, for this basis function,
-!    it may be desirable to choose a value of R0 smaller than any possible R.
-       
-       REAL(QP), DIMENSION(:), INTENT(IN) ::  r
-       REAL(QP), INTENT(INOUT) ::  r0
-       REAL(QP), DIMENSION(size(r)), INTENT(OUT) :: v
-       
-       INTEGER it
-
-       do it = 1, size(r)
-        if(r(it).le.0.0_qp)then
-         v(it) = 0.0_qp
-        else
-         v(it) = r(it)**2*log(r(it)/r0)
-        end if
-       end do
-       
-       END SUBROUTINE phi3
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE phi4 (r,r0,v)
-       
-!! PHI4 evaluates the gaussian radial basis function.
-       REAL(QP), DIMENSION(:), INTENT(IN) ::  r
-       REAL(QP), INTENT(INOUT) ::  r0
-       REAL(QP), DIMENSION(size(r)), INTENT(OUT) :: v
-       
-       v =exp(-0.5_qp*r**2/r0**2)
-       
-       END SUBROUTINE phi4
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE rbf_weight(xd,r0,phi,fd,w)
-       USE recettes
-
-!! RBF_WEIGHT computes weights for radial basis function interpolation.
-!
-!  Discussion:
-!
-!    We assume that there are N (nonsingular) equations in N unknowns.
-!
-!    However, it should be clear that, if we are willing to do some kind
-!    of least squares calculation, we could allow for singularity,
-!    inconsistency, or underdetermine systems.  This could be associated
-!    with data points that are very close or repeated, a smaller number
-!    of data points than function values, or some other ill-conditioning
-!    of the system arising from a peculiarity in the point spacing.
-!
-!    Input, real ( kind = 8 ) XD(M,ND), the data points.
-!
-!    Input, real ( kind = 8 ) R0, a scale factor.  R0 should be larger than 
-!    the typical separation between points, but smaller than the maximum 
-!    separation.  The value of R0 has a significant effect on the resulting 
-!    interpolant.
-!
-!    Input, subroutine PHI ( N, R, R0, V ), a subroutine to evaluate the radial
-!    basis functions.
-!
-!    Input, real ( kind = 8 ) FD(ND), the function values at the data points.
-!
-!    Output, real ( kind = 8 ) W(ND), the weights.
-!
-       REAL(QP), INTENT(INOUT) ::  r0
-       INTERFACE 
-        SUBROUTINE phi(r,rr0,v)
-        USE nrtype
-        REAL(QP), DIMENSION(:), INTENT(IN) ::  r
-        REAL(QP), INTENT(INOUT) ::  rr0
-        REAL(QP), DIMENSION(size(r)), INTENT(OUT) :: v
-        END SUBROUTINE phi
-       END INTERFACE
-       REAL(QP), DIMENSION(:,:), INTENT(IN) :: xd
-       REAL(QP), DIMENSION(size(xd,dim=2)), INTENT(IN) :: fd
-       REAL(QP), DIMENSION(size(fd)), INTENT(OUT) :: w
-
-       REAL(QP), DIMENSION(size(fd),size(fd)) :: a
-       INTEGER i,j,nd
-       INTEGER(I4B), DIMENSION(size(fd)) :: indx
-       REAL(QP), DIMENSION(size(fd)) :: r,v
-       REAL(QP) d
-       
-       nd=size(fd)
-       do i = 1, nd
-       
-         do j = 1, nd
-           r(j) = sqrt(sum((xd(:,i) - xd(:,j))**2))
-         end do
-       
-         call phi(r,r0,v)
-       
-         a(i,1:nd) = v(1:nd)
-       
-       end do
-       
-       w=fd
-       call ludcmp(a,indx,d)
-       call lubksb(a,indx,w)
-       
-       END SUBROUTINE rbf_weight
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       SUBROUTINE rbf_interp(xd,r0,phi,w,xi,fi)
-       
-!! RBF_INTERP_ND evaluates a radial basis function interpolant.
-!
-!  Parameters:
-!
-!    Input, real ( kind = 8 ) XD(M,ND), the data points.
-!
-!    Input, real ( kind = 8 ) R0, a scale factor.  R0 should be larger than 
-!    the typical separation between points, but smaller than the maximum 
-!    separation.  The value of R0 has a significant effect on the resulting 
-!    interpolant.
-!
-!    Input, subroutine PHI ( N, R, R0, V ), a subroutine to evaluate the radial
-!    basis functions.
-!
-!    Input, real ( kind = 8 ) W(ND), the weights, as computed by RBF_WEIGHTS.
-!
-!    Input, real ( kind = 8 ) XI(M,NI), the interpolation points.
-!
-!    Output, real ( kind = 8 ) FI(NI), the interpolated values.
-!
-       REAL(QP), INTENT(INOUT) ::  r0
-       INTERFACE 
-        SUBROUTINE phi(r,rr0,v)
-        USE nrtype
-        REAL(QP), DIMENSION(:), INTENT(IN) ::  r
-        REAL(QP), INTENT(INOUT) ::  rr0
-        REAL(QP), DIMENSION(size(r)), INTENT(OUT) :: v
-        END SUBROUTINE phi
-       END INTERFACE
-       REAL(QP), DIMENSION(:,:), INTENT(IN) :: xd
-       REAL(QP), DIMENSION(size(xd,dim=2)), INTENT(IN) :: w
-       REAL(QP), DIMENSION(:,:), INTENT(IN) :: xi
-       REAL(QP), DIMENSION(size(xi,dim=2)), INTENT(OUT) :: fi
-       
-       INTEGER i,j
-       REAL(QP), DIMENSION(size(xd,dim=2)) :: r,v
-
-       do i=1,size(xi,dim=2) 
-       
-           do j=1,size(xd,dim=2)
-             r(j)=sqrt(sum((xi(:,i)-xd(:,j))**2))
-           end do
-       
-           call phi(r,r0,v)
-       
-           fi(i)=dot_product(v,w)
-       
-         end do
-       
-       END SUBROUTINE rbf_interp
+!       do i=1,size(xi,dim=2) 
+!       
+!           do j=1,size(xd,dim=2)
+!             r(j)=sqrt(sum((xi(:,i)-xd(:,j))**2))
+!           end do
+!       
+!           call phi(r,r0,v)
+!       
+!           fi(i)=dot_product(v,w)
+!       
+!         end do
+!       
+!       END SUBROUTINE rbf_interp
 END MODULE modpol
