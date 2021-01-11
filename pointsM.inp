@@ -7,4 +7,4 @@
 10                  !read(10,*) nom2
 10                  !read(10,*) nom3
 10                  !read(10,*) nominf
-BCSx04     !read(10,*) fichier
+BCSx04_2     !read(10,*) fichier

@@ -6,9 +6,7 @@ IMPLICIT NONE
 REAL(QP) EPSom,EPSu,EPSq
 LOGICAL lecture,ecriture,bla0,st
 INTEGER profondeur
-CHARACTER(len=15) donnees
 CHARACTER(len=30) fichierlec1,fichierlec2,fichierlec3,fichom2,fichom2p
-CHARACTER(len=9) donneesq
 CHARACTER(len=5) suffixe
 REAL(QP) q1,q2,q3,q4
 REAL(QP) xi0,xiP,xiM,epsP,epsM,xmin,xmax
@@ -280,36 +278,6 @@ CONTAINS
 
   enddo
  END FUNCTION intom
-
-! FUNCTION intu(u,arg,m) !Computes size(u) points of the function to be integrate over u
-!  IMPLICIT NONE
-!  INTEGER,  INTENT(IN) :: m ! m=3 here
-!  REAL(QP), INTENT(IN), DIMENSION(:)  ::  u,arg !arg(1) should be the energy in the denominator, arg(2) should be the value of q
-!  REAL(QP), DIMENSION(size(u),m)       ::  intu
-!
-!  REAL(QP) kmq2,q,en,xi,eps,U2,V2,UV,us
-!  INTEGER is
-!
-!  en=arg(1)
-!  q=arg(2)
-!  intu(:,:)=0.0_qp
-!
-!  do is=1,size(u)
-!
-!   us   =u(is)
-!   kmq2 =k**2+q**2-2.0_qp*k*q*us
-!   xi   =kmq2-x0
-!   eps  =sqrt(xi**2+1.0_qp)
-!   U2   =0.5_qp*(1.0_qp+xi/eps)
-!   V2   =1.0_qp-U2
-!   UV   =0.5_qp/eps
-!
-!   intu(is,1)=V2   /(en+eps)
-!   intu(is,2)=U2   /(en+eps)
-!   intu(is,3)=UV   /(en+eps)
-!
-!  enddo
-! END FUNCTION intu
 END FUNCTION selfEldc
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION Iuanaly(en,k,q) !Computes Iu analytically
@@ -366,9 +334,13 @@ CHARACTER(len=*), INTENT(IN) :: var
 END SUBROUTINE erreur
 ! @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION intim(k,zk)
+FUNCTION intim(k,zk,interpolation,fich)
+ USE estM
  REAL(QP), INTENT(IN) :: k,zk
+ LOGICAL, INTENT(IN) :: interpolation
+ CHARACTER(len=90), INTENT(IN) :: fich
  COMPLEX(QPC) intim(1:3)
+
  COMPLEX(QPC) Iq1(1:3),Iq2(1:3),Iq3(1:3)
  REAL(QP) Iqinf(1:3)
  REAL(QP) argq(1:1),e,bq(1:8)
@@ -388,15 +360,22 @@ FUNCTION intim(k,zk)
 
  call lignesenergie(k)
  call region (k,zk-2.0_qp,reg,taille,config)
+
  if(bla0)then
   write(6,*)"reg=",reg,"  config=",ecritconfig(taille,config) 
  endif
  call bornesq(k,zk,bq)
+
  if(bla0)then
   write(6,"(A10,8G20.10)")"zk,bq=",zk,bq(1:taille)
   write(6,*)
  endif
- do igr=1,taille-1
+
+ if(interpolation)then
+  call load_data(fich)
+ endif
+
+ do igr=3,taille-1
   grecque=config(igr)
   Iq1=qromovcq(intimq,bq(igr),bq(igr+1),3,(/bidon/),midpntvcq,EPSq)
  enddo
@@ -409,7 +388,6 @@ FUNCTION intim(k,zk)
   REAL(QP), INTENT(IN), DIMENSION(:)  ::  q,argq
   COMPLEX(QPC)  intimq(size(q),m)
 
-  COMPLEX(QPC), DIMENSION(1:3) ::  I,Ia,Ib,Ic,Id,Ie,It
   REAL(QP)    , DIMENSION(1:3) ::  Iinf
   REAL(QP)    qs,bmax
   REAL(QP) bom(1:3),bom2(1:6),bomf(1:10),arg(1:1,1:10)
@@ -480,7 +458,6 @@ FUNCTION intim(k,zk)
    if(bla0)then
     write(6,*)"bomf=",bomf(1:taillerout+1)
     write(6,*)"routint=",ecritrout(taillerout,routint(1:taillerout))
-!   write(6,*)"routint=",routint
    endif
     
    xi0=k**2+qs**2-x0
@@ -511,7 +488,7 @@ FUNCTION intim(k,zk)
    REAL(QP), INTENT(IN), DIMENSION(:)  ::  om,arg !arg(1) should be the value of q
    COMPLEX(QPC), DIMENSION(size(om),m)       ::  intimom
 
-   COMPLEX(QPC) Gam(1:2,1:2),Mat(1:2,1:2),MatCat(1:2,1:2),det
+   COMPLEX(QPC) Gam(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
    REAL(QP) q,rho(1:2,1:2),ome,enM,enP
    COMPLEX(QPC) IuP(1:3),IuM(1:3)
    INTEGER is,fich
@@ -528,11 +505,15 @@ FUNCTION intim(k,zk)
     IuM(:)=0.0_qp
     IuM=Iuanaly(enM,k,q)
   
-    call mat_pairfield(ome,e,det,Mat,Gam)
+    if(interpolation)then
+     call estmat_pairfield(ome,e,det,Matt,Gam)
+    else
+     call mat_pairfield(ome,e,det,Matt,Gam)
+    endif
     
-    MatCat(1,1)=(Mat(1,1)+Mat(2,2))/2.0_qp+Mat(1,2)
-    MatCat(2,2)=(Mat(1,1)+Mat(2,2))/2.0_qp-Mat(1,2)
-    MatCat(1,2)=(Mat(2,2)-Mat(1,1))/2.0_qp
+    MatCat(1,1)=(Matt(1,1)+Matt(2,2))/2.0_qp+Matt(1,2)
+    MatCat(2,2)=(Matt(1,1)+Matt(2,2))/2.0_qp-Matt(1,2)
+    MatCat(1,2)=(Matt(2,2)-Matt(1,1))/2.0_qp
   
     Gam(1,1)= MatCat(2,2)/det
     Gam(2,2)= MatCat(1,1)/det

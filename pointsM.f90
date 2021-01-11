@@ -58,6 +58,8 @@ write(6,*)"Taille de l’enregistrement en octets:",nn
 
 nouveauf=.FALSE.
 nouveauf=.TRUE.
+bmax=1.0e6_qp
+
 if(nouveauf)then
  call system("rm "//trim(fichier)//".dat")
  call system("rm "//trim(fichier)//"grilleq.dat")
@@ -73,7 +75,6 @@ endif
 
 
 
-bmax=1.0e6_qp
 compteurq=0
 do ifenq=1,3
  nfenetres=4-ifenq
