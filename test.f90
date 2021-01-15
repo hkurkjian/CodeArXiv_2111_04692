@@ -20,7 +20,7 @@ INTEGER izk,taille,config(1:7),pos(1:8),nn,nn2,ixq,ixqbis,compteur,nxq,iom
 COMPLEX(QPC) Gamm(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
 
 REAL(QP) ptq,ptom,ptM(1:3),ptdM(1:3)
-INTEGER iq
+INTEGER iq, ik, iz
 
 LOGICAL errtype1,errtype2,interpol
 !arr=(/6.0_qp,7.0_qp,4.0_qp,3.0_qp,1.0_qp,2.0_qp,8.0_qp,5.0_qp/)
@@ -31,9 +31,18 @@ LOGICAL errtype1,errtype2,interpol
 
 ! x0=1.5_qp
 fichier="specx0_1.5"
-k=0.8_qp
-zk=3.0_qp
-A=selfEpole(k,zk)
+blaPole=.FALSE.
+
+do ik=1,50
+    do iz=1,50
+        k=ik/10.0_qp
+        zk=1.0_qp+iz/10.0_qp
+        A=selfEpole(k,zk)
+    enddo
+enddo
+! k=0.1_qp
+! zk=1.9_qp
+! A=selfEpole(k,zk)
 
 ! EPSpp=1.0e-8_qp
 ! bla1=.FALSE.

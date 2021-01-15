@@ -6,6 +6,7 @@ USE intldc
 IMPLICIT NONE
 REAL(QP) :: ccheck,Theta,Xx
 CHARACTER(len=90) fichier
+LOGICAL blaPole
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION selfEpole(k,zk)
@@ -15,26 +16,37 @@ IMPLICIT NONE
 REAL(QP), INTENT(IN) :: k,zk
 REAL(QP) :: selfEpole(1:6)
 
-REAL(QP) :: q,qmin,qmax,EPS,kmin,kmax,dk,dq,bq(1:7)
+REAL(QP) :: q,qmin,qmax,EPS,kmin,kmax,dk,dq,bq(1:7),qThr
 INTEGER ix,nx,iq,nq,nqeff,nbq
 INTEGER nn,taille
  
 open(11,file=trim(fichier)//".info")
  read(11,*)x0,ccheck,Theta,Xx,qmin,qmax,nq,nn
- write(6,*)"x0,ccheck,Theta,Xx,qmin,qmax,nq,nn=",x0,ccheck,Theta,Xx,qmin,qmax,nq,nn
+ if (blaPole)then
+  write(6,*)"x0,ccheck,Theta,Xx,qmin,qmax,nq,nn,k,zk=",x0,ccheck,Theta,Xx,qmin,qmax,nq,nn,k,zk
+ endif
 close(11)
+
+! Select threshhold q below which omq is approximated by c q
+qThr=0.0205_qp
 
 dq=(qmax-qmin)/nq
 
 inquire(file=trim(fichier)//".dat", size=taille)
 nqeff=taille/nn
 
-write(6,*)"dq,nqeff,nqeff*dq=",dq,nqeff,qmin+nqeff*dq
-
-write(6,*)"Calculating all q-bounds"
+! Calculate q bounds
 call boundsQ(k,zk,bq,nbq)
-write(6,*)"Found this many q bounds:",nbq
-write(6,*)" with values",bq
+
+if (blaPole)then
+  write(6,*)"dq,nqeff,nqeff*dq=",dq,nqeff,qmin+nqeff*dq
+  write(6,*)"Calculating all q-bounds for k,zk=",k,zk
+  write(6,*)"q bounds found:",nbq,bq(1:nbq)
+endif
+
+! open(16,file="testBounds"//trim(fichier)//".dat",position="append")
+! write(16,*)k,zk,bq(1:nbq)
+! close(16)
 
 EPS =1.0e-8_qp
 ! selfEpole=qromovq(integrandeq  ,0.0_qp,nqeff*dq,6,(/bidon/),midpntvq,EPS)
@@ -136,7 +148,7 @@ CONTAINS
   INTEGER iq
   REAL(QP)  ptq(1:5),ptom(1:5),ptM(1:3,1:5),ptdM(1:3,1:5), errom
 
-  if(qVal<0.1)then
+  if(qVal<qThr)then
     ! For small q, use analytic formulas
      omq=sqrt(2.0_qp*ccheck)*qVal
   else
@@ -176,6 +188,7 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
   REAL(QP) x1, x2, y1P, y2P, y1M, y2M
   REAL(QP) q0, qM(1:3), qX(1:3)
   INTEGER iq, nqM, nqP, iP, iM, iT
+  ! REAL(QP) omqTEST, yTEST,y1TEST,y2TEST, dyTEST,dy1TEST,dy2TEST
   
   ! Initialize bounds (1e50 if not important)
   q0=   1.0e50_qp
@@ -195,31 +208,49 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
   nqM=0
   nqP=0
 
-  ! First data point
-  read(11,rec=1)qT,omqT,mT(:),dmT(:)
-  x1=qT
-  y1P=-zk+sqrt((k**2+qT**2+2.0_qp*k*qT-x0)**2+1.0_qp)+omqT
-  y1M=-zk+sqrt((k**2+qT**2-2.0_qp*k*qT-x0)**2+1.0_qp)+omqT
+  ! First data point (q=0)
+  x1=0.0_qp
+  y1P=-zk+sqrt((k**2-x0)**2+1.0_qp)
+  y1M=-zk+sqrt((k**2-x0)**2+1.0_qp)
 
   ! Loop over all data points to intervals with roots
-  do iq=2,nq
+  do iq=1,nq
    
    ! Second data point
    read(11,rec=iq)qT,omqT,mT(:),dmT(:)
+   if(qT<qThr)then
+    ! Below threshhold, use linear approximation for omq
+    call intOmQ(qT,omqT)
+   endif
    x2=qT
    y2P=-zk+sqrt((k**2+qT**2+2.0_qp*k*qT-x0)**2+1.0_qp)+omqT
    y2M=-zk+sqrt((k**2+qT**2-2.0_qp*k*qT-x0)**2+1.0_qp)+omqT
 
    ! Find roots in interval for z=e_{k+q}+omq
    if(y1P*y2P<0.0_qp)then
-    write(6,*)"Pole found for eP in interval",x1,x2
+    if (blaPole)then
+     write(6,*)"Pole found for eP in interval",x1,x2
+    endif
     nqP=nqP+1
     qX(nqP)=rtsafe(rootFunQEps,(/1.0_qp/),x1,x2,1.e-18_qp)
+
+    ! write(6,*)"pole is ",qX(nqP)
+    ! call intOmQ(qX(nqP),omqTEST)
+    ! yTEST=-zk+sqrt((k**2+qX(nqP)**2+2.0_qp*k*qX(nqP)-x0)**2+1.0_qp)+omqTEST
+    ! write(6,*)"function values:",y1P,yTEST,y2P
+
+    ! call rootFunQEps(x1,(/1.0_qp/),y1TEST,dy1TEST)
+    ! call rootFunQEps(x2,(/1.0_qp/),y2TEST,dy2TEST)
+    ! call rootFunQEps(qX(nqP),(/1.0_qp/),yTEST,dyTEST)
+    ! write(6,*)"function values:",y1TEST,yTEST,y2TEST
+    ! write(6,*)"function values derivatives:",dy1TEST,dyTEST,dy2TEST
    endif
 
    ! Find roots in interval for z=e_{k-q}+omq
    if(y1M*y2M<0.0_qp)then
-    write(6,*)"Pole found for eM in interval",x1,x2
+    if (blaPole)then
+     write(6,*)"Pole found for eM in interval",x1,x2
+    endif
     nqM=nqM+1
     qM(nqM)=rtsafe(rootFunQEps,(/-1.0_qp/),x1,x2,1.e-18_qp)
    endif
@@ -265,7 +296,9 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
 
   ! Calculate q0 if it exists and store
   if((1.0_qp<zk).AND.(zk<1.0_qp+omqMax))then
-  !  write(6,*)"zk crosses 1+omq",zk,omqMax
+   if (blaPole)then
+    write(6,*)"zk crosses 1+omq, zk,omqMax=",zk,omqMax
+   endif
    q0=rtsafe(rootFunQ0,(/0.0_qp/),qmin,qmax,1.e-18_qp)
    bq(iT)=q0
    nbq=nqP+nqM+1
@@ -324,8 +357,8 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
   call intOmQ(qIn+h,omP)
   dom=(omP-omM)/(2.0_qp*h)
 
-  xi=k**2+qIn**2+2.0_qp*us*k*qIn-x0
-  eps=sqrt(xiP**2+1.0_qp)
+  xi=k**2.0_qp+qIn**2.0_qp+2.0_qp*us*k*qIn-x0
+  eps=sqrt(xi**2.0_qp+1.0_qp)
 
   ! Output function and derivative
   x=eps+om-zk
