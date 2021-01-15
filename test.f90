@@ -18,6 +18,7 @@ CHARACTER(len=90) fichdep,fich
 CHARACTER(len=2)  reg,regvieux
 INTEGER izk,taille,config(1:7),pos(1:8),nn,nn2,ixq,ixqbis,compteur,nxq,iom
 COMPLEX(QPC) Gamm(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
+COMPLEX(QPC) SigPole(1:6)
 
 REAL(QP) ptq,ptom,ptM(1:3),ptdM(1:3)
 INTEGER iq, ik, iz
@@ -31,18 +32,19 @@ LOGICAL errtype1,errtype2,interpol
 
 ! x0=1.5_qp
 fichier="specx0_1.5"
-blaPole=.FALSE.
+blaPole=.TRUE.
 
-do ik=1,50
-    do iz=1,50
-        k=ik/10.0_qp
-        zk=1.0_qp+iz/10.0_qp
-        A=selfEpole(k,zk)
-    enddo
-enddo
-! k=0.1_qp
-! zk=1.9_qp
-! A=selfEpole(k,zk)
+! do ik=1,50
+!     do iz=1,50
+!         k=ik/10.0_qp
+!         zk=1.0_qp+iz/10.0_qp
+!         A=selfEpole(k,zk)
+!     enddo
+! enddo
+k=1.1_qp
+zk=2.5_qp
+SigPole=selfEpole(k,zk)
+write(6,*)"Sigma=",SigPole(:)
 
 ! EPSpp=1.0e-8_qp
 ! bla1=.FALSE.

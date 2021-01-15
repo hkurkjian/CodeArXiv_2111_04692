@@ -14,11 +14,12 @@ USE modsim
 USE intldc
 IMPLICIT NONE
 REAL(QP), INTENT(IN) :: k,zk
-REAL(QP) :: selfEpole(1:6)
+COMPLEX(QPC) :: selfEpole(1:6), SEint(1:6)
 
 REAL(QP) :: q,qmin,qmax,EPS,kmin,kmax,dk,dq,bq(1:7),qThr
 INTEGER ix,nx,iq,nq,nqeff,nbq
-INTEGER nn,taille
+INTEGER nn,taille,nbounds, ibound
+REAL(QP) bounds(1:9)
  
 open(11,file=trim(fichier)//".info")
  read(11,*)x0,ccheck,Theta,Xx,qmin,qmax,nq,nn
@@ -41,18 +42,46 @@ call boundsQ(k,zk,bq,nbq)
 if (blaPole)then
   write(6,*)"dq,nqeff,nqeff*dq=",dq,nqeff,qmin+nqeff*dq
   write(6,*)"Calculating all q-bounds for k,zk=",k,zk
-  write(6,*)"q bounds found:",nbq,bq(1:nbq)
+  write(6,*)nbq," q bounds found:",bq(1:nbq)
 endif
 
+! Add 0.0 and qMax to bounds
+bounds(1)=0.0_qp
+if(nbq>0)then
+ bounds(2:1+nbq)=bq(:)
+ bounds(2+nbq)=nqeff*dq
+ nbounds=2+nbq
+else
+ bounds(2)=nqeff*dq
+ nbounds=2
+endif
+
+if (blaPole)then
+ write(6,*)"All integration boundaries:",bounds(1:nbounds)
+endif
+
+! ! Write bounds to file
 ! open(16,file="testBounds"//trim(fichier)//".dat",position="append")
 ! write(16,*)k,zk,bq(1:nbq)
 ! close(16)
 
+! Calculate q-integral
 EPS =1.0e-8_qp
-! selfEpole=qromovq(integrandeq  ,0.0_qp,nqeff*dq,6,(/bidon/),midpntvq,EPS)
-selfEpole=0.1_qp
+selfEpole(:)=cmplx(0.0_qp,0.0_qp,kind=qpc)
+do ibound=1,nbounds-1
+ if (blaPole)then
+  write(6,*)"Integration from ",bounds(ibound)," to ",bounds(ibound+1)
+ endif
+ SEint=qromovcq(integrandeq  ,bounds(ibound),bounds(ibound+1),6,(/bidon/),midpntvcq,EPS)
+ selfEpole(:)=selfEpole(:)+SEint(:)
+ if (blaPole)then
+  write(6,*)"Solution = ",SEint(:)
+ endif
+enddo
+! selfEpole=qromovcq(integrandeq  ,0.0_qp,nqeff*dq,6,(/bidon/),midpntvcq,EPS)
+
+! Calculate phi-integral
 selfEpole=selfEpole*2.0_qp*PI
-!Comparison with the perturbative energy correction
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CONTAINS
@@ -61,17 +90,17 @@ CONTAINS
 
  INTEGER,  INTENT(IN) :: m
  REAL(QP), INTENT(IN), DIMENSION(:) :: q,arg
- COMPLEX(QP), DIMENSION(size(q),m) :: integrandeq
+ COMPLEX(QPC), DIMENSION(size(q),m) :: integrandeq
 
  REAL(QP)  ptq(1:5),ptom(1:5),ptM(1:3,1:5),ptdM(1:3,1:5)
  REAL(QP)  qs,om,Ma(1:3),dM(1:3),MatCat(1:3),errom,errM(1:3),errdM(1:3)
  REAL(QP)  ddet
- REAL(QP)  IuM(1:3),IuP(1:3)
+ COMPLEX(QPC)  IuM(1:3),IuP(1:3)
  INTEGER is,ib,iq
 
  do is=1,size(q)
   qs=q(is)
-  if(qs<0.1)then
+  if(qs<qThr)then
   ! For small q, use analytic formulas
    om=sqrt(2.0_qp*ccheck)*qs
    Ma(1)=om**2*Xx**2/Theta/8.0_qp
@@ -135,7 +164,9 @@ CONTAINS
   integrandeq(is,6)=-MatCat(3)*IuP(3)/ddet
 
   ! multiply by Jacobian q^2
-  write(6,*)"qs,integrandeq=",qs,integrandeq(is,1)
+  ! if(blaPole)then
+  !  write(6,*)"qs,integrandeq=",qs,integrandeq(is,1)
+  ! endif
   integrandeq(is,:)=qs**2*integrandeq(is,:)
  enddo
 
@@ -202,7 +233,7 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
   ! Open file for interpolation of omega_q
   open(11,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=nn)
   ! Read last value for omqMax
-  read(11,rec=nq)qMax,omqMax,mMax(:),dmMax(:)
+  read(11,rec=nqeff)qMax,omqMax,mMax(:),dmMax(:)
 
   ! Initialize nqM and nqP (number of bounds)
   nqM=0
@@ -214,7 +245,7 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
   y1M=-zk+sqrt((k**2-x0)**2+1.0_qp)
 
   ! Loop over all data points to intervals with roots
-  do iq=1,nq
+  do iq=1,nqeff
    
    ! Second data point
    read(11,rec=iq)qT,omqT,mT(:),dmT(:)
@@ -299,7 +330,7 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
    if (blaPole)then
     write(6,*)"zk crosses 1+omq, zk,omqMax=",zk,omqMax
    endif
-   q0=rtsafe(rootFunQ0,(/0.0_qp/),qmin,qmax,1.e-18_qp)
+   q0=rtsafe(rootFunQ0,(/0.0_qp/),qmin,nqeff*dq,1.e-18_qp)
    bq(iT)=q0
    nbq=nqP+nqM+1
   else
