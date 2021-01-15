@@ -4,11 +4,13 @@ PROGRAM spectre
  USE vars
  USE dspec
  USE Zerom
+ USE eqdetat
  IMPLICIT NONE
  REAL(QP) :: om,M(1:3),dM(1:3),x
  INTEGER nn,n,taille
  CHARACTER(len=90) fichier
  REAL(QP) xqmin,xqmax,dxq,tolx,omdep
+ REAL(QP) ccheck,Xx,Theta
  INTEGER ixq,ixqdep,nxq
  LOGICAL nouveauf
 
@@ -37,6 +39,10 @@ PROGRAM spectre
   dxq=(xqmax-xqmin)/nxq
  endif
 
+ Theta =4.0_qp*PI*I5(x0)
+ Xx    =4.0_qp*PI*I6(x0)
+ ccheck=mc2sDelta(x0)
+
  xq=xqmin
  write(6,*)'xq=',xq
  write(6,*)'om=',om
@@ -50,8 +56,8 @@ PROGRAM spectre
   call system("rm "//trim(fichier)//".dat")
   call system("rm "//trim(fichier)//".info")
   open(10,file=trim(fichier)//".info")
-   write(10,*)"!x0,xqmin,xqmax,nxq,taille enregistrement"
-   write(10,*)x0,xqmin,xqmax,nxq,nn
+   write(10,*)"!x0,Theta,Xx,ccheck,xqmin,xqmax,nxq,taille enregistrement"
+   write(10,*)x0,Theta,Xx,ccheck,xqmin,xqmax,nxq,nn
   close(10)
  endif
 

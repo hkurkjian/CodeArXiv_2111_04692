@@ -11,13 +11,13 @@ LIB_PERSO=-L./libperso -lmalib
 encorr: dspec.o intldc.o encorr.o
 	$(COMP) -fcheck=bounds -O3 $^ $(LIB_PERSO) -o encorr
 
-test: dspec.o Zerom.o intldc.o intpole.o estM.o test.o
+test: dspec.o Zerom.o estM.o intldc.o intpole.o test.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o test
 
 pointsM: dspec.o pointsM.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o pointsM
 
-spectre: dspec.o Zerom.o spectre.o
+spectre: eqdetat.o dspec.o Zerom.o spectre.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o spectre
 
 propre : 

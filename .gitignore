@@ -9,10 +9,12 @@
 *.mod
 *.dat
 *.info
+*.sor
 example
 encorr
 intldc
 test
 pointsM
+spectre
 libperso/libmalib.a
 DONNEES/

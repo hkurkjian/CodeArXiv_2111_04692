@@ -963,7 +963,7 @@ CONTAINS
         FUNCTION rd_q(x,y,z)
         REAL(QP), INTENT(IN) :: x,y,z
         REAL(QP) :: rd_q
-        REAL(QP), PARAMETER :: ERRTOL=0.000025_qp,TINY=1.0e-200_qp,BIG=4.5e200_qp,&
+        REAL(QP), PARAMETER :: ERRTOL=0.0000025_qp,TINY=1.0e-200_qp,BIG=4.5e200_qp,&
         C1=3.0_qp/14.0_qp,C2=1.0_qp/6.0_qp,C3=9.0_qp/22.0_qp,&
         C4=3.0_qp/26.0_qp,C5=0.25_qp*C3,C6=1.5_qp*C4
         !Computes Carlson's elliptic integral of the second kind, RD(x, y, z). x and y must be
@@ -1177,7 +1177,7 @@ CONTAINS
         FUNCTION rf_q(x,y,z)
         REAL(QP), INTENT(IN) :: x,y,z
         REAL(QP) :: rf_q
-        REAL(QP), PARAMETER :: ERRTOL=0.000025_qp,TINY=1.5e-100_qp,BIG=3.0e100_qp,&
+        REAL(QP), PARAMETER :: ERRTOL=0.0000025_qp,TINY=1.5e-100_qp,BIG=3.0e100_qp,&
         THIRD=1.0_qp/3.0_qp,&
         C1=1.0_qp/24.0_qp,C2=0.1_qp,C3=3.0_qp/44.0_qp,C4=1.0_qp/14.0_qp
         !Computes Carlson's elliptic integral of the first kind, RF (x, y, z). x, y, and z must be
@@ -1292,7 +1292,7 @@ CONTAINS
         USE nrutil, ONLY : assert
         REAL(QP), INTENT(IN) :: x,y,z,p
         REAL(QP) :: rj_q
-        REAL(QP), PARAMETER :: ERRTOL=0.0005_qp,TINY=2.5e-33_qp,BIG=9.0e41_qp,&
+        REAL(QP), PARAMETER :: ERRTOL=0.000005_qp,TINY=2.5e-33_qp,BIG=9.0e41_qp,&
         C1=3.0_qp/14.0_qp,C2=1.0_qp/3.0_qp,C3=3.0_qp/22.0_qp,&
         C4=3.0_qp/26.0_qp,C5=0.75_qp*C3,C6=1.5_qp*C4,C7=0.5_qp*C2,&
         C8=C3+C3

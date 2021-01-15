@@ -4,7 +4,8 @@
 10                  !read(10,*) nq2
 10                  !read(10,*) nq3
 10                  !read(10,*) nom1
-10                  !read(10,*) nom2
+20                  !read(10,*) nom2
 10                  !read(10,*) nom3
+20                  !read(10,*) nom4
 10                  !read(10,*) nominf
 BCSx04_2     !read(10,*) fichier
