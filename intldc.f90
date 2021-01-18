@@ -384,7 +384,7 @@ FUNCTION intim(k,zk,interpolation,fich)
    write(6,*)
    write(6,*)"bq(igr),bq(igr+1)=",bq(igr),bq(igr+1)
   endif
-  Iq1=qromovcq(intimq,bq(igr),bq(igr+1),3,(/bidon/),midpntvcq,EPSq)
+  Iq1=Iq1+qromovcq(intimq,bq(igr),bq(igr+1),3,(/bidon/),midpntvcq,EPSq)
  enddo
  CONTAINS
   FUNCTION intimq(q,argq,m)
@@ -486,6 +486,9 @@ FUNCTION intim(k,zk,interpolation,fich)
     write(6,*)"Imax(3)=",intmax(3)
    endif
    intimq(is,:)=intimq(is,:)+intmax(:)
+   open(25,file="intq.dat",POSITION="APPEND")
+    write(25,*)qs,real(intimq(is,:)),imag(intimq(is,:))
+   close(25)
   enddo
   END FUNCTION intimq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

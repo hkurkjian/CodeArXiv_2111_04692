@@ -7,6 +7,7 @@ USE Zerom
 USE intpole
 USE intldc
 USE estM
+USE eqdetat
 IMPLICIT NONE
 
 REAL(QP) om,dom,M(1:2,1:2),dM(1:2,1:2),A(1:6),dMm(1:3),q
@@ -32,23 +33,36 @@ x0crit=2.0_qp
 !
 x0=4.0_qp
 
+write(6,*)I5(x0)
+write(6,*)I6(x0)
+stop
+
 q=3.74074074074074074074074074074074472E-002_qp
 om=2.0005_qp
 
 q=0.112657197073092805303614801945519069_qp
 om=2.05085169619498758715291017720649464_qp
 
+q=  0.018109528119963552203633485860511848_qp 
+om= 2.05313761443109372152143534318848304_qp
 xq=q
 call oangpp
 
-write(6,*)"q,om=",q,om
-write(6,*)"opp=",opp(1:3)
-
-qpetit=0.05_qp*1/x0
-fich="BCSx04_nvo_augmente"
-call load_data(fich)
-est=interpolM_recerr(q,om)
-call unload_data
+!write(6,*)"q,om=",q,om
+!write(6,*)"opp=",opp(1:3)
+!
+!qpetit=0.05_qp/x0
+!fich="BCSx04_nvo_augmente"
+!call load_data(fich)
+!est=interpolM_recerr(q,om)
+!Matt(1,1)=cmplx(est(1),est(4),kind=qpc)
+!Matt(2,2)=cmplx(est(2),est(5),kind=qpc)
+!Matt(1,2)=cmplx(est(3),est(6),kind=qpc)
+!det=Matt(1,1)*Matt(2,2)-Matt(1,2)**2
+!write(6,*)
+!write(6,*)"det=",det
+!write(6,*)
+!call unload_data
 
 call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
 write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
@@ -74,9 +88,6 @@ write(6,*)
 
 
 fich="BCSx04_nvo_augmente"
-EPSpp=1.0e-8_qp
-bla1=.FALSE.
-blaM=.TRUE.
 temperaturenulle=.TRUE.
 x0=4.0_qp
 
@@ -86,6 +97,7 @@ k=2.1_qp
 zk=3.4_qp
 x0crit=0.0_qp
 x0=4.0_qp
+
 bla0=.TRUE.
 bla1=.TRUE.
 bla1=.FALSE.

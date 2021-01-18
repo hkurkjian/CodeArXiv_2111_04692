@@ -72,6 +72,7 @@ PROGRAM spectre
   call Zero(om,M,dM)
   write(6,*)
   write(6,*)"om,M=",om,M
+  write(6,*)"om,Mapp=",om,om**2*Xx**2/Theta/8.0_qp,Theta/2.0_qp,-Xx*om/4.0_qp
   write(6,*)"dM=",dM
  
   open(11,file=trim(fichier)//".dat",ACTION="WRITE",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)

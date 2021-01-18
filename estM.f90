@@ -310,6 +310,39 @@ elseif(err(2))then
 endif
 
 
+
+do iMm=1,3
+  if(fen==4)then
+     if(err(0))then
+      call polint(ptsy(2:3,3),ptsM(iMm,2:3,3),y,interpolM(iMm),dinterpolM(iMm))
+     elseif(err(1))then
+      call polint(ptsy(2:3,2),ptsM(iMm,2:3,2),y,interpolM(iMm),dinterpolM(iMm))
+     elseif(err(2))then
+      call polin2(ptsq(2:3),ptsy(2:3,2:3),ptsM(iMm,2:3,2:3),q,y,interpolM(iMm),dinterpolM(iMm))
+     else
+      call polin2(ptsq,ptsy,ptsM(iMm,:,:),q,y,interpolM(iMm),dinterpolM(iMm))
+     endif
+  else
+     if(err(0))then
+      call polint(ptsom(2:3,3),ptsM(iMm,2:3,3),om,interpolM(iMm),dinterpolM(iMm))
+     elseif(err(1))then
+      call polint(ptsom(2:3,2),ptsM(iMm,2:3,2),om,interpolM(iMm),dinterpolM(iMm))
+     elseif(err(2))then
+      call polin2(ptsq(2:3),ptsom(2:3,2:3),ptsM(iMm,2:3,2:3),q,om,interpolM(iMm),dinterpolM(iMm))
+     else
+      call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,om,interpolM(iMm),dinterpolM(iMm))
+     endif
+  endif
+  if(abs(dinterpolM(iMm)/interpolM(iMm))>0.01_qp)then
+    blablaerr=.TRUE.
+    write(6,*)"grosse erreur d’interpolation"
+  endif
+  if(abs(dinterpolM(iMm)/interpolM(iMm))>0.2_qp)then
+    err(0:1)=.TRUE.
+    write(6,*)"trop grosse erreur d’interpolation"
+  endif
+enddo
+
 if(blaM.OR.blablaerr)then
  write(6,*)
  write(6,*)"------------- interpolM -------------------"
@@ -341,36 +374,12 @@ if(blaM.OR.blablaerr)then
  endif
 
  write(6,*)
- write(6,*)"ptsM(2,1,:)=",ptsM(2,1,:)
- write(6,*)"ptsM(2,2,:)=",ptsM(2,2,:)
- write(6,*)"ptsM(2,3,:)=",ptsM(2,3,:)
- write(6,*)"ptsM(2,4,:)=",ptsM(2,4,:)
+ write(6,*)"ptsM(1,1,:)=",ptsM(1,1,:)
+ write(6,*)"ptsM(1,2,:)=",ptsM(1,2,:)
+ write(6,*)"ptsM(1,3,:)=",ptsM(1,3,:)
+ write(6,*)"ptsM(1,4,:)=",ptsM(1,4,:)
  write(6,*)
 endif
-
-do iMm=1,3
-  if(fen==4)then
-     if(err(0))then
-      call polint(ptsy(2:3,3),ptsM(iMm,2:3,3),y,interpolM(iMm),dinterpolM(iMm))
-     elseif(err(1))then
-      call polint(ptsy(2:3,2),ptsM(iMm,2:3,2),y,interpolM(iMm),dinterpolM(iMm))
-     elseif(err(2))then
-      call polin2(ptsq(2:3),ptsy(2:3,2:3),ptsM(iMm,2:3,2:3),q,y,interpolM(iMm),dinterpolM(iMm))
-     else
-      call polin2(ptsq,ptsy,ptsM(iMm,:,:),q,y,interpolM(iMm),dinterpolM(iMm))
-     endif
-  else
-     if(err(0))then
-      call polint(ptsom(2:3,3),ptsM(iMm,2:3,3),om,interpolM(iMm),dinterpolM(iMm))
-     elseif(err(1))then
-      call polint(ptsom(2:3,2),ptsM(iMm,2:3,2),om,interpolM(iMm),dinterpolM(iMm))
-     elseif(err(2))then
-      call polin2(ptsq(2:3),ptsom(2:3,2:3),ptsM(iMm,2:3,2:3),q,om,interpolM(iMm),dinterpolM(iMm))
-     else
-      call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,om,interpolM(iMm),dinterpolM(iMm))
-     endif
-  endif
-enddo
 
 interpolM(4)=-PI*rhopp(1.5_qp,om,-1.0_qp)
 interpolM(5)=-PI*rhopp(2.5_qp,om,-1.0_qp)
