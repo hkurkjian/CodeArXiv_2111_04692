@@ -10,6 +10,7 @@
 *.dat
 *.info
 *.sor
+test.eps
 example
 encorr
 intldc

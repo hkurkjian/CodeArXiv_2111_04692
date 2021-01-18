@@ -1,6 +1,6 @@
-0.8604366861256  !read(10,*) x0
-0.02 !read(10,*)xq
+4.0  !read(10,*) x0
+0.01 !read(10,*)xq
 4.0 !read(10,*)xq
-1000                  !read(10,*) nxq
+0                  !read(10,*) nxq
 0.1 !read(10,*) zdep(1) 
 BCSx010     !read(10,*) fichier
