@@ -197,7 +197,7 @@ REAL(QP) Icomp,Iinf!partial integrals
 REAL(QP) arg(1:1,1:10),bornes(1:10)
 REAL(QP), PARAMETER :: singu=1.0_qp,nonsingu=-1.0_qp !singu/nonsingu: call inter with or without the regularizing term r0/(om0-om)
 REAL(QP), PARAMETER :: su=1.0_qp,nsu=-1.0_qp !short for singu/nonsingu
-REAL(QP) ag(1:4)
+REAL(QP) ag(1:4),mil
 INTEGER choix(1:10)
 LOGICAL axer !calculation on or outside the real axis (currently not active)
 
@@ -361,9 +361,10 @@ if(axer)then
   
       Icomp=-r0*log((ag(2)-om0)/(om0-ag(1)))
      elseif(om0<ag(3))then
+      mil=max(om0,(ag(2)+ag(3))/2.0_qp)
       arg(1,1:8)=         (/nsu,    nsu,     su,     su,   nsu,   nsu,                 nsu,   nsu/)
       choix(1:8)=         (/mpnt,   msqu,    msql,   msqu, msql,  msqu,                msql,  rinf/)
-      bornes(1:9)=        (/0.0_qp, ag(1),   ag(2),  om0,  ag(3), (ag(3)+ag(4))/2.0_qp,ag(4), 2*ag(4),bmax/)
+      bornes(1:9)=        (/0.0_qp, ag(1),   ag(2),  mil,  ag(3), (ag(3)+ag(4))/2.0_qp,ag(4), 2*ag(4),bmax/)
       intpp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
 
       Icomp=-r0*log((ag(3)-om0)/(om0-ag(2)))
@@ -1242,8 +1243,95 @@ IMPLICIT NONE
 if(x0<0)stop "xqjoin n'existe que pour x0>0"
 xqjoin=2*sqrt(x0+(sqrt(1+x0**2)-x0)**(1.0_qp/3.0_qp)-(sqrt(1+x0**2)+x0)**(1.0_qp/3.0_qp))
 END SUBROUTINE calcxqjoin
-END MODULE dspec
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE mat_pairfield_pttq(om0,e,det,M,fr)
+USE recettes
+!mat_pairfield computes the 2*2 fluctuation matrix in the phase-modulus basis in the limit xq<<1/x0 (in the BCS regime)
+!input: same for mat
 
+!output: 
+!M(1:2,1:2) a 2*2 symmetric matrix in the basis 1:phase, 2:modulus
+!det=M(1,1)*M(2,2)-M(1,2)**2, the determinant of the matrix
+!fr=1/M the pair propagator
+
+IMPLICIT NONE
+COMPLEX(QPC), DIMENSION(1:2,1:2), INTENT(OUT) :: M,fr
+COMPLEX(QPC), INTENT(OUT) :: det
+REAL(QP), INTENT(IN)  :: om0,e
+
+REAL(QP) ss,ll,nn1,nn2,mm,re_ellpi1,re_ellpi2,im_ellpi1,t0,zeta,rem11,rem22,imm11,imm22
+COMPLEX(QPC) fp,fm
+
+call oangpp
+call oangpt
+
+if(om0<opp(1)) stop "om n’est pas dans le continuum de brisure de paires"
+
+ll=asinh(x0)
+mm =-exp(2.0_qp*ll)
+
+ss=acosh(om0/opp(1))
+!write(6,*)"ss=",ss
+
+nn1= exp(ll+ss)
+nn2=-exp(ll-ss)
+re_ellpi1=ellpi_q(PI/2.0_qp,nn1,mm)
+re_ellpi2=ellpi_q(PI/2.0_qp,nn2,mm)
+
+t0=asin(1.0_qp/sqrt(nn1))
+im_ellpi1=-PI/((1.0_qp-mm*sin(t0)**2)**(0.5_qp)*(-nn1*sin(2.0_qp*t0)))
+!write(6,*)"im_ellpi1=",im_ellpi1
+
+fp=(sinh(ss)+sinh(ll))*(re_ellpi1+iiq*im_ellpi1-re_ellpi2)+cosh(ss)*ellf(PI/2.0_qp,iiq*exp(ll))
+!write(6,*)"fp=",fp
+
+ss=-ss
+
+!write(6,*)"ss=",ss
+nn1= exp(ll+ss)
+nn2=-exp(ll-ss)
+re_ellpi1=ellpi_q(PI/2.0_qp,nn1,mm)
+re_ellpi2=ellpi_q(PI/2.0_qp,nn2,mm)
+
+if(om0<opp(3))then
+ t0=asin(1.0_qp/sqrt(nn1))
+ im_ellpi1=PI/((1.0_qp-mm*sin(t0)**2)**(0.5_qp)*(-nn1*sin(2.0_qp*t0)))
+! write(6,*)"im_ellpi1=",im_ellpi1
+endif
+
+fm=(sinh(ss)+sinh(ll))*(re_ellpi1+iiq*im_ellpi1-re_ellpi2)+cosh(ss)*ellf(PI/2.0_qp,iiq*exp(ll))
+!write(6,*)"fm=",fm
+
+ss=-ss
+
+M(1,2)=-PI*sqrt(2*exp(ll))*(fp+fm)
+M(1,2)=cmplx(real(-PI*sqrt(2*exp(ll))*(fp+fm)),-PI*rhopp(3.5_qp,om0,-1.0_qp),kind=qpc)
+if((opp(1)<om0).AND.(om0<opp(2)))then
+ zeta=(om0-opp(1))/xq**2/x0
+ rem11=-PI**2*log((1+sqrt(1-zeta))/sqrt(zeta))/xq
+ rem22= PI**2*(sqrt(1-zeta)-zeta*log((1+sqrt(1-zeta))/sqrt(zeta)))*xq*x0/2.0_qp
+ rem22= rem22+2.0_qp*PI*x0**(1.5_qp)*xq**2*(zeta-1.0_qp/3.0_qp)
+ imm11=-PI**3/2/xq
+ imm22=-PI**3*zeta*xq*x0/4
+ M(1,1)=cmplx(rem11,imm11,kind=qpc)
+ M(2,2)=cmplx(rem22,imm22,kind=qpc)
+else
+ M(1,1)=-PI*sqrt(2*exp(ll))*(fp-fm)/tanh(ss)
+ M(1,1)=cmplx(real(-PI*sqrt(2*exp(ll))*(fp-fm)/tanh(ss)),-PI*rhopp(1.5_qp,om0,-1.0_qp),kind=qpc)
+ M(2,2)=M(1,1)*tanh(ss)**2
+ M(2,2)=cmplx(real(M(1,1)*tanh(ss)**2),-PI*rhopp(2.5_qp,om0,-1.0_qp),kind=qpc)
+endif
+
+det=M(1,1)*M(2,2)-M(1,2)**2.0_qp
+
+fr(1,1)=M(2,2)/det
+fr(2,2)=M(1,1)/det
+fr(1,2)=-M(1,2)/det
+fr(2,1)=fr(1,2)
+
+END SUBROUTINE mat_pairfield_pttq
+END MODULE dspec
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !    if(opp(1)>2*x0)then
 !     arg(1,1:5)=         (/nsu,    nsu,   nsu,             nsu,     nsu/)
 !     choix(1:5)=         (/msqu,   msql,  msqu,            msql,    rinf/)

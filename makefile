@@ -17,7 +17,7 @@ test: dspec.o Zerom.o estM.o intldc.o intpole.o test.o
 pointsM: dspec.o pointsM.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o pointsM
 
-spectre: dspec.o Zerom.o spectre.o
+spectre: eqdetat.o dspec.o Zerom.o spectre.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o spectre
 
 propre : 

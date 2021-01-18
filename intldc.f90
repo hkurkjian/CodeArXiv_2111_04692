@@ -375,8 +375,15 @@ FUNCTION intim(k,zk,interpolation,fich)
   call load_data(fich)
  endif
 
- do igr=3,taille-1
+ do igr=1,taille-1
   grecque=config(igr)
+  if(bla0)then
+   write(6,*)"---------------------------------"
+   write(6,*)
+   write(6,*)"igr=",igr
+   write(6,*)
+   write(6,*)"bq(igr),bq(igr+1)=",bq(igr),bq(igr+1)
+  endif
   Iq1=qromovcq(intimq,bq(igr),bq(igr+1),3,(/bidon/),midpntvcq,EPSq)
  enddo
  CONTAINS

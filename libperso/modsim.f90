@@ -1287,6 +1287,16 @@ MODULE modsim
        if(size(arg,  DIM=2).NE.size(bornes)-1) stop "size(arg)   ne correspond pas à size(bornes)-1 dans decoupevcq"
        decoupevcq(:)=0.0_qp
        do m=1,size(choix)
+        if(bla)then
+         write(6,*)"--------------------------------"
+         write(6,*)
+         write(6,*)"decoupevcq"
+         write(6,*)
+         write(6,*)"Intégrale de ",bornes(m)," à ",bornes(m+1)
+         write(6,*)
+         write(6,*)
+         write(6,*)
+        endif
         I=qromochoixvcq(func,bornes(m),bornes(m+1),mm,arg(:,m),choix(m),EPS)
         decoupevcq=decoupevcq+I
         if(bla)then
