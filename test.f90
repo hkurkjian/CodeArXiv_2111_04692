@@ -29,7 +29,7 @@ LOGICAL errtype1,errtype2,interpol
 REAL(QP) ThetaT, XxT, ccheckT
 
 ! ! x0=1.5_qp
-! fichier="specx0_1.5"
+fichier="specx0_1.5"
 ! blaPole=.TRUE.
 
 ! ! do ik=1,50
@@ -44,16 +44,26 @@ REAL(QP) ThetaT, XxT, ccheckT
 ! SigPole=selfEpole(k,zk)
 ! write(6,*)"Sigma=",SigPole(:)
 
-open(10,file="testCIJ.dat")
-write(10,*)"x0, Theta, Xx, ccheck"
-do ix=1,101
-    x0=ix/10.0_qp-5.1_qp
-    ThetaT =4.0_qp*PI*I5(x0)
-    XxT    =4.0_qp*PI*I6(x0)
-    ccheckT=mc2sDelta(x0)
-    write(10,*)x0,ThetaT,XxT,ccheckT
+! open(10,file="testCIJ.dat")
+! write(10,*)"x0, Theta, Xx, ccheck"
+! do ix=1,101
+!     x0=ix/10.0_qp-5.1_qp
+!     ThetaT =4.0_qp*PI*I5(x0)
+!     XxT    =4.0_qp*PI*I6(x0)
+!     ccheckT=mc2sDelta(x0)
+!     write(10,*)x0,ThetaT,XxT,ccheckT
+! enddo
+! close(10)
+
+open(10,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=128)
+open(11,file="dat15lowQ.dat")
+write(11,*)"q    omq    Mpp    Mmm    Mpm    dMpp    dMmm    dMpm"
+do iq=1,1000
+    read(10,rec=iq)ptq,ptom,ptM(:),ptdM(:)
+    write(11,*)ptq,ptom,ptM(:),ptdM(:)
 enddo
 close(10)
+close(11)
 
 ! EPSpp=1.0e-8_qp
 ! bla1=.TRUE.

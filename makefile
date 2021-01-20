@@ -20,6 +20,9 @@ pointsM: dspec.o pointsM.o
 spectre: eqdetat.o dspec.o Zerom.o spectre.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o spectre
 
+mkInfoFile: eqdetat.o mkInfoFile.o
+	$(COMP) -O3 $^ $(LIB_PERSO) -o mkInfoFile
+
 propre : 
 	rm -f *.o 
 	rm -f *.mod
