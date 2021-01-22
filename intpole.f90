@@ -4,7 +4,9 @@ USE modsim
 USE vars
 USE intldc
 IMPLICIT NONE
-REAL(QP) :: ccheck,Theta,Xx
+REAL(QP) :: c0,g0
+REAL(QP) :: lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
+REAL(QP) :: ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
 CHARACTER(len=90) fichier
 LOGICAL blaPole
 CONTAINS
@@ -22,9 +24,11 @@ INTEGER nn,taille,nbounds, ibound
 REAL(QP) bounds(1:9)
  
 open(11,file=trim(fichier)//".info")
- read(11,*)x0,ccheck,Theta,Xx,qmin,qmax,nq,nn
+ read(11,*)x0,qmin,qmax,nq,nn,c0,g0,lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3,ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
  if (blaPole)then
-  write(6,*)"x0,ccheck,Theta,Xx,qmin,qmax,nq,nn,k,zk=",x0,ccheck,Theta,Xx,qmin,qmax,nq,nn,k,zk
+  write(6,*)"c0,g0",c0,g0
+  write(6,*)"lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3",lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
+  write(6,*)"ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2",ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
  endif
 close(11)
 
@@ -102,13 +106,13 @@ CONTAINS
   qs=q(is)
   if(qs<qThr)then
   ! For small q, use analytic formulas
-   om=sqrt(2.0_qp*ccheck)*qs
-   Ma(1)=om**2*Xx**2/Theta/8.0_qp
-   Ma(2)=Theta/2.0_qp
-   Ma(3)=-Xx*om/4.0_qp
-   dM(1)=-Theta*om/4.0_qp
-   dM(2)=0.0_qp
-   dM(3)=-Xx/4.0_qp
+   om=c0*qs*(1.0_qp+g0*(qs/c0)**2.0_qp)
+   Ma(1)=lMpp2*qs**2.0_qp+lMpp4*qs**4.0_qp
+   Ma(2)=lMmm0+lMmm2*qs**2.0_qp+lMmm4*qs**4.0_qp
+   Ma(3)=lMpm1*qs+lMpm3*qs**3.0_qp
+   dM(1)=ldMpp1*qs+ldMpp3*qs**3.0_qp
+   dM(2)=ldMmm1*qs+ldMmm3*qs**3.0_qp
+   dM(3)=ldMpm0+ldMpm2*qs**2.0_qp
   else
   ! Else, use interpolation from data file
    open(10,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=nn)
@@ -181,7 +185,7 @@ CONTAINS
 
   if(qVal<qThr)then
     ! For small q, use analytic formulas
-     omq=sqrt(2.0_qp*ccheck)*qVal
+    om=c0*qVal*(1.0_qp+g0*(qVal/c0)**2.0_qp)
   else
 
     ! write(6,*)"Calculating omega for q=",qVal

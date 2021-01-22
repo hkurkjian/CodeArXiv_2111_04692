@@ -1,4 +1,4 @@
-program test
+program mkInfoFile
     USE eqdetat
     USE nrtype
     USE modsim
@@ -102,4 +102,4 @@ program test
         write(11,*)x0,qmin,qmax,nq,nn,c0,g0,lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3,ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
     close(11)
     
-end program    
+end program
