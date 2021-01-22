@@ -28,7 +28,7 @@ REAL(QP) nnn,mmm,intell
 LOGICAL errtype1,errtype2,interpol
 REAL(QP) ThetaT, XxT, ccheckT
 
-! ! x0=1.5_qp
+x0=1.5_qp
 fichier="specx0_1.5"
 ! blaPole=.TRUE.
 
@@ -40,7 +40,18 @@ fichier="specx0_1.5"
 ! !     enddo
 ! ! enddo
 ! k=1.1_qp
-! zk=2.5_qp
+! zk=sqrt((k**2.0_qp-x0)**2.0_qp+1.0_qp)
+call system("rm tstx04DAT.dat")
+open(1, file = 'tstx04DAT.dat', status = 'new')
+do ik=1,250
+    k=ik/50.0_qp
+    zk=sqrt((k**2.0_qp-x0)**2.0_qp+1.0_qp)
+    SigPole=selfEpole(k,zk)
+    write(1,*)k,zk,real(SigPole(1:3)),imag(SigPole(1:3)),real(SigPole(4:6))
+enddo
+close(1)
+! k=1.14_qp
+! zk=sqrt((k**2.0_qp-x0)**2.0_qp+1.0_qp)
 ! SigPole=selfEpole(k,zk)
 ! write(6,*)"Sigma=",SigPole(:)
 
@@ -55,15 +66,15 @@ fichier="specx0_1.5"
 ! enddo
 ! close(10)
 
-open(10,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=128)
-open(11,file="dat15lowQ.dat")
-write(11,*)"q    omq    Mpp    Mmm    Mpm    dMpp    dMmm    dMpm"
-do iq=1,1000
-    read(10,rec=iq)ptq,ptom,ptM(:),ptdM(:)
-    write(11,*)ptq,ptom,ptM(:),ptdM(:)
-enddo
-close(10)
-close(11)
+! open(10,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=128)
+! open(11,file="dat15lowQ.dat")
+! write(11,*)"q    omq    Mpp    Mmm    Mpm    dMpp    dMmm    dMpm"
+! do iq=1,1000
+!     read(10,rec=iq)ptq,ptom,ptM(:),ptdM(:)
+!     write(11,*)ptq,ptom,ptM(:),ptdM(:)
+! enddo
+! close(10)
+! close(11)
 
 ! EPSpp=1.0e-8_qp
 ! bla1=.TRUE.

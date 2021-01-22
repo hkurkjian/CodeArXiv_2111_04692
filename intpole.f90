@@ -24,7 +24,11 @@ INTEGER nn,taille,nbounds, ibound
 REAL(QP) bounds(1:9)
  
 open(11,file=trim(fichier)//".info")
- read(11,*)x0,qmin,qmax,nq,nn,c0,g0,lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3,ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
+!  read(11,*)x0,qmin,qmax,nq,nn,c0,g0,lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3,ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2,kMM,kMP
+  read(11,*)x0,qmin,qmax,nq,nn
+  read(11,*)c0,g0
+  read(11,*)lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
+  read(11,*)ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
  if (blaPole)then
   write(6,*)"c0,g0",c0,g0
   write(6,*)"lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3",lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
@@ -70,7 +74,7 @@ endif
 ! close(16)
 
 ! Calculate q-integral
-EPS =1.0e-8_qp
+EPS =1.0e-6_qp
 selfEpole(:)=cmplx(0.0_qp,0.0_qp,kind=qpc)
 do ibound=1,nbounds-1
  if (blaPole)then
@@ -185,7 +189,7 @@ CONTAINS
 
   if(qVal<qThr)then
     ! For small q, use analytic formulas
-    om=c0*qVal*(1.0_qp+g0*(qVal/c0)**2.0_qp)
+    omq=c0*qVal*(1.0_qp+g0*(qVal/c0)**2.0_qp)
   else
 
     ! write(6,*)"Calculating omega for q=",qVal
