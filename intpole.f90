@@ -24,7 +24,6 @@ INTEGER nn,taille,nbounds, ibound
 REAL(QP) bounds(1:9)
  
 open(11,file=trim(fichier)//".info")
-!  read(11,*)x0,qmin,qmax,nq,nn,c0,g0,lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3,ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2,kMM,kMP
   read(11,*)x0,qmin,qmax,nq,nn
   read(11,*)c0,g0
   read(11,*)lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
@@ -42,13 +41,13 @@ qThr=0.0205_qp
 dq=(qmax-qmin)/nq
 
 inquire(file=trim(fichier)//".dat", size=taille)
-nqeff=taille/nn
+nqeff=taille/nn-2
 
 ! Calculate q bounds
 call boundsQ(k,zk,bq,nbq)
 
 if (blaPole)then
-  write(6,*)"dq,nqeff,nqeff*dq=",dq,nqeff,qmin+nqeff*dq
+  write(6,*)"dq,nqeff,qmax=",dq,nqeff,qmin+nqeff*dq
   write(6,*)"Calculating all q-bounds for k,zk=",k,zk
   write(6,*)nbq," q bounds found:",bq(1:nbq)
 endif
@@ -68,11 +67,6 @@ if (blaPole)then
  write(6,*)"All integration boundaries:",bounds(1:nbounds)
 endif
 
-! ! Write bounds to file
-! open(16,file="testBounds"//trim(fichier)//".dat",position="append")
-! write(16,*)k,zk,bq(1:nbq)
-! close(16)
-
 ! Calculate q-integral
 EPS =1.0e-6_qp
 selfEpole(:)=cmplx(0.0_qp,0.0_qp,kind=qpc)
@@ -86,7 +80,6 @@ do ibound=1,nbounds-1
   write(6,*)"Solution = ",SEint(:)
  endif
 enddo
-! selfEpole=qromovcq(integrandeq  ,0.0_qp,nqeff*dq,6,(/bidon/),midpntvcq,EPS)
 
 ! Calculate phi-integral
 selfEpole=selfEpole*2.0_qp*PI
@@ -192,8 +185,6 @@ CONTAINS
     omq=c0*qVal*(1.0_qp+g0*(qVal/c0)**2.0_qp)
   else
 
-    ! write(6,*)"Calculating omega for q=",qVal
-
     ! Open file for interpolation of omega_q
     open(12,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=nn)
     
@@ -273,16 +264,6 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
     nqP=nqP+1
     qX(nqP)=rtsafe(rootFunQEps,(/1.0_qp/),x1,x2,1.e-18_qp)
 
-    ! write(6,*)"pole is ",qX(nqP)
-    ! call intOmQ(qX(nqP),omqTEST)
-    ! yTEST=-zk+sqrt((k**2+qX(nqP)**2+2.0_qp*k*qX(nqP)-x0)**2+1.0_qp)+omqTEST
-    ! write(6,*)"function values:",y1P,yTEST,y2P
-
-    ! call rootFunQEps(x1,(/1.0_qp/),y1TEST,dy1TEST)
-    ! call rootFunQEps(x2,(/1.0_qp/),y2TEST,dy2TEST)
-    ! call rootFunQEps(qX(nqP),(/1.0_qp/),yTEST,dyTEST)
-    ! write(6,*)"function values:",y1TEST,yTEST,y2TEST
-    ! write(6,*)"function values derivatives:",dy1TEST,dyTEST,dy2TEST
    endif
 
    ! Find roots in interval for z=e_{k-q}+omq
@@ -356,8 +337,7 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
   REAL(QP) om, omM, omP, dom, qInM, qInP, h
 
   ! Step size for derivative
-  h=qIn*0.0001_qp
-  ! write(6,*)"Looking for q0 with qIn,h=",qIn,h
+  h=qIn*0.00001_qp
 
   ! Calculate omega values from interpolation
   call intOmQ(qIn  ,om )
@@ -366,12 +346,10 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
   call intOmQ(qInM,omM)
   call intOmQ(qInP,omP)
   dom=(omP-omM)/(2.0_qp*h)
-  ! write(6,*)"Calculated om and dom=",om,dom
 
   ! Output function and derivative
   x=1.0_qp+om-zk
   dx=dom
-  ! write(6,*)"Calculated x and dx=",x,dx
 
  END SUBROUTINE rootFunQ0
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

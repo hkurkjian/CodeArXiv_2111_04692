@@ -33,3 +33,4 @@ propre :
 	rm -f *.syntec.gz
 	rm -f spectre
 	rm -f pointsM
+	rm -f *.exe

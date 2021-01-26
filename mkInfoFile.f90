@@ -12,7 +12,10 @@ program mkInfoFile
     REAL(QP) ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
     ! REAL(QP) xC,a,b,c,d,p,q,t0,t1,kMM,kMP
 
-    fichier="specx0_1.5"
+    ! fichier="specUni"
+    open(10,file="mkInfoFile.inp")
+        read(10,*)fichier
+    close(10)
     open(11,file=trim(fichier)//".info")
         read(11,*)x0,qmin,qmax,nq,nn
         write(6,*)x0,qmin,qmax,nq,nn

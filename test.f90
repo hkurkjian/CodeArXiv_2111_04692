@@ -28,28 +28,36 @@ REAL(QP) nnn,mmm,intell
 LOGICAL errtype1,errtype2,interpol
 REAL(QP) ThetaT, XxT, ccheckT
 
-x0=1.5_qp
-fichier="specx0_1.5"
+! x0=0.860436686125678599999999999999999961_qp
+fichier="./datSpectre/specUni"
 ! blaPole=.TRUE.
 
-! ! do ik=1,50
-! !     do iz=1,50
-! !         k=ik/10.0_qp
-! !         zk=1.0_qp+iz/10.0_qp
-! !         A=selfEpole(k,zk)
-! !     enddo
-! ! enddo
+open(1, file = 'unisd.dat', status = 'new')
+do ik=1,50
+    k=ik/25.0_qp
+    do iz=1,50
+        zk=1.0_qp+iz/25.0_qp
+        SigPole=selfEpole(k,zk)
+        write(1,*)k,zk,real(SigPole(1:3)),imag(SigPole(1:3)),real(SigPole(4:6))
+    enddo
+    write(6,*)"Calculation succesful for k=",k
+enddo
+close(11)
 ! k=1.1_qp
 ! zk=sqrt((k**2.0_qp-x0)**2.0_qp+1.0_qp)
-call system("rm tstx04DAT.dat")
-open(1, file = 'tstx04DAT.dat', status = 'new')
-do ik=1,250
-    k=ik/50.0_qp
-    zk=sqrt((k**2.0_qp-x0)**2.0_qp+1.0_qp)
-    SigPole=selfEpole(k,zk)
-    write(1,*)k,zk,real(SigPole(1:3)),imag(SigPole(1:3)),real(SigPole(4:6))
-enddo
-close(1)
+
+
+! call system("rm tstUniDAT.dat")
+! open(1, file = 'tstUniDAT.dat', status = 'new')
+! do ik=1,250
+!     k=ik/50.0_qp
+!     zk=sqrt((k**2.0_qp-x0)**2.0_qp+1.0_qp)
+!     SigPole=selfEpole(k,zk)
+!     write(1,*)k,zk,real(SigPole(1:3)),imag(SigPole(1:3)),real(SigPole(4:6))
+! enddo
+! close(1)
+
+
 ! k=1.14_qp
 ! zk=sqrt((k**2.0_qp-x0)**2.0_qp+1.0_qp)
 ! SigPole=selfEpole(k,zk)
@@ -66,12 +74,18 @@ close(1)
 ! enddo
 ! close(10)
 
-! open(10,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=128)
-! open(11,file="dat15lowQ.dat")
-! write(11,*)"q    omq    Mpp    Mmm    Mpm    dMpp    dMmm    dMpm"
-! do iq=1,1000
+! nn=128
+! inquire(file="./datSpectre/"//trim(fichier)//".dat", size=taille)
+! nxq=taille/nn
+! write(6,*)nxq,taille,nn
+
+! open(10,file="./datSpectre/"//trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=nn)
+! open(11,file="dat21_read.dat")
+! ! write(11,*)"q    omq    Mpp    Mmm    Mpm    dMpp    dMmm    dMpm"
+! write(11,*)"q    omq"
+! do iq=1,nxq
 !     read(10,rec=iq)ptq,ptom,ptM(:),ptdM(:)
-!     write(11,*)ptq,ptom,ptM(:),ptdM(:)
+!     write(11,*)ptq,ptom
 ! enddo
 ! close(10)
 ! close(11)
