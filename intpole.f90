@@ -152,17 +152,17 @@ CONTAINS
 
   ! Angle integration
   IuP=Iuanaly(om+zk,k,qs)
-  IuM=Iuanaly(om-zk,k,qs)
+  IuM=conjg(Iuanaly(om-zk,k,qs))
 
   ! 1->2 process integrand
   integrandeq(is,1)=-MatCat(2)*IuM(1)/ddet
   integrandeq(is,2)=-MatCat(1)*IuM(2)/ddet
-  integrandeq(is,3)=-MatCat(3)*IuM(3)/ddet
+  integrandeq(is,3)= MatCat(3)*IuM(3)/ddet
 
   ! 0->3 process integrand
   integrandeq(is,4)= MatCat(1)*IuP(2)/ddet
   integrandeq(is,5)= MatCat(2)*IuP(1)/ddet
-  integrandeq(is,6)=-MatCat(3)*IuP(3)/ddet
+  integrandeq(is,6)= MatCat(3)*IuP(3)/ddet
 
   ! multiply by Jacobian q^2
   ! if(blaPole)then
