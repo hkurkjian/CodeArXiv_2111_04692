@@ -19,9 +19,13 @@ CHARACTER(len=90) fichdep,fich,fich2
 CHARACTER(len=2)  reg,regvieux
 INTEGER izk,taille,config(1:7),pos(1:8),nn,nn2,ixq,ixqbis,compteur,nxq,iom
 COMPLEX(QPC) Gamm(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
+COMPLEX(QPC) SigPole(1:6)
+
+REAL(QP) ptq,ptom,ptM(1:3),ptdM(1:3)
+INTEGER iq, ik, iz, ix
 REAL(QP) nnn,mmm,intell
 
-LOGICAL errtype1,errtype2,interpol
+LOGICAL interpol
 
 !Paramètres physiques
 x0=4.0_qp
@@ -197,8 +201,6 @@ stop
 !write(6,*)"det=",det
 !write(6,*)
 
-
-!
 !k=(k11+k12)/2.
 !k=1.5*k12
 !write(6,*)"k=",k
