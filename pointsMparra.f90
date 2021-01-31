@@ -72,8 +72,8 @@ call system("rm "//trim(fichier)//".dat")
 call system("rm "//trim(fichier)//"grilleq.dat")
 call system("rm "//trim(fichier)//".info")
 open(12,file=trim(fichier)//".info")
- write(12,*)"!x0,xqmin,xq1a,xq1b,xq2,xqmax,nq1a,nq1b,nq2,nq3,nom1a,nom1b,nom2a,nom2b,nom2c,nom3a,nom3a,nominf,nn,bmax"
- write(12,*)  x0,xqmin,xq1a,xq1b,xq2,xqmax,nqfen,nomfen,nominf,nn,bmax
+ write(12,*)"!x0,xqmin,xq1a,xq1b,xq2,xqmax,nq1a,nq1b,nq2,nq3,nom1a,nom1b,nom2a,nom2b,nom2c,nom3a,nom3b,nominf,nn,bmax"
+ write(12,*)  x0,xqmin,xq1a,xq1b,xq2,xqmax,nqfen,nomfen,nn,bmax
 close(12)
 open(13,file=trim(fichier)//"grilleq.dat")
  write(13,*)"!ixq,xq,compteur,taille de l’enregistrement"
@@ -139,6 +139,7 @@ do ifenq=1,4
 
    dom=(ommax-ommin)/nom
    write(6,*)"ommim,ommax,dom=",ommin,ommax,dom
+!$OMP PARALLEL DO PRIVATE(om,det,Mm,Gg,Mmv) SCHEDULE(DYNAMIC)
    do iom=1,nom
     om=ommin+dom*(iom-0.5_qp)
     call mat_pairfield(om,0.0_qp,det,Mm,Gg)
@@ -147,6 +148,7 @@ do ifenq=1,4
     donnees(1,iom+compteur)=om
     donnees(2:7,iom+compteur)=Mmv
    enddo
+!$OMP END PARALLEL DO
    compteur=compteur+nom
   enddo
 
@@ -161,6 +163,7 @@ do ifenq=1,4
 
   dy=(ymax-ymin)/nominf
   write(6,*)"ommim,ommax,ymin,ymax,dy=",ommin,ommax,ymin,ymax,dy
+!$OMP PARALLEL DO PRIVATE(om,det,Mm,Gg,Mmv,y) SCHEDULE(DYNAMIC)
   do iom=1,nominf
    y=ymin+dy*(iom-0.5_qp)
 !   om=1.0_qp/y**(2.0_qp/3.0_qp)
@@ -171,6 +174,7 @@ do ifenq=1,4
    donnees(1,iom+compteur)=om
    donnees(2:7,iom+compteur)=Mmv
   enddo
+!$OMP END PARALLEL DO
   compteur=compteur+nominf
 
   open(11,file=trim(fichier)//".dat",ACTION="WRITE",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)

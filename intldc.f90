@@ -4,14 +4,13 @@ USE dspec
 USE modsim
 IMPLICIT NONE
 REAL(QP) EPSom,EPSu,EPSq
-LOGICAL lecture,ecriture,bla0,st
+LOGICAL lecture,ecriture,bla0,bla00,st
 INTEGER profondeur
 CHARACTER(len=30) fichierlec1,fichierlec2,fichierlec3,fichom2,fichom2p
-CHARACTER(len=5) suffixe
+CHARACTER(len=50) suffixe_intq1,prefixe,suffixe
 REAL(QP) q1,q2,q3,q4
 REAL(QP) xi0,xiP,xiM,epsP,epsM,xmin,xmax
 REAL(QP) k0,k1,k2,k3,k4,k5,k6,k7,k8,k9,k10,k11,k12
-REAL(QP) l1,l2,l3,l4,l5,l6,l7,l8
 INTEGER, PARAMETER :: al=1,bet=2,gam=3,delt=4,epsi=5,alti=6,betti=7,deltti=8,epsiti=9
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -28,6 +27,22 @@ FUNCTION selfEldc(k,zk)
 
  e=0.0_qp
 
+ if(bla0)then
+   write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+   write(6,*)
+   write(6,*)"+++++++++++++++++++++++++++++ selfEldc ++++++++++++++++++++++++++++"
+   write(6,*)
+   write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+   write(6,*)
+   write(6,*)"k,zk=",k,zk
+   write(6,*)"lecture,ecriture=",lecture,ecriture
+   write(6,*)"fichierlec1,fichierlec2: ",fichierlec1," ",fichierlec2
+   write(6,*)"q1,q2,q3=",q1,q2,q3
+   write(6,*)
+   write(6,*)"EPSq,EPSom,profondeur=",EPSq,EPSom,profondeur
+   write(6,*)
+   write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+ endif
 
 ! qromovq(f,a,b,dim,arg,varchange,EPS,jmax): Romberg integration of the function f
 ! with values in R^dim from a to b with precision EPS. arg is a vector of 
@@ -38,7 +53,6 @@ FUNCTION selfEldc(k,zk)
 ! varchange=racinfvq when b -> +oo and f decays as 1/x^(3/2)
 ! varchange=midsquvq/midsqlvq f has a 1/sqrt(b-x) or 1/sqrt(x-a) (integrable) divergence at the upper/lower bound of the integration interval
 
- write(6,*)"fichierlec1,fichierlec2: ",fichierlec1," ",fichierlec2
  if(lecture)then
   open(11,file=trim(fichierlec1))
   read(11,*)chainebidon
@@ -46,8 +60,6 @@ FUNCTION selfEldc(k,zk)
   open(12,file=trim(fichierlec2))
   read(12,*)chainebidon
   write(6,*)chainebidon
-!  open(13,file=trim(fichierlec3))
-!  read(13,*)
  endif
 
  if(ecriture)then
@@ -55,50 +67,41 @@ FUNCTION selfEldc(k,zk)
   write(16,*)"! grille de valeur de q,om et Mat de qmin=",q1,"à qmax=",q2," avec profondeur=",profondeur
   open (17,file=trim(fichierlec2))
   write(17,*)"! grille de valeur de q,om et Mat de qmin=",q2,"à qmax=",q3," avec profondeur=",profondeur
-  open (18,file=trim(fichierlec3))
-  write(18,*)"! grille de valeur de q,om et Mat de qmin=",q3,"à qmax=",q4," avec profondeur=",profondeur
  endif
 
  Iq1(:)=0.0_qp
  Iq2(:)=0.0_qp
  Iq3(:)=0.0_qp
 
+ suffixe="sEfixed"
  argq(1)=1.5_qp 
  Iq1=qromovfixed(intq,q1 ,   q2,   6,argq,midpntvcq,EPSq,profondeur,err)
  write(6,*)"re Iq1=",real(Iq1)
  write(6,*)"im Iq1=",imag(Iq1)
  if(err)  call erreur("q")
 
- argq(1)=2.5_qp 
- Iq2=qromovfixed(intq,q2,    q3,   6,argq,midpntvcq,EPSq,profondeur,err)
- write(6,*)"re Iq2=",real(Iq2)
- write(6,*)"im Iq2=",imag(Iq2)
- if(err)  call erreur("q")
-
-! argq(1)=3.5_qp 
-! Iq3=qromovfixed(intq,q3,    q4,   6,argq,midinfvcq,EPSq,profondeur,err)
-! write(6,*)"re Iq3=",real(Iq3)
-! write(6,*)"im Iq3=",imag(Iq3)
+! argq(1)=2.5_qp 
+! Iq2=qromovfixed(intq,q2,    q3,   6,argq,midpntvcq,EPSq,profondeur,err)
+! write(6,*)"re Iq2=",real(Iq2)
+! write(6,*)"im Iq2=",imag(Iq2)
 ! if(err)  call erreur("q")
 
  Iqinf(:)=0.0_qp
- Iqinf(1)=1.0_qp/(2.0_qp*sqrt(3.0_qp)*PI**3*q3**4)
- Iqinf(5)=-Iqinf(1)
+! Iqinf(1)=1.0_qp/(2.0_qp*sqrt(3.0_qp)*PI**3*q3**4)
+! Iqinf(5)=-Iqinf(1)
 ! For the other integrals, the large q contribution (vanishing at least of 1/q3**6) is neglected
 
  selfEldc=2.0_qp*PI*(Iq1+Iq2+Iq3+Iqinf) !Integration sur phi
 
- open(20,file="intq"//suffixe//".dat",POSITION="APPEND")
+ open(20,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
   write(20,*)
  close(20)
 
  close(11)
  close(12)
- close(13)
 
  close(16)
  close(17)
- close(18)
 
 CONTAINS
 
@@ -109,9 +112,9 @@ CONTAINS
   REAL(QP), INTENT(IN), DIMENSION(:)  ::  q,argq
   COMPLEX(QPC)  intq(size(q),m)
 
-  COMPLEX(QPC), DIMENSION(1:6) ::  I,Ia,Ib,Ic,Id,Ie,It
+  COMPLEX(QPC), DIMENSION(1:6) ::  I,Ia,Ib,Ic,Id,Ie
   REAL(QPC)   , DIMENSION(1:6) ::  Iinf
-  REAL(QP) bmax,qs,fich,bmax2
+  REAL(QP) bmax,qs,fich
   INTEGER is
  
   fich=argq(1)
@@ -122,9 +125,14 @@ CONTAINS
    xq=qs
    call oangpp
 
-   call ecrit(bla0,"qs=",qs)
-   call ecrit(bla0,"ptbranchmtpp=",real(ptbranchmtpp,kind=qpc))
-   call ecrit(bla0,"opp=",opp)
+   if(bla0)then
+    write(6,*)"----------------------------------------"
+    write(6,*)
+    write(6,*)"qs=",qs
+    write(6,*)"ptbranchmtpp=",ptbranchmtpp
+    write(6,*)"opp=",opp
+    write(6,*)
+   endif
   
    xi0=k**2+qs**2-x0
    xiP=k**2+qs**2+2.0_qp*k*qs-x0
@@ -152,49 +160,82 @@ CONTAINS
    Iinf(5)=-Iinf(1)
    Iinf(6)= Iinf(3)
    if(bla0)then
-    write(6,*)"Iinf=",Iinf
+     write(6,FMT="(A6,6G20.10)")"Iinf=",Iinf
    endif
   
    if(ptbranchmtpp==1)then !BEC-like behavior: integrated from branch cut lower-edge opp(1) to infinity
      Ib=qromovfixed(intom,opp(1)         ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err) !deals with the 1/om^(3/2) decay at large om
-     call ecrit(bla0,'Ib=',Ib)
+     if(bla0)then
+       write(6,FMT="(A10,6G20.10)")'real(Ib)=',real(Ib)
+       write(6,FMT="(A10,6G20.10)")'imag(Ib)=',imag(Ib)
+     endif
      if(err)  call erreur("omega")
+
    elseif(ptbranchmtpp==2)then !One angular point opp(2) besides the lower-edge
     Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err) !Integrate from the edge to the angular point
-    call ecrit(bla0,'Ib=',Ib)
+    if(bla0)then
+      write(6,FMT="(A10,6G20.10)")'real(Ib)=',real(Ib)
+      write(6,FMT="(A10,6G20.10)")'imag(Ib)=',imag(Ib)
+    endif
     if(err)  call erreur("omega")
+
     Ic=qromovfixed(intom,opp(2)         ,2.0_qp*opp(2)       ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err) !then from opp(2) to 2*opp(2), this circumscribes the numerical difficulty around opp(2)
-    call ecrit(bla0,'Ic=',Ic)
+    if(bla0)then
+      write(6,FMT="(A10,6G20.10)")'real(Ic)=',real(Ic)
+      write(6,FMT="(A10,6G20.10)")'imag(Ic)=',imag(Ic)
+    endif
     if(err)  call erreur("omega")
+
     Id=qromovfixed(intom,2.0_qp*opp(2)  ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err) !then from 2*opp(2) to infinity
-    call ecrit(bla0,'Id=',Id)
+    if(bla0)then
+      write(6,FMT="(A10,6G20.10)")'real(Id)=',real(Id)
+      write(6,FMT="(A10,6G20.10)")'imag(Id)=',imag(Id)
+    endif
     if(err)  call erreur("omega")
+
    elseif(ptbranchmtpp==3)then !Two angular points opp(2) and opp(3) besides the lower-edge
     Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
-    call ecrit(bla0,'Ib=',Ib)
+    if(bla0)then
+      write(6,FMT="(A10,6G20.10)")'real(Ib)=',real(Ib)
+      write(6,FMT="(A10,6G20.10)")'imag(Ib)=',imag(Ib)
+    endif
     if(err)  call erreur("omega")
+
     Ic=qromovfixed(intom,opp(2)         ,opp(3)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
-    call ecrit(bla0,'Ic=',Ic)
+    if(bla0)then
+      write(6,FMT="(A10,6G20.10)")'real(Ic)=',real(Ic)
+      write(6,FMT="(A10,6G20.10)")'imag(Ic)=',imag(Ic)
+    endif
     if(err)  call erreur("omega")
+
     Id=qromovfixed(intom,opp(3)         ,2.0_qp*opp(3)       ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
-    call ecrit(bla0,'Id=',Id)
+    if(bla0)then
+      write(6,FMT="(A10,6G20.10)")'real(Id)=',real(Id)
+      write(6,FMT="(A10,6G20.10)")'imag(Id)=',imag(Id)
+    endif
     if(err)  call erreur("omega")
+
     Ie=qromovfixed(intom,2.0_qp*opp(3)  ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err)
-    call ecrit(bla0,'Ie=',Ie)
+    if(bla0)then
+      write(6,FMT="(A10,6G20.10)")'real(Ie)=',real(Ie)
+      write(6,FMT="(A10,6G20.10)")'imag(Ie)=',imag(Ie)
+    endif
     if(err)  call erreur("omega")
    endif
   
    I=Ib+Ic+Id+Ie+Iinf !Combine the integration intervals
    if(bla0)then
-    write(6,*)"qs,I=",qs,real(I)
-!    write(6,*)"qs,Iinf(1),I(1)=",qs,Iinf(1),real(I(1))
+    write(6,*)
+    write(6,FMT="(A12,7G20.10)")"qs,real(I)=",qs,real(I)
+    write(6,FMT="(A12,7G20.10)")"qs,imag(I)=",qs,imag(I)
    endif
 
-!   open(20,file="intq"//suffixe//".dat",POSITION="APPEND")
-!    write(20,*)qs,real(I(1:3))
-!   close(20)
 
    intq(is,:)=I(:)*qs**2 !Jacobian of the q integration
+
+   open(20,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
+    write(20,*)qs,real(intq(is,1:6)),imag(intq(is,1:3))
+   close(20)
   
   enddo
 
@@ -207,17 +248,21 @@ CONTAINS
   REAL(QP), INTENT(IN), DIMENSION(:)  ::  om,arg !arg(1) should be the value of q
   COMPLEX(QPC), DIMENSION(size(om),m)       ::  intom
 
-  COMPLEX(QPC) Gam(1:2,1:2),Mat(1:2,1:2),Mat2(1:2,1:2),MatCat(1:2,1:2),det
+  COMPLEX(QPC) Gam(1:2,1:2),Mat(1:2,1:2),MatCat(1:2,1:2),det
   REAL(QP) reM11,reM22,reM12,reM21,imM11,imM22,imM12,imM21,omfi,xqfi
   REAL(QP) q,argintu(1:2),rho(1:2,1:2),ome,enM,enP
   COMPLEX(QPC) IuP(1:3),IuM(1:3)
-  REAL(QP) deb,fin,Iu(1:3)
   INTEGER is,fich
 
   q=arg(1) !value of q passed on to the intu function
   fich=floor(arg(2))
   argintu(2)=q
   intom(:,:)=0.0_qp
+
+  if((bla00).AND.(size(om)==1))then
+   write(6,*)
+   write(6,*)"****************"
+  endif
 
   do is=1,size(om)
    ome=om(is)
@@ -230,8 +275,8 @@ CONTAINS
    IuM(:)=0.0_qp
    argintu(1)=enM
 !   Iu=qromovq(intu,-1.0_qp,1.0_qp,3,argintu,midpntvq,EPSu) !computes int_-1^1 du (V^2,U^2,UV)/(ome-z+eps)
-   IuM=Iuanaly(enM,k,q)
-   IuP=Iuanaly(enP,k,q)
+   IuM=conjg(Iuanaly(enM,k,q)) !enM a une (petite) partie imaginaire négative venant de -zk
+   IuP=      Iuanaly(enP,k,q)
 
    if(lecture)then
     read(10+fich,*)xqfi,omfi,reM11,reM12,reM21,reM22,imM11,imM12,imM21,imM22
@@ -258,8 +303,8 @@ CONTAINS
    MatCat(2,2)=(Mat(1,1)+Mat(2,2))/2.0_qp-Mat(1,2)
    MatCat(1,2)=(Mat(2,2)-Mat(1,1))/2.0_qp
 
-   Gam(1,1)=MatCat(2,2)/det
-   Gam(2,2)=MatCat(1,1)/det
+   Gam(1,1)= MatCat(2,2)/det
+   Gam(2,2)= MatCat(1,1)/det
    Gam(1,2)=-MatCat(1,2)/det
 
    rho=-imag(Gam)/PI
@@ -272,17 +317,23 @@ CONTAINS
    intom(is,5)= rho(1,1)*IuP(1)
    intom(is,6)=-rho(1,2)*IuP(3)
 
-   if(bla0)then
-    write(6,FMT="(A20,8G20.10)")"q,ome,real(intom)=",q,ome,real(intom(is,:))!*ome**(3.0_qp/2.0_qp)
+   if(bla00)then
+    write(6,FMT="(A19,8G20.10)")"q,ome,real(intom),imag(intom)=",q,ome,&
+        real(intom(is,1:6)),imag(intom(is,1:3))!*ome**(3.0_qp/2.0_qp)
    endif
 
   enddo
+
+  if(bla00)then
+   write(6,*)
+  endif
+
  END FUNCTION intom
 END FUNCTION selfEldc
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION Iuanaly(en,k,q) !Computes Iu analytically
- USE recettes
- IMPLICIT NONE
+FUNCTION Iuanaly(en,k,q) !Computes analytically the integrals int_-1^1 num/(om+eps(\vec{k}-\vec{q})+i*0^+)
+ USE recettes            !with num=U^2 in Iuanaly(1), V^2 in Iuanaly(2) and UV in Iuanaly(3)
+ IMPLICIT NONE           !Use conjg the get the integrals with a -i*0^+
  REAL(QP), INTENT(IN) :: en,k,q
  COMPLEX(QPC) Iuanaly(1:3)
  COMPLEX(QPC) x1,x2
@@ -332,74 +383,136 @@ CHARACTER(len=*), INTENT(IN) :: var
   write(6,*) "convergence non atteinte dans l’intégrale sur "//var
  endif
 END SUBROUTINE erreur
+
 ! @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION intim(k,zk,interpolation,fich)
- USE estM
+!FUNCTION selfEldc2(k,zk,interpolation,fich)
+!USE estM
+!REAL(QP), INTENT(IN) :: k,zk
+!LOGICAL, INTENT(IN) :: interpolation
+!CHARACTER(len=90), INTENT(IN) :: fich
+!COMPLEX(QPC) selfEldc2(1:6)
+!
+!CHARACTER(len=2) reg
+!INTEGER tconf,config(1:7)
+!
+!REAL(QP) qmax,int6(1:6),le(1:8),bq(1:8)
+!
+!call bornesk
+!call bornesq (k,zk-2.0_qp,le,reg,tconf,config,bq)
+!temperaturenulle=.TRUE.
+!
+!suffixe="sEres"
+!open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
+!close(25)
+!selfEldc2(1:3)=intres(k,zk,interpolation,config(1:tconf),bq(1:tconf+1))
+!int6=intpasres(k,zk,interpolation,2,bq(tconf+1),qmax)
+!selfEldc2(1:3)=selfEldc2(1:3)+int6(1:3)
+!
+!suffixe="sEpasres"
+!open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
+!close(25)
+!int6=intpasres(k,zk,interpolation,3,0.0_qp,qmax)
+!selfEldc2(4:6)=int6(4:6)
+!
+!if(interpolation) call unload_data
+!
+!END FUNCTION selfEldc2
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+FUNCTION intres(k,zk,interpolation,fich)
+ USE bestM
+ USE recettes
  REAL(QP), INTENT(IN) :: k,zk
- LOGICAL, INTENT(IN) :: interpolation
- CHARACTER(len=90), INTENT(IN) :: fich
- COMPLEX(QPC) intim(1:3)
+ LOGICAL,  INTENT(IN) :: interpolation
+ CHARACTER(len=90), INTENT(IN), DIMENSION(1:2) :: fich
+ COMPLEX(QPC) intres(1:6)
 
- COMPLEX(QPC) Iq1(1:3),Iq2(1:3),Iq3(1:3)
- REAL(QP) Iqinf(1:3)
- REAL(QP) argq(1:1),e,bq(1:8)
- CHARACTER(len=250) chainebidon
-
- INTEGER taille,grecque,igr
- INTEGER, DIMENSION(1:7) :: config
+ INTEGER,  ALLOCATABLE, DIMENSION(:) :: config
+ REAL(QP), ALLOCATABLE, DIMENSION(:) :: bq
 
  CHARACTER(len=2) reg
+ INTEGER tconf,configbis(1:7)
+ REAL(QP) e,qmax,le(1:8),bqbis(1:8)
 
+ CHARACTER(len=250) chainebidon
+ INTEGER grecque,igr
+
+ call bornesk
+ call bornesq (k,zk-2.0_qp,le,reg,tconf,configbis,bqbis)
  temperaturenulle=.TRUE.
  e=0.0_qp
 
- Iq1(:)=0.0_qp
- Iq2(:)=0.0_qp
- Iq3(:)=0.0_qp
+ allocate(bq(1:tconf+1))
+ allocate(config(1:tconf))
+ bq    =bqbis(1:tconf+1)
+ config=configbis(1:tconf)
 
- call lignesenergie(k)
- call region (k,zk-2.0_qp,reg,taille,config)
-
+ if(interpolation) call load_data(fich(1))
+ if(interpolation) call loadom2(fich(2))
+ 
  if(bla0)then
-  write(6,*)"reg=",reg,"  config=",ecritconfig(taille,config) 
- endif
- call bornesq(k,zk,bq)
-
- if(bla0)then
-  write(6,"(A10,8G20.10)")"zk,bq=",zk,bq(1:taille)
-  write(6,*)
- endif
-
- if(interpolation)then
-  call load_data(fich)
- endif
-
- do igr=1,taille-1
-  grecque=config(igr)
-  if(bla0)then
-   write(6,*)"---------------------------------"
+   write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
    write(6,*)
-   write(6,*)"igr=",igr
+   write(6,*)"++++++++++++++++++++++++++++++ intres +++++++++++++++++++++++++++++"
    write(6,*)
-   write(6,*)"bq(igr),bq(igr+1)=",bq(igr),bq(igr+1)
-  endif
-  Iq1=Iq1+qromovcq(intimq,bq(igr),bq(igr+1),3,(/bidon/),midpntvcq,EPSq)
- enddo
+   write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+   write(6,*)
+   write(6,*)
+   write(6,*)"k,zk=",k,zk
+   write(6,FMT="(A21,8G20.10)")"lignes d’énergie=",le
+   write(6,*)                  "reg=",reg
+   write(6,*)                  "config=",ecritconfig(tconf-1,config) 
+   write(6,*)                  "bq="    ,bq(1:tconf+1)
+ endif
+
+ suffixe="res"
+ open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
+ close(25)
+
+ intres(:)=cmplx(0.0_qp,0.0_qp,kind=qpc)
+
+ bmax =1.e6_qp
+ qmax= 16.0_qp
+
+ if(tconf==0)then
+  intres=qromovcq(intresq,0.0_qp,qmax,6,(/bidon/),midpntvcq,EPSq)
+ else
+  do igr=1,size(config)
+   grecque=config(igr)
+   if(bla0)then
+    write(6,*)"---------------------------------"
+    write(6,*)
+    write(6,*)"igr=",igr
+    write(6,*)"bq(igr),bq(igr+1)=",bq(igr),bq(igr+1)
+    write(6,*)
+   endif
+   intres=intres+qromovcq(intresq,bq(igr),bq(igr+1),6,(/bidon/),midpntvcq,EPSq)
+   if(bla0)then
+    write(6,*)
+    write(6,*)"---------------------------------"
+   endif
+  enddo
+  intres=intres+qromovcq(intresq,bq(igr+1),qmax,6,(/bidon/),midpntvcq,EPSq)
+ endif
+ intres=2.0_qp*PI*intres
+ if(interpolation) call unload_data
+
  CONTAINS
-  FUNCTION intimq(q,argq,m)
+  FUNCTION intresq(q,argq,m)
   USE nrutil
   USE recettes
   USE modsim
   INTEGER,  INTENT(IN) :: m 
   REAL(QP), INTENT(IN), DIMENSION(:)  ::  q,argq
-  COMPLEX(QPC)  intimq(size(q),m)
+  COMPLEX(QPC)  intresq(size(q),m)
 
-  REAL(QP)    , DIMENSION(1:3) ::  Iinf
-  REAL(QP)    qs,bmax
-  REAL(QP) bom(1:3),bom2(1:6),bomf(1:10),arg(1:1,1:10)
-  INTEGER is,tailletot,tailleres,taillerout,res(1:2),pos_bom(1:6),routint(1:10),p1,p2
-  INTEGER itai,jtai
+  REAL(QP) qs,ommil
+  REAL(QP) bom(1:3),bom2(1:6)
+  INTEGER is,ttot,tres,trout,res(1:2),pos_bom(1:6),p1,p2
+  REAL(QP), ALLOCATABLE, DIMENSION(:,:) :: arg
+  REAL(QP), ALLOCATABLE, DIMENSION(:)   :: bomf
+  INTEGER,  ALLOCATABLE, DIMENSION(:)   :: vres,routint
+  INTEGER itai
   COMPLEX(QPC)  intmax(m)
 
   do is=1,size(q)
@@ -407,66 +520,8 @@ FUNCTION intim(k,zk,interpolation,fich)
    qs=q(is)
    xq=qs
    call oangpp
-   call bornesom(k,zk,qs,grecque,res,bom,tailleres)
+   call bornesom(k,zk,qs,grecque,res,bom,tres)
  
-   if(bla0)then
-    write(6,*)"qs=",qs
-    write(6,*)"grecque=",ecritc(grecque)
-    write(6,*)"ptbranchmtpp=",ptbranchmtpp
-    write(6,*)"opp=",opp
-    write(6,*)"res=",res
-    write(6,*)"bom=",bom
-   endif
-
-   bom2(:)=1.e100_qp
-   bomf(:)=1.e100_qp
-   routint(:)=1000
-   if((grecque==al).OR.(grecque==alti).OR.(grecque==bet).OR.(grecque==betti).OR.(grecque==gam))then
-    tailletot=tailleres+ptbranchmtpp
-    bom2(1:ptbranchmtpp)=opp(1:ptbranchmtpp)
-    bom2(ptbranchmtpp+1:ptbranchmtpp+tailleres)=bom(2:tailleres+1)
-   else
-    tailletot=tailleres+ptbranchmtpp+1
-    bom2(1:ptbranchmtpp)=opp(1:ptbranchmtpp)
-    bom2(ptbranchmtpp+1:ptbranchmtpp+tailleres+1)=bom(1:tailleres+1)
-   endif
-   call tri_pos(bom2,pos_bom)
-!   write(6,*)"tailletot=",tailletot
-!   write(6,*)"pos_bom=",pos_bom
-!   write(6,*)"bom2=",bom2
- 
-   bomf(1:6)=bom2
-   taillerout=tailletot-1
-   do itai=tailletot-1,1,-1
-    p1=pos_bom(itai)
-    p2=pos_bom(itai+1)
-!    write(6,*)"itai=",itai
-!    write(6,*)"p1,p2=",p1,p2
-    if((p1>ptbranchmtpp).AND.(p2.LE.ptbranchmtpp))then
-     routint(itai)=msql
-    elseif((p1.LE.ptbranchmtpp).AND.(p2>ptbranchmtpp))then
-     routint(itai)=msqu
-    elseif((p1.LE.ptbranchmtpp).AND.(p2.LE.ptbranchmtpp))then
-     routint(itai)=mpnt
-    elseif((p1>ptbranchmtpp).AND.(p2>ptbranchmtpp))then
-     taillerout=taillerout+1
-     do jtai=tailletot+3,itai+1,-1
-      bomf(jtai+1)=bomf(jtai)
-      routint(jtai+1)=routint(jtai)
-     enddo
-     bomf(itai+1)=(bom2(itai)+bom2(itai+1))/2
-     routint(itai+1)=msqu
-     routint(itai)  =msql
-    endif
-!    write(6,*)"bomf=",bomf(1:6)
-!    write(6,*)"routint=",routint(1:5)
-   enddo
-    
-   if(bla0)then
-    write(6,*)"bomf=",bomf(1:taillerout+1)
-    write(6,*)"routint=",ecritrout(taillerout,routint(1:taillerout))
-   endif
-    
    xi0=k**2+qs**2-x0
    xiP=k**2+qs**2+2.0_qp*k*qs-x0
    xiM=k**2+qs**2-2.0_qp*k*qs-x0
@@ -476,44 +531,157 @@ FUNCTION intim(k,zk,interpolation,fich)
    xmin=epsP-xiP
    xmax=epsM-xiM
 
-   bmax =1.e6_qp
-   arg(1:1,1:10)=qs
-   intmax(:)   =qromovcq(intimom,bomf(taillerout+1),bmax,3,(/qs/),racinfvcq,EPSom)
-   intimq(is,:)=decoupevcq(intimom,bomf(1:taillerout+1),3,arg(1:1,1:taillerout),routint(1:taillerout),EPSom,bla0)
    if(bla0)then
-    write(6,*)"Imax(1)=",intmax(1)
-    write(6,*)"Imax(2)=",intmax(2)
-    write(6,*)"Imax(3)=",intmax(3)
+    write(6,*)"---------------------------------"
+    write(6,*)
+    write(6,*)"qs=",qs
+    write(6,*)"grecque=",ecritc(grecque)
+    write(6,*)"ptbranchmtpp=",ptbranchmtpp
+    write(6,*)"opp=",opp
+    write(6,*)"res=",res
+    write(6,FMT="(A5,3G20.10)")"bom=",bom
    endif
-   intimq(is,:)=intimq(is,:)+intmax(:)
-   open(25,file="intq.dat",POSITION="APPEND")
-    write(25,*)qs,real(intimq(is,:)),imag(intimq(is,:))
+
+!Combine les points anguleux de opp avec ceux de bom
+   bom2(:)=1.e100_qp
+   if(grecque==0)then
+    ttot=ptbranchmtpp !ttot=nbr tot de points anguleux.
+    bom2(1:ptbranchmtpp)=opp(1:ptbranchmtpp)
+   elseif((grecque==al).OR.(grecque==alti).OR.(grecque==bet).OR.(grecque==betti).OR.(grecque==gam))then
+    ttot=tres+ptbranchmtpp !Dans ce cas bom(1)=opp(1): on évite le double comptage
+    bom2(1:ptbranchmtpp)=opp(1:ptbranchmtpp)
+    bom2(ptbranchmtpp+1:ptbranchmtpp+tres)=bom(2:tres+1)
+   else
+    ttot=tres+ptbranchmtpp+1 !Dans ce cas bom(1).NE.opp(1)
+    bom2(1:ptbranchmtpp)=opp(1:ptbranchmtpp)
+    bom2(ptbranchmtpp+1:ptbranchmtpp+tres+1)=bom(1:tres+1)
+   endif
+   call tri_pos(bom2,pos_bom)
+ 
+!Découpe les intervalles par le milieu, assigne routint (pour le changement de variable) et vres (pour le nombre d’angles de résonnance)
+   trout=2*ttot-1 !trout=nombre d’intervalle d’integration. Nombre de bornes (avec les milieux et bmax: 2*ttot)
+   allocate(bomf(1:trout+1))
+   allocate(routint(1:trout))
+   allocate(vres(1:trout))
+   vres(:)   =0
+   routint(:)=mpnt
+   do itai=1,ttot-1
+    p1=pos_bom(itai)
+    p2=pos_bom(itai+1)
+    ommil=(bom2(itai)+bom2(itai+1))/2
+    bomf(2*itai-1)=bom2(itai)
+    bomf(2*itai)  =ommil
+    if(p1>ptbranchmtpp) routint(2*itai-1)=msql
+    if(p2>ptbranchmtpp) routint(2*itai)  =msqu
+!    if((ptbranchmtpp==3).AND.(p1==2)) routint(2*itai-1)  =msql
+    if(grecque.NE.0)then 
+     call locate(bom(1:tres+1),ommil,p1)
+     if((p1>0).AND.(p1<tres+1))then
+       vres(2*itai-1:2*itai)=res(p1)
+     endif
+    endif
+   enddo
+   bomf(trout)  =bom2(ttot)
+   bomf(trout+1)=bmax
+   routint(trout)=rinf
+   vres(trout)=0
+
+   allocate(arg(1:2,1:trout))
+   arg(1,:)=qs
+   arg(2,:)=vres(:)+0.5_qp
+
+!   bomf(1:6)=bom2
+!   trout=ttot-1
+!   do itai=ttot-1,1,-1
+!    p1=pos_bom(itai)
+!    p2=pos_bom(itai+1)
+!    if((p1>ptbranchmtpp).AND.(p2.LE.ptbranchmtpp))then
+!     routint(itai)=msql
+!    elseif((p1.LE.ptbranchmtpp).AND.(p2>ptbranchmtpp))then
+!     routint(itai)=msqu
+!    elseif((p1.LE.ptbranchmtpp).AND.(p2.LE.ptbranchmtpp))then
+!     routint(itai)=mpnt
+!    elseif((p1>ptbranchmtpp).AND.(p2>ptbranchmtpp))then
+!     trout=trout+1
+!     do jtai=ttot+3,itai+1,-1
+!      bomf(jtai+1)=bomf(jtai)
+!      routint(jtai+1)=routint(jtai)
+!     enddo
+!     bomf(itai+1)=(bom2(itai)+bom2(itai+1))/2
+!     routint(itai+1)=msqu
+!     routint(itai)  =msql
+!    endif
+!   enddo
+!   allocate(vres(1:trout))
+!   vres(:)=100
+!   if(grecque==0)then 
+!    vres(:)=0
+!   else
+!    do itai=1,trout
+!     ommil=(bomf(itai)+bomf(itai+1))/2.0_qp
+!     call locate(bom(1:tres+1),ommil,p1)
+!     if((p1==0).OR.(p1==tres+1))then
+!       vres(itai)=0
+!     else
+!       vres(itai)=res(p1)
+!     endif
+!    enddo
+!   endif
+
+
+   if(bla0)then
+    write(6,FMT="(A6,9G20.10)")"bomf=",bomf(1:trout+1)
+    write(6,*)"routint=",ecritrout(trout,routint(1:trout))
+    write(6,*)"vres="   ,vres(1:trout)
+    write(6,*)
+    write(6,*)"************************"
+    write(6,*)
+    write(6,*)"        decoupe         "
+    write(6,*)
+   endif
+   intresq(is,:)=decoupevcq(intresom,bomf(1:trout+1),6,arg,routint(1:trout),EPSom,bla0)
+   intresq(is,:)=intresq(is,:)*qs**2
+   open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
+    write(25,*)qs,real(intresq(is,:)),imag(intresq(is,1:3))
    close(25)
+   deallocate(bomf)
+   deallocate(routint)
+   deallocate(vres)
+   deallocate(arg)
   enddo
-  END FUNCTION intimq
+  END FUNCTION intresq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  FUNCTION intimom(om,arg,m) !Computes size(om) points of the function  to be integrate over om
+  FUNCTION intresom(om,arg,m) !Computes size(om) points of the function  to be integrate over om
    IMPLICIT NONE
-   INTEGER,  INTENT(IN) :: m !m=3 here
+   INTEGER,  INTENT(IN) :: m !m=6 here
    REAL(QP), INTENT(IN), DIMENSION(:)  ::  om,arg !arg(1) should be the value of q
-   COMPLEX(QPC), DIMENSION(size(om),m)       ::  intimom
+   COMPLEX(QPC), DIMENSION(size(om),m)       ::  intresom
 
    COMPLEX(QPC) Gam(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
-   REAL(QP) q,rho(1:2,1:2),ome,enM,enP
+   REAL(QP) q,rho(1:2,1:2),ome,enP,enM
    COMPLEX(QPC) IuP(1:3),IuM(1:3)
-   INTEGER is,fich
+   INTEGER is,r
 
-   q=arg(1) !value of q passed on to the intu function
-   intimom(:,:)=0.0_qp
+   q=arg(1) 
+   r=floor(arg(2))!Number of resonance angles
+   intresom(:,:)=0.0_qp
+!   if(r==0) return
+
+   if(bla00.AND.(size(om)==1))then
+    write(6,*)"************************"
+   endif
 
    do is=1,size(om)
     ome=om(is)
 
-!value of the energy denominator passed on to the intu and Iuanaly functions
     enM= ome-zk
+    enP= ome+zk
   
     IuM(:)=0.0_qp
-    IuM=Iuanaly(enM,k,q)
+    IuP(:)=0.0_qp
+
+    IuM=conjg(Iuanaly(enM,k,q)) !enM a une (petite) partie imaginaire négative venant de -zk
+    IuP=      Iuanaly(enP,k,q) 
   
     if(interpolation)then
      call estmat_pairfield(ome,e,det,Matt,Gam)
@@ -531,92 +699,377 @@ FUNCTION intim(k,zk,interpolation,fich)
   
     rho=-imag(Gam)/PI
   
-    intimom(is,1)=-rho(1,1)*IuM(1)
-    intimom(is,2)=-rho(2,2)*IuM(2)
-    intimom(is,3)=-rho(1,2)*IuM(3)
+    intresom(is,1)=-rho(1,1)*IuM(1)
+    intresom(is,2)=-rho(2,2)*IuM(2)
+    intresom(is,3)=-rho(1,2)*IuM(3)
   
-    if(bla0)then
-     write(6,FMT="(A20,8G20.10)")"q,ome,real(intimom)=",q,ome,real(intimom(is,1)),imag(intimom(is,1))!*ome**(3.0_qp/2.0_qp)
+    intresom(is,4)= rho(2,2)*IuP(2)
+    intresom(is,5)= rho(1,1)*IuP(1)
+    intresom(is,6)=-rho(1,2)*IuP(3)
+
+    if(bla00)then
+     write(6,FMT="(A21,8G20.10)")"q,ome,real(intresom)=",q,ome,real(intresom(is,1)),imag(intresom(is,1))
     endif
 
   enddo
-  END FUNCTION intimom
-END FUNCTION intim
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE bornesom(k,zk,q,grecque,res,bom,tailleres)
-USE recettes
-REAL(QP), INTENT(IN) :: k,zk,q
-INTEGER, INTENT(IN) :: grecque
-INTEGER, INTENT(OUT) :: res(1:2),tailleres
-REAL(QP), INTENT(OUT) :: bom(1:3)
-REAL(QP) s
+  if(bla00)then
+   write(6,*)
+  endif
+  END FUNCTION intresom
+END FUNCTION intres
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!FUNCTION intpasres(k,zk,interpolation,trois_ou_six,qmin,qmax)
+! USE estM
+! USE recettes
+! INTEGER,  INTENT(IN) :: trois_ou_six
+! REAL(QP), INTENT(IN) :: k,zk,qmin,qmax
+! LOGICAL, INTENT(IN) :: interpolation
+! REAL(QP) intpasres(1:6)
+!
+! REAL(QP) e,argq(1)
+! CHARACTER(len=250) chainebidon
+!
+! temperaturenulle=.TRUE.
+! e=0.0_qp
+!
+! if(bla0)then
+!   write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+!   write(6,*)
+!   write(6,*)"++++++++++++++++++++++++++++ intpasres ++++++++++++++++++++++++++++"
+!   write(6,*)
+!   write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+!   write(6,*)
+!   write(6,*)
+!   write(6,*)"k,zk=",k,zk
+!   write(6,*)
+! endif
+!
+! intpasres(:)=0.0_qp
+! bmax =1.e6_qp
+!
+! argq(1)=bidon
+!
+! intpasres=qromovq(intpasresq,qmin,    qmax,   6,argq,midpntvq,EPSq)
+! intpasres=2.0_qp*PI*intpasres
+!
+! CONTAINS
+!  FUNCTION intpasresq(q,argq,m)
+!  USE recettes
+!  USE modsim
+!  INTEGER,  INTENT(IN) :: m!m=6 
+!  REAL(QP), INTENT(IN), DIMENSION(:)  ::  q,argq
+!  REAL(QP)  intpasresq(size(q),m)
+!
+!  REAL(QP) qs
+!  REAL(QP), ALLOCATABLE, DIMENSION(:)   :: bom
+!  REAL(QP), ALLOCATABLE, DIMENSION(:,:) :: arg
+!  INTEGER , ALLOCATABLE, DIMENSION(:)   :: routint
+!  INTEGER is
+!
+!  do is=1,size(q)
+!  
+!   qs=q(is)
+!   xq=qs
+!   call oangpp
+! 
+!   if(bla0)then
+!    write(6,*)"---------------------------------"
+!    write(6,*)
+!    write(6,*)"qs=",qs
+!    write(6,*)"ptbranchmtpp=",ptbranchmtpp
+!    write(6,*)"opp=",opp
+!   endif
+!
+!   allocate(bom(1:ptbranchmtpp+2))
+!   bom(1:ptbranchmtpp)=opp(1:ptbranchmtpp)
+!   bom(ptbranchmtpp+1)=4*opp(3)
+!   bom(ptbranchmtpp+2)=bmax
+!
+!   allocate(routint(1:ptbranchmtpp+1))
+!   routint(1:ptbranchmtpp)=mpnt
+!   routint(ptbranchmtpp+1)=rinf
+! 
+!   allocate(arg(1,1:ptbranchmtpp+1))
+!
+!   if(bla0)then
+!    write(6,FMT="(A6,5G20.10)")"bom=",bom
+!    write(6,*)"routint=",ecritrout(size(routint),routint)
+!    write(6,*)
+!   endif
+!    
+!   xi0=k**2+qs**2-x0
+!   xiP=k**2+qs**2+2.0_qp*k*qs-x0
+!   xiM=k**2+qs**2-2.0_qp*k*qs-x0
+!   epsP=sqrt(xiP**2+1.0_qp)
+!   epsM=sqrt(xiM**2+1.0_qp)
+! 
+!   xmin=epsP-xiP
+!   xmax=epsM-xiM
+!
+!   arg(1,:)=qs
+!   if(bla0)then
+!    write(6,*)"************************"
+!    write(6,*)
+!    write(6,*)"        decoupe         "
+!    write(6,*)
+!   endif
+!   intpasresq(is,:)=decoupevq(intpasresom,bom,m,arg,routint,EPSom,bla0)
+!   intpasresq(is,:)=intpasresq(is,:)*qs**2
+!   open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
+!    write(25,*)qs,intpasresq(is,:)
+!   close(25)
+!
+!   deallocate(bom,routint,arg)
+!  enddo
+!  END FUNCTION intpasresq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!  FUNCTION intpasresom(om,arg,m) !Computes size(om) points of the function  to be integrate over om
+!   IMPLICIT NONE
+!   INTEGER,  INTENT(IN) :: m !m=6 
+!   REAL(QP), INTENT(IN), DIMENSION(:)  ::  om,arg !arg(1) should be the value of q
+!   REAL(QP), DIMENSION(size(om),m)       ::  intpasresom
+!
+!   COMPLEX(QPC) Gam(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
+!   REAL(QP) q,rho(1:2,1:2),ome,enP,enM
+!   REAL(QP) IuP(1:3),IuM(1:3)
+!   INTEGER is
+!
+!   q=arg(1) 
+!   intpasresom(:,:)=0.0_qp
+!
+!   if(bla00.AND.(size(om)==1))then
+!    write(6,*)"************************"
+!   endif
+!
+!   do is=1,size(om)
+!    ome=om(is)
+!
+!!value of the energy denominator passed on to the intu and Iuanaly functions
+!    enP= ome+zk
+!    enM= ome-zk
+!  
+!    IuP(:)=0.0_qp
+!    IuM(:)=0.0_qp
+!
+!    if((trois_ou_six==1).OR.(trois_ou_six==2)) IuM=real(Iuanaly(enM,k,q))
+!    if((trois_ou_six==1).OR.(trois_ou_six==3)) IuP=real(Iuanaly(enP,k,q))
+!  
+!    if(interpolation)then
+!     call estmat_pairfield(ome,e,det,Matt,Gam)
+!    else
+!     call mat_pairfield(ome,e,det,Matt,Gam)
+!    endif
+!    
+!    MatCat(1,1)=(Matt(1,1)+Matt(2,2))/2.0_qp+Matt(1,2)
+!    MatCat(2,2)=(Matt(1,1)+Matt(2,2))/2.0_qp-Matt(1,2)
+!    MatCat(1,2)=(Matt(2,2)-Matt(1,1))/2.0_qp
+!  
+!    Gam(1,1)= MatCat(2,2)/det
+!    Gam(2,2)= MatCat(1,1)/det
+!    Gam(1,2)=-MatCat(1,2)/det
+!  
+!    rho=-imag(Gam)/PI
+!  
+!    intpasresom(is,1)=-rho(1,1)*IuM(1)
+!    intpasresom(is,2)=-rho(2,2)*IuM(2)
+!    intpasresom(is,3)=-rho(1,2)*IuM(3)
+!  
+!    intpasresom(is,4)= rho(2,2)*IuP(2)
+!    intpasresom(is,5)= rho(1,1)*IuP(1)
+!    intpasresom(is,6)=-rho(1,2)*IuP(3)
+!  
+!    if(bla00)then
+!     write(6,FMT="(A21,8G20.10)")"q,ome,intpasresom=",q,ome,intpasresom(is,1)
+!    endif
+!
+!  enddo
+!  if(bla00)then
+!   write(6,*)
+!  endif
+!  END FUNCTION intpasresom
+!END FUNCTION intpasres
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE bornesk
 
-bom(:)=1.e100_qp
+k0=sqrt(x0)
+k1=k0/sqrt(2.0_qp)
+k2=3*k0/5
+k3=k0/2
+k4=k0/sqrt(5.0_qp)
+k5=k0/3
+k6=(sqrt(2.0_qp)-1)*k0/2
+k7=k0/5
 
-if(grecque<6)then 
- s=+1.0_qp
-else
- s=-1.0_qp
-endif
+k8 =(1+sqrt(2.0_qp))*k0/2
+k9 =sqrt(2.0_qp)*k0
+k10=-k0+sqrt(4*k0**2+2*sqrt(k0**4+2*sqrt(1+k0**4)-2))
+k11=2*k0
+k12=3*k0
 
-if((grecque==al).OR.(grecque==alti))then
- tailleres=1
- bom(1)=ec(q)
- res(1)=1
- bom(2)=zk-epsBCS(k-s*q)
-elseif((grecque==bet).OR.(grecque==betti))then
- tailleres=2
- bom(1)=ec(q)
- res(1)=1
- bom(2)=zk-epsBCS(k-s*q)
- res(2)=2
- bom(3)=zk-1.0_qp
-elseif(grecque==gam)then
- tailleres=1
- bom(1)=ec(q)
- res(1)=2
- bom(2)=zk-1.0_qp
-elseif((grecque==delt).OR.(grecque==deltti))then
- tailleres=1
- bom(1)=zk-epsBCS(k+s*q)
- res(1)=1
- bom(2)=zk-epsBCS(k-s*q)
-elseif((grecque==epsi).OR.(grecque==epsiti))then
- tailleres=2
- bom(1)=zk-epsBCS(k+s*q)
- res(1)=1
- bom(2)=zk-epsBCS(k-s*q)
- res(2)=2
- bom(3)=zk-1.0_qp
-endif
-
-END SUBROUTINE bornesom
+END SUBROUTINE bornesk
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE bornesq(k,zk,bq)
+SUBROUTINE bornesq(k,zkt,le,reg,tconf,config,bq)
 USE recettes
-REAL(QP), INTENT(IN) :: k,zk
+REAL(QP), INTENT(IN) :: k,zkt
+CHARACTER(len=2), INTENT(OUT) :: reg
+INTEGER, INTENT(OUT) :: tconf
+INTEGER, DIMENSION(1:7), INTENT(OUT) :: config
 REAL(QP), INTENT(OUT) :: bq(1:8)
+REAL(QP), INTENT(OUT) :: le(1:8)
 
-REAL(QP) zkt,km,kp,qm,q1m,q2m,q3m,q4m,q1p,q2p,q1mbis,q3mbis,q2pbis,qc,qd
+REAL(QP) km,kp,qm,q1m,q2m,q3m,q4m,q1p,q2p,q1mbis,q3mbis,q2pbis,qc,qd
+REAL(QP) l1,l2,l3,l4,l5,l6,l7,l8
 REAL(QP) vecq(1:13)
-REAL(QP) sC,dsC
 
-zkt=   zk-2.0_qp
-km=    1.0e50_qp  
-kp=    1.0e50_qp  
-q1m=   1.0e50_qp  
-q2m=   1.0e50_qp  
-q3m=   1.0e50_qp  
-q4m=   1.0e50_qp  
+l1=1.0e50_qp; l2=1.0e50_qp; l3=1.0e50_qp; l4=1.0e50_qp; 
+l5=1.0e50_qp; l6=1.0e50_qp; l7=1.0e50_qp; l8=1.0e50_qp;
 
-q1mbis=1.0e50_qp  
-q3mbis=1.0e50_qp  
+!lignes d’énergie
+l1=epsBCS(k)
+l5=epsBCS(0.0_qp)
+if(k<k0)then
+ l2=epsBCS(2*k-k0)
+ l3=epsBCS(2*k+k0)
+ l4=epsBCS(k+sqrt(k0**2-k**2))
+elseif(k<3*k0)then
+ l2=epsBCS(2*k-k0)
+ l3=epsBCS(2*k+k0)+ec(k+k0)-2
+ if(k<2*k0)then
+  l4=solom2(k,fichom2)
+ endif
+ l6=ec(k+k0)-1
+ l8=1.0_qp
+else
+ l2=epsBCS(2*k-k0)+ec(k-k0)-2
+ l3=epsBCS(2*k+k0)+ec(k+k0)-2
+ l6=ec(k+k0)-1
+ l7=ec(k-k0)-1
+ l8=solom2(k,fichom2p)
+endif
+le=(/l1,l2,l3,l4,l5,l6,l7,l8/)
 
-q1p=   1.0e50_qp  
-q2p=   1.0e50_qp 
+!reg et configuration
+if(k<k0)then
+ if(zkt<1)then
+  reg="00"
+  tconf=0
+ elseif(min(l1,l4)>zkt)then
+  reg="A0"
+  tconf=6
+  config(1:tconf)=(/0,alti,betti,gam,bet,al/)
+ elseif((zkt>l1).AND.(min(l2,l4)>zkt))then
+  reg="B0"
+  tconf=6
+  config(1:tconf)=(/deltti,alti,betti,gam,bet,al/)
+ elseif((zkt>l4).AND.(min(l1,l2)>zkt))then
+  reg="B1"
+  tconf=7
+  config(1:tconf)=(/0,alti,betti,epsiti,epsi,bet,al/)
+ elseif((zkt>l2).AND.(l4>zkt))then
+  reg="C0"
+  tconf=6
+  config(1:tconf)=(/deltti,epsiti,betti,gam,bet,al/)
+ elseif((l2>zkt).AND.(zkt>max(l1,l4)))then
+  reg="C1"
+  tconf=7
+  config(1:tconf)=(/deltti,alti,betti,epsiti,epsi,bet,al/)
+ elseif((min(l1,l3)>zkt).AND.(zkt>l2))then
+  reg="C2"
+  tconf=7
+  config(1:tconf)=(/0,alti,deltti,epsiti,epsi,bet,al/)
+ elseif((zkt>l4).AND.(l5>zkt).AND.(k>k1))then
+  reg="D0"
+  tconf=7
+  config(1:tconf)=(/deltti,epsiti,epsi,bet,gam,bet,al/)
+ elseif((zkt>max(l2,l4)).AND.(l5>zkt).AND.(k>k3))then
+  reg="D1"
+  tconf=7
+  config(1:tconf)=(/deltti,epsiti,betti,epsiti,epsi,bet,al/)
+ elseif((zkt>max(l1,l2)).AND.(min(l3,l5)>zkt).AND.(k>k7))then
+  reg="D2"
+  tconf=7
+  config(1:tconf)=(/deltti,alti,deltti,epsiti,epsi,bet,al/)
+ elseif((l1>zkt).AND.(zkt> l3))then
+  reg="D3"
+  tconf=7
+  config(1:tconf)=(/0,alti,deltti,epsiti,epsi,delt,al/)
+ elseif((l3>zkt).AND.(zkt>l5))then
+  reg="E0"
+  tconf=5
+  config(1:tconf)=(/deltti,epsiti,epsi,bet,al/)
+ elseif((l5>zkt).AND.(zkt>max(l1,l3)))then
+  reg="E1"
+  tconf=7
+  config(1:tconf)=(/deltti,alti,deltti,epsiti,epsi,delt,al/)
+ elseif(zkt>max(l3,l5))then
+  reg="F0"
+  tconf=5
+  config(1:tconf)=(/deltti,epsiti,epsi,delt,al/)
+ else
+  stop "Erreur dans region k<k0"
+ endif
+else
+ if(l8>zkt)then
+  reg="00"
+  tconf=0
+ elseif((min(l1,l5)>zkt).AND.(zkt>l6))then
+  reg="A0"
+  tconf=6
+  config(1:tconf)=(/0,al,bet,gam,bet,al/)
+ elseif((min(l2,l5)>zkt).AND.(zkt>l1))then
+  reg="B0"
+  tconf=6
+  config(1:tconf)=(/delt,al,bet,gam,bet,al/)
+ elseif((zkt>max(l6,l5)).AND.(l1>zkt))then
+  reg="B1"
+  tconf=4
+  config(1:tconf)=(/0,al,bet,al/)
+ elseif((zkt>l2).AND.(l5>zkt))then
+  reg="D0"
+  tconf=6
+  config(1:tconf)=(/delt,epsi,bet,gam,bet,al/)
+ elseif((l2>zkt).AND.(zkt>max(l1,l5)))then
+  reg="D1"
+  tconf=4
+  config(1:tconf)=(/delt,al,bet,al/)
+ elseif((zkt>max(l2,l5)).AND.(l3>zkt))then
+  reg="E0"
+  tconf=4
+  config(1:tconf)=(/delt,epsi,bet,al/)
+ elseif(zkt>l3)then
+  reg="F0"
+  tconf=4
+  config(1:tconf)=(/delt,epsi,delt,al/)
+ elseif((k<k11).AND.((zkt<l4).OR.((zkt>l5).AND.(l6>zkt))))then
+  reg="G0"
+  tconf=4
+  config(1:tconf)=(/0,al,bet,gam/)
+ elseif((k>k11).AND.(k12>k).AND.(l6>zkt))then
+  reg="G0"
+  tconf=4
+  config(1:tconf)=(/0,al,bet,gam/)
+ elseif((k>k12).AND.(l6>zkt).AND.(zkt>l7))then
+  reg="G0"
+  tconf=4
+  config(1:tconf)=(/0,al,bet,gam/)
+ elseif((k>k12).AND.(l7>zkt).AND.(zkt>l8))then
+  reg="H0"
+  tconf=2
+  config(1:tconf)=(/0,al/)
+ elseif((k<k11).AND.(min(l5,l6)>zkt).AND.(zkt>l4))then
+  reg="J0"
+  tconf=6
+  config(1:tconf)=(/0,al,bet,gam,bet,gam/)
+ else 
+  stop "Erreur dans region k>k0"
+ endif
+endif
 
-qc=    1.0e50_qp
-qm=    1.0e50_qp
+!bornesq
+km=    1.0e50_qp; kp=    1.0e50_qp; q1m=   1.0e50_qp; q2m=   1.0e50_qp; q3m=   1.0e50_qp; q4m=   1.0e50_qp; 
+q1mbis=1.0e50_qp; q3mbis=1.0e50_qp; 
+q1p=   1.0e50_qp; q2p=   1.0e50_qp; 
+qc=    1.0e50_qp; qm=    1.0e50_qp;
 
 if(k<k0)then
  km=k0-k
@@ -658,6 +1111,7 @@ else
  elseif(k<3*k0)then
   km=k-k0
   if(zkt<l1) q1m=k-sqrt(k0**2+sqrt(zkt**2-1))
+  if(zkt<l1) write(6,*)"top"
   if(zkt<l6) q2m=rtsafe(soleC,(/-1.0_qp,1.0_qp/),k-k0 ,k+k0    ,1.e-18_qp)
  else
   if((zkt>l7).AND.(l6>zkt))then
@@ -680,7 +1134,6 @@ endif
 
 
 vecq=(/0.0_qp,q1m,q2m,q3m,q4m,q1p,q2p,kp,km,qm,qc,q1mbis,q3mbis/)
-!write(6,*)"vecq=",real(vecq,sp)
 call tri(vecq)
 bq=vecq(1:8)
 
@@ -697,7 +1150,7 @@ CONTAINS
   s=arg(1)
   derivee=arg(2)
 
-  sC=zk-ec(q)-epsBCS(k+s*q)
+  sC=zkt+2-ec(q)-epsBCS(k+s*q)
 !  write(6,*)"q,sC=",q,sC
   if(q<2*k0)then
    dec =0.0_qp
@@ -718,178 +1171,57 @@ CONTAINS
   endif  
   END SUBROUTINE soleC
 END SUBROUTINE bornesq
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE bornesk
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE bornesom(k,zk,q,grecque,res,bom,tres)
+USE recettes
+REAL(QP), INTENT(IN) :: k,zk,q
+INTEGER, INTENT(IN) :: grecque
+INTEGER, INTENT(OUT) :: res(1:2),tres
+REAL(QP), INTENT(OUT) :: bom(1:3)
+REAL(QP) s
 
-k0=sqrt(x0)
-k1=k0/sqrt(2.0_qp)
-k2=3*k0/5
-k3=k0/2
-k4=k0/sqrt(5.0_qp)
-k5=k0/3
-k6=(sqrt(2.0_qp)-1)*k0/2
-k7=k0/5
+bom(:)=1.e100_qp
 
-k8 =(1+sqrt(2.0_qp))*k0/2
-k9 =sqrt(2.0_qp)*k0
-k10=-k0+sqrt(4*k0**2+2*sqrt(k0**4+2*sqrt(1+k0**4)-2))
-k11=2*k0
-k12=3*k0
-
-END SUBROUTINE bornesk
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE region(k,zkt,reg,taille,config)
-REAL(QP), INTENT(IN) :: k,zkt
-!INTEGER reg
-CHARACTER(len=2), INTENT(OUT) :: reg
-INTEGER, INTENT(OUT) :: taille
-INTEGER, DIMENSION(1:7), INTENT(OUT) :: config
-
-if(k<k0)then
- if(zkt<1)then
-  reg="00"
-  taille=0
- elseif(min(l1,l4)>zkt)then
-  reg="A0"
-  taille=7
-  config(1:taille)=(/0,alti,betti,gam,bet,al/)
- elseif((zkt>l1).AND.(min(l2,l4)>zkt))then
-  reg="B0"
-  taille=7
-  config(1:taille)=(/deltti,alti,betti,gam,bet,al/)
- elseif((zkt>l4).AND.(min(l1,l2)>zkt))then
-  reg="B1"
-  taille=8
-  config(1:taille)=(/0,alti,betti,epsiti,epsi,bet,al/)
- elseif((zkt>l2).AND.(l4>zkt))then
-  reg="C0"
-  taille=7
-  config(1:taille)=(/deltti,epsiti,betti,gam,bet,al/)
- elseif((l2>zkt).AND.(zkt>max(l1,l4)))then
-  reg="C1"
-  taille=8
-  config(1:taille)=(/deltti,alti,betti,epsiti,epsi,bet,al/)
- elseif((min(l1,l3)>zkt).AND.(zkt>l2))then
-  reg="C2"
-  taille=8
-  config(1:taille)=(/0,alti,deltti,epsiti,epsi,bet,al/)
- elseif((zkt>l4).AND.(l5>zkt).AND.(k>k1))then
-  reg="D0"
-  taille=8
-  config(1:taille)=(/deltti,epsiti,epsi,bet,gam,bet,al/)
- elseif((zkt>max(l2,l4)).AND.(l5>zkt).AND.(k>k3))then
-  reg="D1"
-  taille=8
-  config(1:taille)=(/deltti,epsiti,betti,epsiti,epsi,bet,al/)
- elseif((zkt>max(l1,l2)).AND.(min(l3,l5)>zkt).AND.(k>k7))then
-  reg="D2"
-  taille=8
-  config(1:taille)=(/deltti,alti,deltti,epsiti,epsi,bet,al/)
- elseif((l1>zkt).AND.(zkt> l3))then
-  reg="D3"
-  taille=8
-  config(1:taille)=(/0,alti,deltti,epsiti,epsi,delt,al/)
- elseif((l3>zkt).AND.(zkt>l5))then
-  reg="E0"
-  taille=6
-  config(1:taille)=(/deltti,epsiti,epsi,bet,al/)
- elseif((l5>zkt).AND.(zkt>max(l1,l3)))then
-  reg="E1"
-  taille=8
-  config(1:taille)=(/deltti,alti,deltti,epsiti,epsi,delt,al/)
- elseif(zkt>max(l3,l5))then
-  reg="F0"
-  taille=6
-  config(1:taille)=(/deltti,epsiti,epsi,delt,al/)
- else
-  stop "Erreur dans region k<k0"
- endif
+if(grecque<6)then 
+ s=+1.0_qp
 else
-! write(6,*)"top"
- if(l8>zkt)then
-  reg="00"
-  taille=0
- elseif((min(l1,l5)>zkt).AND.(zkt>l6))then
-  reg="A0"
-  taille=7
-  config(1:taille)=(/0,al,bet,gam,bet,al/)
- elseif((min(l2,l5)>zkt).AND.(zkt>l1))then
-  reg="B0"
-  taille=7
-  config(1:taille)=(/delt,al,bet,gam,bet,al/)
- elseif((zkt>max(l6,l5)).AND.(l1>zkt))then
-  reg="B1"
-  taille=5
-  config(1:taille)=(/0,al,bet,al/)
- elseif((zkt>l2).AND.(l5>zkt))then
-  reg="D0"
-  taille=7
-  config(1:taille)=(/delt,epsi,bet,gam,bet,al/)
- elseif((l2>zkt).AND.(zkt>max(l1,l5)))then
-  reg="D1"
-  taille=5
-  config(1:taille)=(/delt,al,bet,al/)
- elseif((zkt>max(l2,l5)).AND.(l3>zkt))then
-  reg="E0"
-  taille=5
-  config(1:taille)=(/delt,epsi,bet,al/)
- elseif(zkt>l3)then
-  reg="F0"
-  taille=5
-  config(1:taille)=(/delt,epsi,delt,al/)
- elseif((k<k11).AND.((zkt<l4).OR.((zkt>l5).AND.(l6>zkt))))then
-  reg="G0"
-  taille=5
-  config(1:taille)=(/0,al,bet,gam/)
- elseif((k>k11).AND.(k12>k).AND.(l6>zkt))then
-  reg="G0"
-  taille=5
-  config(1:taille)=(/0,al,bet,gam/)
- elseif((k>k12).AND.(l6>zkt).AND.(zkt>l7))then
-  reg="G0"
-  taille=5
-  config(1:taille)=(/0,al,bet,gam/)
- elseif((k>k12).AND.(l7>zkt).AND.(zkt>l8))then
-  reg="H0"
-  taille=3
-  config(1:taille)=(/0,al/)
- elseif((k<k11).AND.(min(l5,l6)>zkt).AND.(zkt>l4))then
-  reg="J0"
-  taille=7
-  config(1:taille)=(/0,al,bet,gam,bet,gam/)
- else 
-  stop "Erreur dans region k>k0"
- endif
-endif
-END SUBROUTINE region
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE lignesenergie(k)
-
-REAL(QP), INTENT(IN) :: k
-
-l1=epsBCS(k)
-l5=epsBCS(0.0_qp)
-if(k<k0)then
- l2=epsBCS(2*k-k0)
- l3=epsBCS(2*k+k0)
- l4=epsBCS(k+sqrt(k0**2-k**2))
-elseif(k<3*k0)then
- l2=epsBCS(2*k-k0)
- l3=epsBCS(2*k+k0)+ec(k+k0)-2
- if(k<2*k0)then
-  l4=solom2(k,fichom2)
- endif
- l6=ec(k+k0)-1
- l8=1.0_qp
-else
- l2=epsBCS(2*k-k0)+ec(k-k0)-2
- l3=epsBCS(2*k+k0)+ec(k+k0)-2
- l6=ec(k+k0)-1
- l7=ec(k-k0)-1
- l8=solom2(k,fichom2p)
+ s=-1.0_qp
 endif
 
-END SUBROUTINE lignesenergie 
+if((grecque==al).OR.(grecque==alti))then
+ tres=1
+ bom(1)=ec(q)
+ res(1)=1
+ bom(2)=zk-epsBCS(k-s*q)
+elseif((grecque==bet).OR.(grecque==betti))then
+ tres=2
+ bom(1)=ec(q)
+ res(1)=1
+ bom(2)=zk-epsBCS(k-s*q)
+ res(2)=2
+ bom(3)=zk-1.0_qp
+elseif(grecque==gam)then
+ tres=1
+ bom(1)=ec(q)
+ res(1)=2
+ bom(2)=zk-1.0_qp
+elseif((grecque==delt).OR.(grecque==deltti))then
+ tres=1
+ bom(1)=zk-epsBCS(k+s*q)
+ res(1)=1
+ bom(2)=zk-epsBCS(k-s*q)
+elseif((grecque==epsi).OR.(grecque==epsiti))then
+ tres=2
+ bom(1)=zk-epsBCS(k+s*q)
+ res(1)=1
+ bom(2)=zk-epsBCS(k-s*q)
+ res(2)=2
+ bom(3)=zk-1.0_qp
+elseif(grecque==0)then
+ tres=0
+endif
+
+END SUBROUTINE bornesom
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION ec(q)
 
@@ -990,14 +1322,14 @@ CONTAINS
  END SUBROUTINE solP
 END FUNCTION solom2
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION ecritconfig(taille,config)
-INTEGER, INTENT(IN) :: taille
+FUNCTION ecritconfig(tconf,config)
+INTEGER, INTENT(IN) :: tconf
 INTEGER, DIMENSION(:), INTENT(IN) :: config
 CHARACTER(len=90) :: ecritconfig
 
 INTEGER itai
 ecritconfig=trim(ecritc(config(1)))
-do itai=2,taille
+do itai=2,tconf
  ecritconfig=trim(ecritconfig)//"  "//trim(ecritc(config(itai)))
 enddo
 END FUNCTION ecritconfig

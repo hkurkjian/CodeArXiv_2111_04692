@@ -6,16 +6,16 @@ USE vars
 USE Zerom
 USE intpole
 USE intldc
-USE estM
+USE bestM
 USE eqdetat
 IMPLICIT NONE
 
 REAL(QP) om,dom,M(1:2,1:2),dM(1:2,1:2),A(1:6),dMm(1:3),q
-COMPLEX(QPC) Mm(1:3)
+COMPLEX(QPC) Mm2(1:6)
 REAL(QP) vec(1:2000,1:10000)
 REAL(QP) vec2(1:2000,1:10000)
 REAL(QP) :: xik,epsk,Uk2,Vk2,k,zk,zkmax,le(1:8),bq(1:10),arr(1:8),don(1:7,1:1000,0:100),don2(1:7,1:1000),est(1:6),dest(1:6)
-CHARACTER(len=90) fichdep,fich
+CHARACTER(len=90) fichdep,fich,fich2
 CHARACTER(len=2)  reg,regvieux
 INTEGER izk,taille,config(1:7),pos(1:8),nn,nn2,ixq,ixqbis,compteur,nxq,iom
 COMPLEX(QPC) Gamm(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
@@ -23,36 +23,147 @@ REAL(QP) nnn,mmm,intell
 
 LOGICAL errtype1,errtype2,interpol
 
+!Paramètres physiques
+x0=4.0_qp
+k=4.1_qp
+zk=sqrt((k**2-x0)**2+1)-0.0001_qp
+k=2.1_qp
+zk=3.4_qp
+
+
+!Paramètres de dspec
+temperaturenulle=.TRUE.
 EPSpp=1.0e-8_qp
+x0crit=0.0_qp
 bla1=.TRUE.
 bla1=.FALSE.
-blaM=.TRUE.
-temperaturenulle=.TRUE.
-x0=1.0_qp
-x0crit=2.0_qp
-!
-x0=4.0_qp
+bla2=.TRUE.
+bla2=.FALSE.
 
-write(6,*)I5(x0)
-write(6,*)I6(x0)
+!Paramètres de estM
+blaM=.TRUE.
+blaM=.FALSE.
+blaerr=.TRUE.
+blaerr=.FALSE.
+qpetit=0.1_qp/x0
+qpetit=0.03_qp
+write(6,*)"qpetit=",qpetit
+
+
+!Paramètres de intldc
+EPSom=1.0e-5_qp
+EPSq =1.0e-3_qp
+bla0=.TRUE.
+bla00=.FALSE.
+bla00=.TRUE.
+lecture=.FALSE.
+lecture=.TRUE.
+ecriture=.TRUE.
+ecriture=.FALSE.
+q1=  0.0_qp
+q2= 10.0_qp
+q3=100.0_qp
+profondeur=5
+prefixe="test"
+
+!Fichiers de données
+
+fich="BCSx04_nvo_augmente"
+fich ="BCS_4_2"
+fich2="BCS_4_sup"
+
+fichom2 ="DONNEES/Tom1.dat"
+fichom2p="DONNEES/Tom1p.dat"
+
+fichierlec1="grille_x04_1.dat"
+fichierlec2="grille_x04_2.dat"
+fichierlec3="grille_x04_3.dat"
+
+interpol=.TRUE.
+
+!call load_data(fich)
+!call loadom2(fich2)
+!
+!om= 3.0_qp
+!om= 2.00969499921292210131045_qp
+!xq=0.05_qp
+!xq=0.0499812499999999999999999999999
+!om=2.00968917749000663444
+!om=2.015
+!om=2.01000836809456590498816858862099477
+!xq=0.0500_qp
+!xq=0.098148148148148148148148148148148230
+!om=2.03813211050015212474015981164369636
+!xq=0.3322364370         
+!om=2.395419696
+!call oangpp
+!write(6,*)"opp=",opp(1:3)
+!
+!call estmat_pairfield(om,0.0_qp,det,Matt,Gamm)
+!write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
+!write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
+!write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
+!write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
+!write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
+!write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
+!write(6,*)
+!write(6,*)"det=",det
+!write(6,*)
+!
+!call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
+!write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
+!write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
+!write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
+!write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
+!write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
+!write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
+!write(6,*)
+!write(6,*)"det=",det
+!write(6,*)
+!
+!call unload_data
+!stop
+
+Mm2=intres(k,zk,interpol,(/fich,fich2/))
+write(6,*)"Mm2=",Mm2
+open(17,file="selfE"//trim(suffixe)//".dat")
+ write(17,*)real(Mm2),imag(Mm2)
+close(17)
+
+!Mm2=selfEldc(k,zk)
+open(17,file="selfE"//trim(suffixe)//".dat")
+ write(17,*)real(Mm2),imag(Mm2)
+close(17)
+
 stop
 
-q=3.74074074074074074074074074074074472E-002_qp
-om=2.0005_qp
 
-q=0.112657197073092805303614801945519069_qp
-om=2.05085169619498758715291017720649464_qp
-
-q=  0.018109528119963552203633485860511848_qp 
-om= 2.05313761443109372152143534318848304_qp
-xq=q
-call oangpp
-
+!x0=4.0_qp
+!q=0.1_qp
+!xq=q
+!om=16000.1_qp
+!call oangpp
+!
+!!Paramètres de dspec
+!temperaturenulle=.TRUE.
+!EPSpp=1.0e-8_qp
+!x0crit=0.0_qp
+!bla1=.TRUE.
+!bla1=.FALSE.
+!bla2=.TRUE.
+!bla2=.FALSE.
+!
+!!Paramètres de estM
+!blaM=.FALSE.
+!blaM=.TRUE.
+!blaerr=.FALSE.
+!blaerr=.TRUE.
+!qpetit=0.05_qp/x0
+!
 !write(6,*)"q,om=",q,om
 !write(6,*)"opp=",opp(1:3)
 !
-!qpetit=0.05_qp/x0
-!fich="BCSx04_nvo_augmente"
+!fich="BCS_4_2"
 !call load_data(fich)
 !est=interpolM_recerr(q,om)
 !Matt(1,1)=cmplx(est(1),est(4),kind=qpc)
@@ -63,62 +174,29 @@ call oangpp
 !write(6,*)"det=",det
 !write(6,*)
 !call unload_data
-
-call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
-write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
-write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
-write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
-write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
-write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
-write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
-write(6,*)
-write(6,*)"det=",det
-write(6,*)
-
-call mat_pairfield_pttq(om,0.0_qp,det,Matt,Gamm)
-write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
-write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
-write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
-write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
-write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
-write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
-write(6,*)
-write(6,*)"det=",det
-write(6,*)
-
-
-fich="BCSx04_nvo_augmente"
-temperaturenulle=.TRUE.
-x0=4.0_qp
-
-fichom2 ="DONNEES/Tom1.dat"
-fichom2p="DONNEES/Tom1p.dat"
-k=2.1_qp
-zk=3.4_qp
-x0crit=0.0_qp
-x0=4.0_qp
-
-bla0=.TRUE.
-bla1=.TRUE.
-bla1=.FALSE.
-bla2=.TRUE.
-bla2=.FALSE.
-blaM=.TRUE.
-blaM=.FALSE.
-blaerr=.TRUE.
-
-EPSpp=1.0e-8_qp
-EPSom=1.0e-5_qp
-EPSq =1.0e-3_qp
-call bornesk
-!call lignesenergie(k)
-!le=(/l1,l2,l3,l4,l5,l6,l7,l8/)
-!call tri_q(le)
-!write(6,FMT="(A30,8G20.10)")"lignes d’énergie=",le
+!
+!call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
+!write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
+!write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
+!write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
+!write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
+!write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
+!write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
 !write(6,*)
-interpol=.TRUE.
-Mm=intim(k,zk,interpol,fich)
-stop
+!write(6,*)"det=",det
+!write(6,*)
+!
+!call mat_pairfield_pttq(om,0.0_qp,det,Matt,Gamm)
+!write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
+!write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
+!write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
+!write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
+!write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
+!write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
+!write(6,*)
+!write(6,*)"det=",det
+!write(6,*)
+
 
 !
 !k=(k11+k12)/2.

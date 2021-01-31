@@ -6,10 +6,10 @@ PROGRAM spectre
  USE Zerom
  USE eqdetat
  IMPLICIT NONE
- REAL(QP) :: om,M(1:3),dM(1:3),x
- INTEGER nn,n,taille
+ REAL(QP) :: om,M(1:3),dM(1:3)
+ INTEGER nn
  CHARACTER(len=90) fichier
- REAL(QP) xqmin,xqmax,dxq,tolx,omdep
+ REAL(QP) xqmin,xqmax,dxq,tolx
  REAL(QP) ccheck,Xx,Theta
  INTEGER ixq,ixqdep,nxq
  LOGICAL nouveauf

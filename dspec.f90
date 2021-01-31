@@ -520,8 +520,8 @@ IMPLICIT NONE
 REAL(QP), INTENT(IN)  :: num,om0,e,T
 REAL(QP) deriveepp
 REAL(QP) r0 !spectral density in om0
-REAL(QP) bmax,bmax2,db,omcrit!bmax: energy cutoff, omcrit: critical value of om after which racinfq should be used to integrate the tail
-REAL(QP) Icomp,Iinf,Iinf2!partial integrals
+REAL(QP) bmax,db,omcrit!bmax: energy cutoff, omcrit: critical value of om after which racinfq should be used to integrate the tail
+REAL(QP) Iinf!partial integrals
 REAL(QP) arg(1:1,1:10),bornes(1:10)
 REAL(QP) ag(1:4)
 INTEGER choix(1:10)
@@ -582,7 +582,7 @@ if(T<0.0_qp)then ! Intégrale du "+1" de 1+nP+nM
     deriveepp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
    endif
  endif
- deriveepp=deriveepp+Icomp+Iinf
+ deriveepp=deriveepp+Iinf
  call ecrit(bla1,'deriveepp=',deriveepp)
 elseif(T>0.0_qp)then ! Intégrale du terme en nP+nM de 1+nP+nM
  bmax=1111840.0_qp
@@ -597,7 +597,6 @@ elseif(T>0.0_qp)then ! Intégrale du terme en nP+nM de 1+nP+nM
   choix(1:4)=         (/mpnt,   mpnt,   msql,   minf/)
   deriveepp=decoupe(inter,(/0.0_qp, opp(1), opp(2), opp(3), bmax/),     arg(1:1,1:4),choix(1:4),EPSpp,bla1)
  endif
- deriveepp=deriveepp+Icomp
  call ecrit(bla1,'deriveepp=',deriveepp)
 endif
 
@@ -611,6 +610,8 @@ CONTAINS
   elseif(floor(num)==3)then
 !   intinfini= -2.0_qp*PI/(sqrt(2.0_qp*bm))-2.0_qp*PI*(x0-xq**2/4.0_qp)/(3.0_qp*sqrt(2.0_qp*bm**3)) !Subleading order in der_+-
    intinfini= -2.0_qp*PI/(sqrt(2.0_qp*bm))
+  else
+   stop "Mauvais num dans deriveepp"
   endif
   END FUNCTION intinfini
 
@@ -620,7 +621,7 @@ CONTAINS
   
   REAL(QP), INTENT(IN), DIMENSION(:)  ::  om,arg
   REAL(QP), DIMENSION(size(om))       ::  inter
-  REAL(QP) r,s,ome,cterm
+  REAL(QP) r,ome
   INTEGER is
   
   inter(:)=0.0_qp
@@ -711,7 +712,6 @@ CONTAINS
  REAL(QP), INTENT(IN), DIMENSION(:)  :: arg
  REAL(QP), DIMENSION(size(y)) :: integrande
  REAL(QP), DIMENSION(size(y)) :: h,xii,np,nm,denocommun,nume
- INTEGER ifun
 
  integrande(:)=0.0_qp
 
@@ -781,6 +781,8 @@ CONTAINS
   rA=rA+ellf(PI/2.0_qp,tht)-ellf(asin(s2),tht)
  elseif(sec==3)then
   rA=   ellf(PI/2.0_qp,tht)-ellf(asin(s2),tht)
+ else 
+  stop "Mauvais secteur dans rA"
  endif
 
  END FUNCTION rA
@@ -796,6 +798,8 @@ CONTAINS
   rB=rB+(elle(PI/2.0_qp,tht)-elle(asin(s2),tht))/(1.0_qp-th2t)
  elseif(sec==3)then
   rB=   (elle(PI/2.0_qp,tht)-elle(asin(s2),tht))/(1.0_qp-th2t)
+ else 
+  stop "Mauvais secteur dans rB"
  endif
 
  END FUNCTION rB
@@ -840,6 +844,8 @@ CONTAINS
  elseif(sec==3)then
   rCC(1)=0.0_qp
   rCC(2)=( sqrt((1.0_qp-s2**2.0_qp)/(1.0_qp-th2t*s2**2.0_qp)))/(1.0_qp-th2t)
+ else 
+  stop "Mauvais secteur dans rCC"
  endif
  END FUNCTION rCC
 !!!!!!!!!!!!!!!!
@@ -856,6 +862,8 @@ CONTAINS
  elseif(sec==3)then
   rrC=rCC(sec)
   rBp=rB(sec)+th2t*s2*rrC(2)
+ else 
+  stop "Mauvais secteur dans rBp"
  endif
  END FUNCTION rBp
 !!!!!!!!!!!!!!!!
@@ -870,6 +878,8 @@ CONTAINS
   rDD=rDD+log((sqrt(1.0_qp-th2t*s2**2.0_qp)+sqrt(th2t*(1.0_qp-s2**2.0_qp)))/sqrt(1.0_qp-th2t))/tht
  elseif(sec==3)then
   rDD=   log((sqrt(1.0_qp-th2t*s2**2.0_qp)+sqrt(th2t*(1.0_qp-s2**2.0_qp)))/sqrt(1.0_qp-th2t))/tht
+ else 
+  stop "Mauvais secteur dans rDD"
  endif
  END FUNCTION rDD
 !!!!!!!!!!!!!!!!
@@ -995,7 +1005,6 @@ CONTAINS
  REAL(QP), INTENT(IN), DIMENSION(:)  :: arg
  REAL(QP), DIMENSION(size(y)) :: integrande
  REAL(QP), DIMENSION(size(y)) :: h,xii,np,nm,denocommun,nume
- INTEGER ifun
 
  xii=cost/y
  h=sqrt((1.0_qp+y**2.0_qp*tan2t)/(1.0_qp-y**2.0_qp))

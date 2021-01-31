@@ -15,8 +15,8 @@ IMPLICIT NONE
 REAL(QP), INTENT(IN) :: k,zk
 REAL(QP) :: selfEpole(1:6)
 
-REAL(QP) :: q,qmin,qmax,EPS,kmin,kmax,dk,dq
-INTEGER ix,nx,iq,nq,nqeff
+REAL(QP) :: qmin,qmax,EPS,dq
+INTEGER iq,nq,nqeff
 INTEGER nn,taille
  
 open(11,file=trim(fichier)//".info")
@@ -100,11 +100,11 @@ CONTAINS
 
   integrandeq(is,1)=-MatCat(2)*IuM(1)/ddet
   integrandeq(is,2)=-MatCat(1)*IuM(2)/ddet
-  integrandeq(is,3)=-MatCat(3)*IuM(3)/ddet
+  integrandeq(is,3)= MatCat(3)*IuM(3)/ddet
 
   integrandeq(is,4)= MatCat(1)*IuP(2)/ddet
   integrandeq(is,5)= MatCat(2)*IuP(1)/ddet
-  integrandeq(is,6)=-MatCat(3)*IuP(3)/ddet
+  integrandeq(is,6)= MatCat(3)*IuP(3)/ddet
   write(6,*)"qs,integrandeq=",qs,integrandeq(is,1)
   integrandeq(is,:)=qs**2*integrandeq(is,:)
  enddo

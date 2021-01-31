@@ -1078,6 +1078,74 @@ MODULE modsim
        write(6,*) 'Nombre d itération dépassé dans qromovqfixed'
        err=.TRUE.
        END FUNCTION qromovqfixed
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       FUNCTION qromochoixvq(func,a,b,m,arg,choix,EPS)
+       REAL(QP), INTENT(IN) :: a,b
+       REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+       INTEGER, INTENT(IN) :: m,choix
+       REAL(QP), INTENT(IN)  :: EPS
+       REAL(QP) :: qromochoixvq(1:m)
+       PROCEDURE(funcvq) :: func
+       if(choix==mpnt)then 
+        qromochoixvq=qromovq(func,a,b,m,arg,midpntvq,EPS)
+       elseif(choix==minf)then
+        qromochoixvq=qromovq(func,a,b,m,arg,midinfvq,EPS)
+       elseif(choix==msql)then
+        qromochoixvq=qromo(func,a,b,m,arg,midsqlvq,EPS)
+       elseif(choix==msqu)then
+        qromochoixvq=qromo(func,a,b,m,arg,midsquvq,EPS)
+       elseif(choix==mexp)then
+        qromochoixvq=qromo(func,a,b,m,arg,midexpvq,EPS)
+       elseif(choix==rinf)then
+        qromochoixvq=qromo(func,a,b,m,arg,racinfvq,EPS)
+       endif
+       END FUNCTION qromochoixvq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       FUNCTION decoupevq(func,bornes,mm,arg,choix,EPS,bla) 
+       !Calcule la somme des integrales de func de bornes(m) à bornes(m+1)
+       !avec le changement de variable choix(m) et les arguments arg(m)
+       INTEGER, DIMENSION(:), INTENT(IN) :: choix
+       REAL(QP), DIMENSION(size(choix)+1), INTENT(IN) :: bornes
+       REAL(QP), DIMENSION(:,:), INTENT(IN) :: arg
+       REAL(QP), INTENT(IN) :: EPS
+       INTEGER, INTENT(IN) :: mm
+       LOGICAL, INTENT(IN) :: bla
+       PROCEDURE(funcvq) :: func
+       REAL(QP) decoupevq(1:mm)
+       !
+       INTEGER m,imm
+       REAL(QP) I(1:mm)
+       if(size(arg,  DIM=2).NE.size(bornes)-1) stop "size(arg)   ne correspond pas à size(bornes)-1 dans decoupevq"
+       decoupevq(:)=0.0_qp
+       do m=1,size(choix)
+
+        if(bla)then
+         write(6,*)"************************"
+         write(6,*)
+         write(6,*)"Intégrale de ",bornes(m)," à ",bornes(m+1)
+         write(6,*)
+        endif
+
+        I=qromochoixvq(func,bornes(m),bornes(m+1),mm,arg(:,m),choix(m),EPS)
+        decoupevq=decoupevq+I
+
+        if(bla)then
+         write(6,*)
+         do imm=1,mm
+          write(6,FMT="(A2,I1,A1,I1,A3,1P,G45.35)") "I",m,"(",imm,")=  ",I(imm)
+         enddo
+         write(6,*)
+        endif
+       enddo
+       if(bla)then
+         write(6,*)
+         do imm=1,mm
+          write(6,FMT="(A6,I1,A2,1P,G45.35)") "Itot(",imm,")=",decoupevq(imm)
+         enddo
+         write(6,*)
+       endif
+
+       END FUNCTION decoupevq
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        SUBROUTINE midpntvcq(func,a,b,m,arg,s,n)
@@ -1287,29 +1355,33 @@ MODULE modsim
        if(size(arg,  DIM=2).NE.size(bornes)-1) stop "size(arg)   ne correspond pas à size(bornes)-1 dans decoupevcq"
        decoupevcq(:)=0.0_qp
        do m=1,size(choix)
+
         if(bla)then
-         write(6,*)"--------------------------------"
-         write(6,*)
-         write(6,*)"decoupevcq"
+         write(6,*)"************************"
          write(6,*)
          write(6,*)"Intégrale de ",bornes(m)," à ",bornes(m+1)
          write(6,*)
-         write(6,*)
-         write(6,*)
         endif
+
         I=qromochoixvcq(func,bornes(m),bornes(m+1),mm,arg(:,m),choix(m),EPS)
         decoupevcq=decoupevcq+I
+
         if(bla)then
+         write(6,*)
          do imm=1,mm
-          write(6,FMT="(A1,I1,A1,I1,A3,1P,2G45.35)") "I",m,"(",imm,")=  ",I(imm)
+          write(6,FMT="(A2,I1,A1,I1,A3,1P,2G45.35)") "I",m,"(",imm,")=  ",I(imm)
          enddo
+         write(6,*)
         endif
        enddo
        if(bla)then
+         write(6,*)
          do imm=1,mm
-          write(6,FMT="(A5,I1,A2,1P,2G45.35)") "Itot(",imm,")=",decoupevcq(imm)
+          write(6,FMT="(A6,I1,A2,1P,2G45.35)") "Itot(",imm,")=",decoupevcq(imm)
          enddo
+         write(6,*)
        endif
+
        END FUNCTION decoupevcq
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 

@@ -2,6 +2,7 @@ MODULE eqdetat
  USE nrtype
  USE recettes, ONLY : elle,ellf
  IMPLICIT NONE
+ REAL(QP), PARAMETER ::  bidoneqdet=1.0e200_qp
  CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  FUNCTION x1(x0)
@@ -58,16 +59,16 @@ MODULE eqdetat
  FUNCTION eFsurmu(bmu,bd)
  USE modsim
  REAL(QP), INTENT(IN) :: bmu,bd
- REAL(QP) eFsurmu,bidon,bmax,EPS
+ REAL(QP) eFsurmu,bmax,EPS
   
  EPS=1.0e-9_qp
  bmax=1.0e10_qp
  if(bmu>0.0_qp)then
-  eFsurmu=qromo(intxi,0.0_qp,1.0_qp,(/bidon/),midpntq,EPS)
-  eFsurmu=eFsurmu+qromo(intx,sqrt(2.0_qp),bmax,(/bidon/),midinfq,EPS)
+  eFsurmu=qromo(intxi,0.0_qp,1.0_qp,(/bidoneqdet/),midpntq,EPS)
+  eFsurmu=eFsurmu+qromo(intx,sqrt(2.0_qp),bmax,(/bidoneqdet/),midinfq,EPS)
  else
-  eFsurmu=qromo(intx,0.0_qp,1.0_qp,(/bidon/),midpntq,EPS)
-  eFsurmu=eFsurmu+qromo(intx,1.0_qp,bmax,(/bidon/),midinfq,EPS)
+  eFsurmu=qromo(intx,0.0_qp,1.0_qp,(/bidoneqdet/),midpntq,EPS)
+  eFsurmu=eFsurmu+qromo(intx,1.0_qp,bmax,(/bidoneqdet/),midinfq,EPS)
  endif
  eFsurmu=(3.0_qp*eFsurmu/2.0_qp)**(2.0_qp/3.0_qp)
  CONTAINS 
@@ -90,16 +91,16 @@ MODULE eqdetat
  FUNCTION unsurkFa(bmu,bd)
  USE modsim
  REAL(QP), INTENT(IN) :: bmu,bd
- REAL(QP) unsurkFa,bidon,bmax,EPS
+ REAL(QP) unsurkFa,bmax,EPS
   
  EPS=1.0e-9_qp
  bmax=1.0e10_qp
  if(bmu>0.0_qp)then
-  unsurkFa=qromo(intxi,0.0_qp,1.0_qp,(/bidon/),midsquq,EPS)
-  unsurkFa=unsurkFa+qromo(intx,sqrt(2.0_qp),bmax,(/bidon/),midinfq,EPS)
+  unsurkFa=qromo(intxi,0.0_qp,1.0_qp,(/bidoneqdet/),midsquq,EPS)
+  unsurkFa=unsurkFa+qromo(intx,sqrt(2.0_qp),bmax,(/bidoneqdet/),midinfq,EPS)
  else
-  unsurkFa=qromo(intx,0.0_qp,1.0_qp,(/bidon/),midpntq,EPS)
-  unsurkFa=unsurkFa+qromo(intx,1.0_qp,bmax,(/bidon/),midinfq,EPS)
+  unsurkFa=qromo(intx,0.0_qp,1.0_qp,(/bidoneqdet/),midpntq,EPS)
+  unsurkFa=unsurkFa+qromo(intx,1.0_qp,bmax,(/bidoneqdet/),midinfq,EPS)
  endif
  unsurkFa=unsurkFa*4.0_qp/(PI*sqrt(eFsurmu(bmu,bd)))
  CONTAINS 
@@ -124,16 +125,16 @@ MODULE eqdetat
  FUNCTION eFsurmuTc(bmu)
  USE modsim
  REAL(QP), INTENT(IN) :: bmu
- REAL(QP) eFsurmuTc,bidon,bmax,EPS
+ REAL(QP) eFsurmuTc,bmax,EPS
   
  EPS=1.0e-9_qp
  bmax=1.0e10_qp
  if(bmu>0.0_qp)then
-  eFsurmuTc=qromo(intxi,0.0_qp,1.0_qp,(/bidon/),midpntq,EPS)
-  eFsurmuTc=eFsurmuTc+qromo(intx,sqrt(2.0_qp),bmax,(/bidon/),midinfq,EPS)
+  eFsurmuTc=qromo(intxi,0.0_qp,1.0_qp,(/bidoneqdet/),midpntq,EPS)
+  eFsurmuTc=eFsurmuTc+qromo(intx,sqrt(2.0_qp),bmax,(/bidoneqdet/),midinfq,EPS)
  else
-  eFsurmuTc=qromo(intx,0.0_qp,1.0_qp,(/bidon/),midpntq,EPS)
-  eFsurmuTc=eFsurmuTc+qromo(intx,1.0_qp,bmax,(/bidon/),midinfq,EPS)
+  eFsurmuTc=qromo(intx,0.0_qp,1.0_qp,(/bidoneqdet/),midpntq,EPS)
+  eFsurmuTc=eFsurmuTc+qromo(intx,1.0_qp,bmax,(/bidoneqdet/),midinfq,EPS)
  endif
  eFsurmuTc=(3.0_qp*eFsurmuTc/2.0_qp)**(2.0_qp/3.0_qp)
  CONTAINS 
@@ -154,16 +155,16 @@ MODULE eqdetat
  FUNCTION unsurkFaTc(bmu)
  USE modsim
  REAL(QP), INTENT(IN) :: bmu
- REAL(QP) unsurkFaTc,bidon,bmax,EPS
+ REAL(QP) unsurkFaTc,bmax,EPS
   
  EPS=1.0e-9_qp
  bmax=1.0e10_qp
  if(bmu>0.0_qp)then
-  unsurkFaTc=qromo(intxi,0.0_qp,1.0_qp,(/bidon/),midsquq,EPS)
-  unsurkFaTc=unsurkFaTc+qromo(intx,sqrt(2.0_qp),bmax,(/bidon/),midinfq,EPS)
+  unsurkFaTc=qromo(intxi,0.0_qp,1.0_qp,(/bidoneqdet/),midsquq,EPS)
+  unsurkFaTc=unsurkFaTc+qromo(intx,sqrt(2.0_qp),bmax,(/bidoneqdet/),midinfq,EPS)
  else
-  unsurkFaTc=qromo(intx,0.0_qp,1.0_qp,(/bidon/),midpntq,EPS)
-  unsurkFaTc=unsurkFaTc+qromo(intx,1.0_qp,bmax,(/bidon/),midinfq,EPS)
+  unsurkFaTc=qromo(intx,0.0_qp,1.0_qp,(/bidoneqdet/),midpntq,EPS)
+  unsurkFaTc=unsurkFaTc+qromo(intx,1.0_qp,bmax,(/bidoneqdet/),midinfq,EPS)
  endif
  unsurkFaTc=unsurkFaTc*4.0_qp/(PI*sqrt(eFsurmuTc(bmu)))
  CONTAINS 
@@ -184,18 +185,19 @@ MODULE eqdetat
  FUNCTION bmuTc(unskfa)
  USE recettes
  REAL(QP), INTENT(IN) :: unskfa
- REAL(QP) bmuTc,bidon,bmax,EPS
+ REAL(QP) bmuTc,EPS
   
 
  if(unskfa>3100.0_qp)STOP "unskfa trop grand"
  if(unskfa<-10.0_qp) STOP "unskfa trop petit"
 
+ EPS=1.e-7_qp
  if(unskfa<-1.0_qp)then
-  bmuTc=rtsafeq(zero,(/bidon/),10.0_qp,1.e5_qp,1.e-7_qp) !
+  bmuTc=rtsafeq(zero,(/bidoneqdet/),10.0_qp,1.e5_qp,EPS) !
  elseif(unskfa>10.0_qp)then
-  bmuTc=rtsafeq(zero,(/bidon/),-20.0_qp,-4.0_qp,1.e-7_qp) !
+  bmuTc=rtsafeq(zero,(/bidoneqdet/),-20.0_qp,-4.0_qp,EPS) !
  else
-  bmuTc=rtsafeq(zero,(/bidon/),-5.0_qp,10.0_qp,1.e-7_qp)
+  bmuTc=rtsafeq(zero,(/bidoneqdet/),-5.0_qp,10.0_qp,EPS)
  endif
  CONTAINS 
   SUBROUTINE zero(bmu,arg,f,df)
@@ -215,7 +217,7 @@ MODULE eqdetat
 ! USE recettes
 ! REAL(QP), INTENT(IN)  :: unskfa,TsTc
 ! REAL(QP), INTENT(OUT) :: bmu,bd
-! REAL(QP) bidon,bmax,EPS
+! REAL(QP) bmax,EPS
 !  
 ! bmuc   = bmuTc(unskfa)
 ! eFsmuC = eFsmuTc(bmuc)
@@ -224,11 +226,11 @@ MODULE eqdetat
 ! if(unskfa<-10.0_qp) STOP "unskfa trop petit"
 !
 ! if(unskfa<-1.0_qp)then
-!  bmuTc=rtsafeq(zero,(/bidon/),10.0_qp,1.e5_qp,1.e-7_qp) !
+!  bmuTc=rtsafeq(zero,(/bidoneqdet/),10.0_qp,1.e5_qp,1.e-7_qp) !
 ! elseif(unskfa>10.0_qp)then
-!  bmuTc=rtsafeq(zero,(/bidon/),-20.0_qp,-4.0_qp,1.e-7_qp) !
+!  bmuTc=rtsafeq(zero,(/bidoneqdet/),-20.0_qp,-4.0_qp,1.e-7_qp) !
 ! else
-!  bmuTc=rtsafeq(zero,(/bidon/),-5.0_qp,10.0_qp,1.e-7_qp)
+!  bmuTc=rtsafeq(zero,(/bidoneqdet/),-5.0_qp,10.0_qp,1.e-7_qp)
 ! endif
 ! CONTAINS 
 !  SUBROUTINE zero(bmu,arg,f,df)

@@ -7,7 +7,7 @@ IMPLICIT NONE
 REAL(QP), DIMENSION(:,:,:), ALLOCATABLE :: donnees
 REAL(QP), DIMENSION(:),     ALLOCATABLE :: vecq
 REAL(QP) xqmin,xq1,xq2,xqmax,bmax,qpetit
-INTEGER nq1,nq2,nq3,nom1,nom2,nom3,nom4,nominf
+INTEGER nq1,nq2,nq3,nom1,nom2,nom3,nom4,nominf,nbidon
 LOGICAL blaM,blaerr,blablaerr
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -30,12 +30,14 @@ open(12,file=trim(fich)//".info")
  endif
 close(12)
 allocate(donnees(1:7,1:nom1+nom2+nom3+nom4+nominf,1:nq1+nq2+nq3))
+inquire(iolength=nbidon)donnees
+write(6,*)nbidon
 allocate(vecq(1:nq1+nq2+nq3))
 donnees(1,:,:)=1.0e50_qp
 open(13,file=trim(fich)//"grilleq.dat")
 read(13,*)
-!do ixq=1,nq1+nq2+nq3
-do ixq=1,180
+do ixq=1,nq1+nq2+nq3
+!do ixq=1,1100
   read(13,*)ixqbis,xqlec,compteur
   vecq(ixq)=xqlec
   open(11,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
@@ -67,7 +69,6 @@ COMPLEX(QPC), DIMENSION(1:2,1:2), INTENT(OUT) :: M,fr
 COMPLEX(QPC), INTENT(OUT) :: det
 REAL(QP), INTENT(IN)  :: om0,e
 
-LOGICAL :: errtype1,errtype2
 REAL(QP),  DIMENSION(1:6) :: Mmv
 REAL(QP) :: q
 
@@ -75,7 +76,7 @@ q=xq
 Mmv=interpolM_recerr(q,om0)
 M(1,1)=cmplx(Mmv(1),Mmv(4),kind=qpc)
 M(2,2)=cmplx(Mmv(2),Mmv(5),kind=qpc)
-M(1,2)=cmplx(Mmv(3),Mmv(5),kind=qpc)
+M(1,2)=cmplx(Mmv(3),Mmv(6),kind=qpc)
 M(2,1)=M(1,2)
 
 det=M(1,1)*M(2,2)-M(1,2)**2.0_qp
@@ -131,14 +132,19 @@ LOGICAL, INTENT(OUT) :: err(0:2)
 REAL(QP), DIMENSION(1:6), INTENT(OUT) :: dinterpolM
 REAL(QP), DIMENSION(1:6) :: interpolM
 
-INTEGER posq,posom,posy,ixqbis,ixq,nq,decalageq,nom,decalageom,fen,iposq,npts,iMm
+INTEGER posq,posom,posy,nq,decalageq,nom,decalageom,fen,iposq,iMm
 REAL(QP) ommin,ommax,dom,ymin,ymax,dy,y,dxq,xqdep,xqfin
 REAL(QP) ptsq(1:4),ptsom(1:4,1:4),ptsy(1:4,1:4),ptsM(1:3,1:4,1:4)
-REAL(QP), DIMENSION(:),     ALLOCATABLE :: grilleom
 REAL(QP), DIMENSION(:,:),   ALLOCATABLE :: sousgrille,sousgrilley
 
 err(:)=.FALSE.
 blablaerr=.FALSE.
+
+ptsM (:,:,:)=0.0_qp
+ptsom(:,:)  =0.0_qp
+ptsy (:,:)  =0.0_qp
+ptsq (:)    =0.0_qp
+
 xq=q
 call oangpp
 
@@ -239,17 +245,17 @@ do iposq=posq-1,posq+2
   sousgrilley(2:4,:)=sousgrille(2:4,:)
   dy=sousgrilley(1,2)-sousgrilley(1,1)
   ymin=sousgrilley(1,1)-0.5_qp*dy
-  posy=(y-ymin+0.5_qp*dy)/dy
+  posy=floor((y-ymin+0.5_qp*dy)/dy)
   posom=posy
  elseif(fen==2)then
   call locate(sousgrille(1,1:nom),om,posom)
  else
   dom=sousgrille(1,2)-sousgrille(1,1)
   ommin=sousgrille(1,1)-0.5_qp*dom
-  posom=(om-ommin+0.5_qp*dom)/dom
+  posom=floor((om-ommin+0.5_qp*dom)/dom)
  endif
 
- if(((posom<1).OR.(posom.GE.nom)).AND.((iposq==posq).OR.(iposq==posq+1)))then
+ if((posom<1).OR.(posom.GE.nom))then
   if(blaerr) write(6,*)"*********************************************"
   if(blaerr) write(6,*)
   if(blaerr) write(6,*)"om hors grille à posq,iposq=",posq,iposq
@@ -334,12 +340,12 @@ do iMm=1,3
      endif
   endif
   if(abs(dinterpolM(iMm)/interpolM(iMm))>0.01_qp)then
-    blablaerr=.TRUE.
-    write(6,*)"grosse erreur d’interpolation"
+    if(blaerr) blablaerr=.TRUE.
+    if(blaerr) write(6,*)"grosse erreur d’interpolation"
   endif
   if(abs(dinterpolM(iMm)/interpolM(iMm))>0.2_qp)then
     err(0:1)=.TRUE.
-    write(6,*)"trop grosse erreur d’interpolation"
+    if(blaerr) write(6,*)"trop grosse erreur d’interpolation"
   endif
 enddo
 
@@ -386,6 +392,9 @@ interpolM(5)=-PI*rhopp(2.5_qp,om,-1.0_qp)
 interpolM(6)=-PI*rhopp(3.5_qp,om,-1.0_qp)
 
 dinterpolM(4:6)=EPSpp
+
+deallocate(sousgrille)
+deallocate(sousgrilley)
 
 END FUNCTION interpolM
 END MODULE estM
