@@ -7,7 +7,9 @@ IMPLICIT NONE
 REAL(QP) :: c0,g0
 REAL(QP) :: lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
 REAL(QP) :: ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
+REAL(QP) :: qThr,qmin,qmax,dq
 CHARACTER(len=90) fichier
+INTEGER nq,nn
 LOGICAL blaPole
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -18,27 +20,18 @@ IMPLICIT NONE
 REAL(QP), INTENT(IN) :: k,zk
 COMPLEX(QPC) :: selfEpole(1:6), SEint(1:6)
 
-REAL(QP) :: q,qmin,qmax,EPS,kmin,kmax,dk,dq,bq(1:7),qThr
-INTEGER ix,nx,iq,nq,nqeff,nbq
-INTEGER nn,taille,nbounds, ibound
+REAL(QP) :: q,EPS,kmin,kmax,dk,bq(1:7)
+INTEGER ix,nx,iq,nqeff,nbq
+INTEGER taille,nbounds, ibound
 REAL(QP) bounds(1:9)
  
-open(11,file=trim(fichier)//".info")
-  read(11,*)x0,qmin,qmax,nq,nn
-  read(11,*)c0,g0
-  read(11,*)lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
-  read(11,*)ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
- if (blaPole)then
-  write(6,*)"c0,g0",c0,g0
-  write(6,*)"lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3",lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
-  write(6,*)"ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2",ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
- endif
-close(11)
-
-! Select threshhold q below which omq is approximated by c q
-qThr=0.0205_qp
-
-dq=(qmax-qmin)/nq
+! Read info-file for low-q and interpolation variables
+! Contains: 
+!   c0,g0
+!   lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
+!   ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
+!   qThr,qmin,qmax,dq
+call rdInfo()
 
 inquire(file=trim(fichier)//".dat", size=taille)
 nqeff=taille/nn-2
@@ -55,7 +48,7 @@ endif
 ! Add 0.0 and qMax to bounds
 bounds(1)=0.0_qp
 if(nbq>0)then
- bounds(2:1+nbq)=bq(:)
+ bounds(2:1+nbq)=bq(1:nbq)
  bounds(2+nbq)=nqeff*dq
  nbounds=2+nbq
 else
@@ -172,38 +165,6 @@ CONTAINS
  enddo
 
  END FUNCTION integrandeq 
- SUBROUTINE intOmQ(qVal,omq)
-  IMPLICIT NONE
-  REAL(QP), INTENT(IN) :: qVal
-  REAL(QP), INTENT(OUT) :: omq
-
-  INTEGER iq
-  REAL(QP)  ptq(1:5),ptom(1:5),ptM(1:3,1:5),ptdM(1:3,1:5), errom
-
-  if(qVal<qThr)then
-    ! For small q, use analytic formulas
-    omq=c0*qVal*(1.0_qp+g0*(qVal/c0)**2.0_qp)
-  else
-
-    ! Open file for interpolation of omega_q
-    open(12,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=nn)
-    
-    ! Read 5 points around qVal
-    iq=floor((qVal-qmin)/dq)+1
-    read(12,rec=iq-2)ptq(1),ptom(1),ptM(:,1),ptdM(:,1)
-    read(12,rec=iq-1)ptq(2),ptom(2),ptM(:,2),ptdM(:,2)
-    read(12,rec=iq  )ptq(3),ptom(3),ptM(:,3),ptdM(:,3)
-    read(12,rec=iq+1)ptq(4),ptom(4),ptM(:,4),ptdM(:,4)
-    read(12,rec=iq+2)ptq(5),ptom(5),ptM(:,5),ptdM(:,5)
-
-    ! Close file
-    close(12)
-
-    ! Interpolation scheme for omega_q
-    call polint(ptq,ptom,qVal,omq,errom)
-  endif
-
- END SUBROUTINE intOmQ
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE boundsQ(k,zk,bq,nbq)
  ! Calculate all bounds on q for integration above emission continuum
@@ -384,4 +345,69 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
  END SUBROUTINE rootFunQEps
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 END FUNCTION selfEpole 
+SUBROUTINE intOmQ(qVal,omq)
+ IMPLICIT NONE
+ REAL(QP), INTENT(IN) :: qVal
+ REAL(QP), INTENT(OUT) :: omq
+
+ INTEGER iq
+ REAL(QP)  ptq(1:5),ptom(1:5),ptM(1:3,1:5),ptdM(1:3,1:5), errom
+
+ if(qVal<qThr)then
+   ! For small q, use analytic formulas
+   omq=c0*qVal*(1.0_qp+g0*(qVal/c0)**2.0_qp)
+ else
+
+   ! Open file for interpolation of omega_q
+   open(12,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=nn)
+   
+   ! Read 5 points around qVal
+   iq=floor((qVal-qmin)/dq)+1
+   read(12,rec=iq-2)ptq(1),ptom(1),ptM(:,1),ptdM(:,1)
+   read(12,rec=iq-1)ptq(2),ptom(2),ptM(:,2),ptdM(:,2)
+   read(12,rec=iq  )ptq(3),ptom(3),ptM(:,3),ptdM(:,3)
+   read(12,rec=iq+1)ptq(4),ptom(4),ptM(:,4),ptdM(:,4)
+   read(12,rec=iq+2)ptq(5),ptom(5),ptM(:,5),ptdM(:,5)
+
+   ! Close file
+   close(12)
+
+   ! Interpolation scheme for omega_q
+   call polint(ptq,ptom,qVal,omq,errom)
+ endif
+
+END SUBROUTINE intOmQ
+SUBROUTINE rdInfo()
+  ! Read the fichier.info file for all needed variables for interpolation
+
+  open(11,file=trim(fichier)//".info")
+    read(11,*)x0,qmin,qmax,nq,nn
+    read(11,*)c0,g0
+    read(11,*)lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
+    read(11,*)ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
+  if (blaPole)then
+    write(6,*)"c0,g0",c0,g0
+    write(6,*)"lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3",lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
+    write(6,*)"ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2",ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
+  endif
+  close(11)
+
+  dq=(qmax-qmin)/nq
+
+  ! Select threshhold q below which omq is approximated by c q
+  qThr=0.0205_qp
+  
+END SUBROUTINE
+FUNCTION continuum(k) 
+  ! Calculate the lower continuum edge for the 1->2 process
+  IMPLICIT NONE
+  REAL(QP), INTENT(IN) :: k
+  REAL(QP) :: continuum
+  
+  ! Read info file
+  call rdInfo()
+
+  
+
+END FUNCTION continuum
 END MODULE intpole
