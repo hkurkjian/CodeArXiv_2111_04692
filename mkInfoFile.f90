@@ -10,7 +10,7 @@ program mkInfoFile
     REAL(QP) y,c0,g0,D0
     REAL(QP) lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
     REAL(QP) ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
-    ! REAL(QP) xC,a,b,c,d,p,q,t0,t1,kMM,kMP
+    REAL(QP) xC,a,b,c,d,p,q,t0,t1,kMM,kMP
 
     ! fichier="specUni"
     open(10,file="mkInfoFile.inp")
@@ -97,46 +97,46 @@ program mkInfoFile
     ldMpm0=ldMpm0/D0**(3.0_qp/2.0_qp)*8.0_qp*PI
     ldMpm2=ldMpm2/D0**(3.0_qp/2.0_qp)*8.0_qp*PI
 
-    ! ! Interval around minimum
-    ! xC=2.449775705506458_qp
+    ! Interval around minimum
+    xC=2.449775705506458_qp
 
-    ! ! Calculate polynomial coefficients a k^6 + b k^4 + c k^2 + d
-    ! a=4.0_qp
-    ! b=-(c0**2.0_qp+8.0_qp*x0)
-    ! c=2.0_qp*x0*(c0**2.0_qp+2.0_qp*x0)
-    ! d=-c0**2.0_qp*(x0**2.0_qp+1.0_qp)
+    ! Calculate polynomial coefficients a k^6 + b k^4 + c k^2 + d
+    a=4.0_qp
+    b=-(c0**2.0_qp+8.0_qp*x0)
+    c=2.0_qp*x0*(c0**2.0_qp+2.0_qp*x0)
+    d=-c0**2.0_qp*(x0**2.0_qp+1.0_qp)
 
-    ! ! Depressed cubic t^3 + p t + q
-    ! p=(3.0_qp*a*c-b**2.0_qp)/(3.0_qp*a**2.0_qp)
-    ! q=(2.0_qp*b**3.0_qp-9.0_qp*a*b*c+27.0_qp*a**2.0_qp*d)/(27.0_qp*a**3.0_qp)
+    ! Depressed cubic t^3 + p t + q
+    p=(3.0_qp*a*c-b**2.0_qp)/(3.0_qp*a**2.0_qp)
+    q=(2.0_qp*b**3.0_qp-9.0_qp*a*b*c+27.0_qp*a**2.0_qp*d)/(27.0_qp*a**3.0_qp)
 
-    ! if(x0<xC)then ! kMM=0
-    !     kMM=0.0_qp
-    !     t0=(-q/2.0_qp+sqrt(q**2.0_qp/4.0_qp+p**3.0_qp/27.0_qp))**(1.0_qp/3.0_qp) &
-    !      +(-q/2.0_qp-sqrt(q**2.0_qp/4.0_qp+p**3.0_qp/27.0_qp))**(1.0_qp/3.0_qp)
-    !     kMP=sqrt(t0-b/(3.0_qp*a))
-    ! else
-    !     t0=2.0_qp*sqrt(-p/3.0_qp)*cos(acos(3.0_qp/2.0_qp*q/p*sqrt(-3.0_qp/p))/3.0_qp)
-    !     t1=2.0_qp*sqrt(-p/3.0_qp)*cos(acos(3.0_qp/2.0_qp*q/p*sqrt(-3.0_qp/p))/3.0_qp &
-    !                                     -2.0_qp*PI/3.0_qp)
-    !     kMM=sqrt(t1-b/(3.0_qp*a));
-    !     kMP=sqrt(t0-b/(3.0_qp*a));
-    ! endif
+    if(x0<xC)then ! kMM=0
+        kMM=0.0_qp
+        t0=(-q/2.0_qp+sqrt(q**2.0_qp/4.0_qp+p**3.0_qp/27.0_qp))**(1.0_qp/3.0_qp) &
+         +(-q/2.0_qp-sqrt(q**2.0_qp/4.0_qp+p**3.0_qp/27.0_qp))**(1.0_qp/3.0_qp)
+        kMP=sqrt(t0-b/(3.0_qp*a))
+    else
+        t0=2.0_qp*sqrt(-p/3.0_qp)*cos(acos(3.0_qp/2.0_qp*q/p*sqrt(-3.0_qp/p))/3.0_qp)
+        t1=2.0_qp*sqrt(-p/3.0_qp)*cos(acos(3.0_qp/2.0_qp*q/p*sqrt(-3.0_qp/p))/3.0_qp &
+                                        -2.0_qp*PI/3.0_qp)
+        kMM=sqrt(t1-b/(3.0_qp*a));
+        kMP=sqrt(t0-b/(3.0_qp*a));
+    endif
 
     write(6,*)y,c0,g0,D0
     write(6,*)" "
     write(6,*)lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
     write(6,*)" "
     write(6,*)ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
-    ! write(6,*)" "
-    ! write(6,*)kMM,kMP
+    write(6,*)" "
+    write(6,*)kMM,kMP
 
     open(11,file=trim(fichier)//".info")
         write(11,*)x0,qmin,qmax,nq,nn
         write(11,*)c0,g0
         write(11,*)lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
         write(11,*)ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
-        ! write(11,*)kMM,kMP
+        write(11,*)kMM,kMP
     close(11)
     
 end program

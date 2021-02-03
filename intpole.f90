@@ -7,9 +7,10 @@ IMPLICIT NONE
 REAL(QP) :: c0,g0
 REAL(QP) :: lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
 REAL(QP) :: ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
+REAL(QP) :: kMM,kMP
 REAL(QP) :: qThr,qmin,qmax,dq
 CHARACTER(len=90) fichier
-INTEGER nq,nn
+INTEGER nq,nn,nqeff
 LOGICAL blaPole
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -21,8 +22,8 @@ REAL(QP), INTENT(IN) :: k,zk
 COMPLEX(QPC) :: selfEpole(1:6), SEint(1:6)
 
 REAL(QP) :: q,EPS,kmin,kmax,dk,bq(1:7)
-INTEGER ix,nx,iq,nqeff,nbq
-INTEGER taille,nbounds, ibound
+INTEGER ix,nx,iq,nbq
+INTEGER nbounds, ibound
 REAL(QP) bounds(1:9)
  
 ! Read info-file for low-q and interpolation variables
@@ -30,11 +31,10 @@ REAL(QP) bounds(1:9)
 !   c0,g0
 !   lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
 !   ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
+!   kMM, kMP
 !   qThr,qmin,qmax,dq
+!   nqeff
 call rdInfo()
-
-inquire(file=trim(fichier)//".dat", size=taille)
-nqeff=taille/nn-2
 
 ! Calculate q bounds
 call boundsQ(k,zk,bq,nbq)
@@ -340,11 +340,12 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
 
   ! Output function and derivative
   x=eps+om-zk
-  dx=2*us*k*xi/eps+dom
+  dx=2.0_qp*(q+us*k)*xi/eps+dom
 
  END SUBROUTINE rootFunQEps
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 END FUNCTION selfEpole 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE intOmQ(qVal,omq)
  IMPLICIT NONE
  REAL(QP), INTENT(IN) :: qVal
@@ -379,35 +380,177 @@ SUBROUTINE intOmQ(qVal,omq)
 END SUBROUTINE intOmQ
 SUBROUTINE rdInfo()
   ! Read the fichier.info file for all needed variables for interpolation
+  IMPLICIT NONE
+  INTEGER taille
 
   open(11,file=trim(fichier)//".info")
     read(11,*)x0,qmin,qmax,nq,nn
     read(11,*)c0,g0
     read(11,*)lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
     read(11,*)ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
+    read(11,*)kMM,kMP
   if (blaPole)then
     write(6,*)"c0,g0",c0,g0
     write(6,*)"lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3",lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
     write(6,*)"ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2",ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
+    write(6,*)"kMM,kMP",kMM,kMP
   endif
   close(11)
 
+  ! q step
   dq=(qmax-qmin)/nq
+
+  ! Effective q length
+  inquire(file=trim(fichier)//".dat", size=taille)
+  nqeff=taille/nn-2
 
   ! Select threshhold q below which omq is approximated by c q
   qThr=0.0205_qp
   
-END SUBROUTINE
-FUNCTION continuum(k) 
+END SUBROUTINE rdInfo
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+FUNCTION contPole(k) 
   ! Calculate the lower continuum edge for the 1->2 process
+  USE recettes, ONLY : rtsafe
   IMPLICIT NONE
   REAL(QP), INTENT(IN) :: k
-  REAL(QP) :: continuum
+  REAL(QP) :: contPole
+
+  REAL(QP) qMax, omqMax, mMax(1:3), dmMax(1:3)
+  REAL(QP) ptq(1:5),ptom(1:5),ptM(1:3,1:5),ptdM(1:3,1:5), errom
+  REAL(QP) qT, omqT, domqT, qRt, omqRt
+  REAL(QP) xikq, epkq, h, domqM, domqP
+  REAL(QP) k0, uC, contTMP(1:5)
+  REAL(QP) x1, x2, y1, y2
+  INTEGER nCM, iq
+
+  ! Initialize
+  contTMP(:)=1.0e50_qp
+  nCM=0
+  ! Minimum
+  if(x0<=0.0)then
+    k0=0.0_qp
+  else
+    k0=sqrt(x0)
+  endif
   
   ! Read info file
   call rdInfo()
 
+  ! Open file for interpolation of omega_q
+  open(11,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=nn)
+  ! Read last value for omqMax
+  read(11,rec=nqeff)qMax,omqMax,mMax(:),dmMax(:)
   
+  if((kMM<=k).AND.(k<=kMP))then
+    ! Close to minimum: contPole = eps_k
+    contPole=sqrt((k*k-x0)**2.0_qp+1.0_qp)
+  else if((k0+qMax < k).AND.(qMax<20.0))then
+    ! At high k in BCS regime, contPole = eps_{k-qMax)+om_{qMax}
+    contPole=sqrt((k*k+qMax*qMax-2.0_qp*k*qMax-x0)**2.0_qp+1.0_qp)+omqMax
+  else
+    if(k<kMM)then
+      ! Descending part: minimum of e_{k+q}+omq
+      uC=1.0_qp;
+    else
+      ! Ascending part: minimum of e_{k-q}+omq
+      uC=-1.0_qp;
+    endif
 
-END FUNCTION continuum
+    ! First data point (q=0)
+    x1=0.0_qp
+    xikq=k**2.0_qp-x0
+    epkq=sqrt(xikq*xikq+1.0_qp)
+    y1=2.0_qp*uC*k*xikq/epkq+c0
+
+    ! Loop over all data points to intervals with roots
+    !   (start from iq=3 for interpolation scheme)
+    do iq=30,nqeff-2
+
+      ! Calculate derivative at q point
+      read(11,rec=iq-2)ptq(1),ptom(1),ptM(:,1),ptdM(:,1)
+      read(11,rec=iq-1)ptq(2),ptom(2),ptM(:,2),ptdM(:,2)
+      read(11,rec=iq  )ptq(3),ptom(3),ptM(:,3),ptdM(:,3)
+      read(11,rec=iq+1)ptq(4),ptom(4),ptM(:,4),ptdM(:,4)
+      read(11,rec=iq+2)ptq(5),ptom(5),ptM(:,5),ptdM(:,5)
+      qT=ptq(3)         ! q value
+      omqT=ptom(3)      ! omq at qT
+
+      ! Noticed that the brute-force technique breaks down at low q, so skip these values
+      if(qT>0.04)then
+
+        ! Derivative of omq
+        h=qT*0.0001_qp   ! step size for derivative
+        call polint(ptq,ptom,qT-h,domqM,errom)
+        call polint(ptq,ptom,qT+h,domqP,errom)
+        domqT=(domqP-domqM)/(2.0_qp*h) ! Derivative at qT
+
+        ! Second data point
+        x2=qT
+        xikq=k*k+qT*qT+2.0_qp*k*qT*uC-x0;
+        epkq=sqrt(xikq*xikq+1.0_qp);
+        y2=2.0_qp*(qT+uC*k)*xikq/epkq+domqT
+
+        ! Look for root in interval if sign change
+        if(y1*y2<0.0_qp)then
+
+          ! q value at extremum
+          qRt=rtsafe(rootFunContQ,(/uC/),x1,x2,1.e-18_qp)
+
+          ! Calculate function value
+          call intOmQ(qRt,omqRt)
+          nCM=nCM+1
+          contTMP(nCM)=sqrt((k*k+qRt*qRt+2.0_qp*k*qRt*uC-x0)**2.0_qp+1.0_qp)+omqRt
+
+          if (blaPole)then
+            write(6,*)"Root found in interval",x1,x2,", for k=",k
+            write(6,*)"function value=",contTMP(nCM)
+          endif
+        endif
+
+        ! Store second data point in first for next iteration
+        x1=x2
+        y1=y2
+      endif
+
+    enddo
+
+    ! From all extrema, take the minimum
+    contPole=minval(contTMP)
+    
+  endif
+  ! Close file
+  close(11)
+CONTAINS
+  SUBROUTINE rootFunContQ(qIn,arg,x,dx)
+    IMPLICIT NONE
+    REAL(QP), INTENT(IN) :: qIn
+    REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+    REAL(QP), INTENT(OUT) :: x,dx
+
+    REAL(QP) om, omM, omP, dom, ddom, h
+    REAL(QP) us, xi, eps
+
+    ! Plus or minus sign
+    us=arg(1)
+
+    ! Step size for derivative
+    h=qIn*0.0001_qp
+
+    ! Calculate omega values from interpolation
+    call intOmQ(qIn  ,om )
+    call intOmQ(qIn-h,omM)
+    call intOmQ(qIn+h,omP)
+    dom =(omP-omM)/(2.0_qp*h)
+    ddom=(omP-2.0_qp*om+omM)/h/h
+
+    xi=k*k+qIn*qIn+2.0_qp*us*k*qIn-x0
+    eps=sqrt(xi*xi+1.0_qp)
+
+    ! Output function and derivative
+    x=2.0_qp*(qIn+us*k)*xi/eps+dom
+    dx=4.0_qp*(qIn+us*k)**2.0_qp*(eps*eps-xi*xi)/eps/eps/eps+2.0_qp*xi/eps+ddom
+
+  END SUBROUTINE rootFunContQ
+END FUNCTION contPole
 END MODULE intpole

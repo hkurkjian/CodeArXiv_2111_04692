@@ -26,32 +26,53 @@ IMPLICIT NONE
 ! LOGICAL errtype1,errtype2,interpol
 ! REAL(QP) ThetaT, XxT, ccheckT
 
-REAL(QP) qVal,omq,k,zk
+REAL(QP) qVal,omq,k,zk,contK
 COMPLEX(QPC) SigPole(1:6)
+INTEGER ik
 
 ! x0=0.860436686125678599999999999999999961_qp
-fichier="./datSpectre/specx0_3.0"
-blaPole=.TRUE.
+fichier="./datSpectre/specx0_4.0"
+! blaPole=.TRUE.
 
-call rdInfo()
+open(14,file="tstCONT.dat")
+do ik=1,350
+    k=ik/70.0_qp
+    contK=contPole(k) 
+    write(6,*)k,contK
+    write(14,*)k,contK
+enddo
+close(14)
+! k=1.18_qp
+! contK=contPole(k) 
+! write(6,*)k,contK
 
-! Select threshhold q below which omq is approximated by c q
-qThr=0.0205_qp
+! call rdInfo()
 
-open(12,file="tstInput.inp")
-  read(12,*)qVal
-  read(12,*)k
-  read(12,*)zk
-close(12)
-call intOmQ(qVal,omq)
-write(6,*)"q,omq=",qVal,omq
+! open(14,file='ipOMQx04low.dat')
+! do ik=0,100
+!     qVal=ik/2500.0_qp
+!     call intOmQ(qVal,omq)
+!     write(14,*)qVal,omq
+! enddo
+! close(14)
 
-SigPole=selfEpole(k,zk)
-write(6,*)"k,z= ",k,zk
-write(6,*)"Spp= ",real(SigPole(1))," + ",imag(SigPole(1))," i"
-write(6,*)"Smm= ",real(SigPole(2))," + ",imag(SigPole(2))," i"
-write(6,*)"Spm= ",real(SigPole(3))," + ",imag(SigPole(3))," i"
-write(6,*)"Sig04= ",real(SigPole(4:6))
+! ! Select threshhold q below which omq is approximated by c q
+! qThr=0.0205_qp
+
+! open(12,file="tstInput.inp")
+!   read(12,*)qVal
+!   read(12,*)k
+!   read(12,*)zk
+! close(12)
+! call intOmQ(qVal,omq)
+! write(6,*)"q,omq=",qVal,omq
+
+! SigPole=selfEpole(k,zk)
+! write(6,*)"k,z= ",k,zk
+! write(6,*)"Spp= ",real(SigPole(1))," + ",imag(SigPole(1))," i"
+! write(6,*)"Smm= ",real(SigPole(2))," + ",imag(SigPole(2))," i"
+! write(6,*)"Spm= ",real(SigPole(3))," + ",imag(SigPole(3))," i"
+! write(6,*)"Sig04= ",real(SigPole(4:6))
 
 ! open(1, file = 'unisd.dat', status = 'new')
 ! do ik=1,50
