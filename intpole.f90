@@ -55,7 +55,7 @@ endif
 ! Add 0.0 and qMax to bounds
 bounds(1)=0.0_qp
 if(nbq>0)then
- bounds(2:1+nbq)=bq(:)
+ bounds(2:1+nbq)=bq(1:nbq)
  bounds(2+nbq)=nqeff*dq
  nbounds=2+nbq
 else
@@ -379,7 +379,7 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
 
   ! Output function and derivative
   x=eps+om-zk
-  dx=2*us*k*xi/eps+dom
+  dx=2*(qIn+us*k)*xi/eps+dom
 
  END SUBROUTINE rootFunQEps
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
