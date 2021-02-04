@@ -2,6 +2,7 @@ MODULE intldc !Contribution of the branch cuts ("ldc") to the fermionic self-ene
 USE vars ! For variables share by all subroutines here and in the dspec module (in particular x0=mu/Delta and xq=q/q_Delta, opp(1:4), location of the angular points of the qp-qp branch cut)
 USE dspec
 USE modsim
+USE angularint
 IMPLICIT NONE
 REAL(QP) EPSom,EPSu,EPSq
 LOGICAL lecture,ecriture,bla0,bla00,st
@@ -9,7 +10,7 @@ INTEGER profondeur
 CHARACTER(len=30) fichierlec1,fichierlec2,fichierlec3,fichom2,fichom2p
 CHARACTER(len=50) suffixe_intq1,prefixe,suffixe
 REAL(QP) q1,q2,q3,q4
-REAL(QP) xi0,xiP,xiM,epsP,epsM,xmin,xmax
+REAL(QP) xiP,xiM,epsP,epsM,xmin,xmax
 REAL(QP) k0,k1,k2,k3,k4,k5,k6,k7,k8,k9,k10,k11,k12
 INTEGER, PARAMETER :: al=1,bet=2,gam=3,delt=4,epsi=5,alti=6,betti=7,deltti=8,epsiti=9
 CONTAINS
@@ -134,7 +135,6 @@ CONTAINS
     write(6,*)
    endif
   
-   xi0=k**2+qs**2-x0
    xiP=k**2+qs**2+2.0_qp*k*qs-x0
    xiM=k**2+qs**2-2.0_qp*k*qs-x0
    epsP=sqrt(xiP**2+1.0_qp)
@@ -275,8 +275,8 @@ CONTAINS
    IuM(:)=0.0_qp
    argintu(1)=enM
 !   Iu=qromovq(intu,-1.0_qp,1.0_qp,3,argintu,midpntvq,EPSu) !computes int_-1^1 du (V^2,U^2,UV)/(ome-z+eps)
-   IuM=conjg(Iuanaly(enM,k,q)) !enM a une (petite) partie imaginaire négative venant de -zk
-   IuP=      Iuanaly(enP,k,q)
+   IuM=conjg(Iuanaly(enM,k,q,xmin,xmax)) !enM a une (petite) partie imaginaire négative venant de -zk
+   IuP=      Iuanaly(enP,k,q,xmin,xmax)
 
    if(lecture)then
     read(10+fich,*)xqfi,omfi,reM11,reM12,reM21,reM22,imM11,imM12,imM21,imM22
@@ -330,49 +330,6 @@ CONTAINS
 
  END FUNCTION intom
 END FUNCTION selfEldc
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION Iuanaly(en,k,q) !Computes analytically the integrals int_-1^1 num/(om+eps(\vec{k}-\vec{q})+i*0^+)
- USE recettes            !with num=U^2 in Iuanaly(1), V^2 in Iuanaly(2) and UV in Iuanaly(3)
- IMPLICIT NONE           !Use conjg the get the integrals with a -i*0^+
- REAL(QP), INTENT(IN) :: en,k,q
- COMPLEX(QPC) Iuanaly(1:3)
- COMPLEX(QPC) x1,x2
-
- REAL(QP) I1,I2,I3,imI1,imI2,rac
-
- Iuanaly(:)=0.0_qp
- imI1=0.0_qp
- imI2=0.0_qp
- 
- if(abs(en)>1.0_qp)then
-  rac=sqrt(en**2-1.0_qp)
-  x1=cmplx(-en+rac,0.0_qp,kind=qpc)
-  x2=cmplx(-en-rac,0.0_qp,kind=qpc)
- else
-  rac=sqrt(1.0_qp-en**2)
-  x1=cmplx(-en,+rac,kind=qpc)
-  x2=cmplx(-en,-rac,kind=qpc)
- endif
- I1=log(abs((xmax-x1)*(xmax-x2)/(xmin-x1)/(xmin-x2)))
- I3=log(xmax/xmin)
- if(abs(en)<1.0_qp)then
-  I2=2.0_qp*(argum(xmax-x1)-argum(xmin-x1))/rac
- else
-  I2=log(abs((xmax-x1)*(xmin-x2)/(xmax-x2)/(xmin-x1)))/rac
-  if((xmax>real(x1)).AND.(xmin<real(x1)))then
-   imI1=imI1+PI*sign(1.0_qp,en)
-   imI2=imI2+PI*sign(1.0_qp,en)
-  endif
-  if((xmax>real(x2)).AND.(xmin<real(x2)))then
-   imI1=imI1-PI*sign(1.0_qp,en)
-   imI2=imI2+PI*sign(1.0_qp,en)
-  endif
-  imI2=imI2/rac
- endif
- Iuanaly(1)=( (I1+iiq*imI1)-en*(I2+iiq*imI2))          /(4*k*q) !I_V^2
- Iuanaly(2)=(-(I1+iiq*imI1)-en*(I2+iiq*imI2)+2.0_qp*I3)/(4*k*q) !I_U^2
- Iuanaly(3)=  (I2+iiq*imI2)                            /(4*k*q) !I_UV
-END FUNCTION Iuanaly
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE erreur(var)
 CHARACTER(len=*), INTENT(IN) :: var
@@ -466,8 +423,8 @@ FUNCTION intres(k,zk,interpolation,fich)
  endif
 
  suffixe="res"
- open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
- close(25)
+! open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
+! close(25)
 
  intres(:)=cmplx(0.0_qp,0.0_qp,kind=qpc)
 
@@ -477,7 +434,7 @@ FUNCTION intres(k,zk,interpolation,fich)
  if(tconf==0)then
   intres=qromovcq(intresq,0.0_qp,qmax,6,(/bidon/),midpntvcq,EPSq)
  else
-  do igr=1,size(config)
+  do igr=5,size(config)
    grecque=config(igr)
    if(bla0)then
     write(6,*)"---------------------------------"
@@ -522,7 +479,6 @@ FUNCTION intres(k,zk,interpolation,fich)
    call oangpp
    call bornesom(k,zk,qs,grecque,res,bom,tres)
  
-   xi0=k**2+qs**2-x0
    xiP=k**2+qs**2+2.0_qp*k*qs-x0
    xiM=k**2+qs**2-2.0_qp*k*qs-x0
    epsP=sqrt(xiP**2+1.0_qp)
@@ -680,8 +636,8 @@ FUNCTION intres(k,zk,interpolation,fich)
     IuM(:)=0.0_qp
     IuP(:)=0.0_qp
 
-    IuM=conjg(Iuanaly(enM,k,q)) !enM a une (petite) partie imaginaire négative venant de -zk
-    IuP=      Iuanaly(enP,k,q) 
+    IuM=conjg(Iuanaly(enM,k,q,xmin,xmax)) !enM a une (petite) partie imaginaire négative venant de -zk
+    IuP=      Iuanaly(enP,k,q,xmin,xmax)
   
     if(interpolation)then
      call estmat_pairfield(ome,e,det,Matt,Gam)
@@ -717,177 +673,6 @@ FUNCTION intres(k,zk,interpolation,fich)
   endif
   END FUNCTION intresom
 END FUNCTION intres
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!FUNCTION intpasres(k,zk,interpolation,trois_ou_six,qmin,qmax)
-! USE estM
-! USE recettes
-! INTEGER,  INTENT(IN) :: trois_ou_six
-! REAL(QP), INTENT(IN) :: k,zk,qmin,qmax
-! LOGICAL, INTENT(IN) :: interpolation
-! REAL(QP) intpasres(1:6)
-!
-! REAL(QP) e,argq(1)
-! CHARACTER(len=250) chainebidon
-!
-! temperaturenulle=.TRUE.
-! e=0.0_qp
-!
-! if(bla0)then
-!   write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-!   write(6,*)
-!   write(6,*)"++++++++++++++++++++++++++++ intpasres ++++++++++++++++++++++++++++"
-!   write(6,*)
-!   write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-!   write(6,*)
-!   write(6,*)
-!   write(6,*)"k,zk=",k,zk
-!   write(6,*)
-! endif
-!
-! intpasres(:)=0.0_qp
-! bmax =1.e6_qp
-!
-! argq(1)=bidon
-!
-! intpasres=qromovq(intpasresq,qmin,    qmax,   6,argq,midpntvq,EPSq)
-! intpasres=2.0_qp*PI*intpasres
-!
-! CONTAINS
-!  FUNCTION intpasresq(q,argq,m)
-!  USE recettes
-!  USE modsim
-!  INTEGER,  INTENT(IN) :: m!m=6 
-!  REAL(QP), INTENT(IN), DIMENSION(:)  ::  q,argq
-!  REAL(QP)  intpasresq(size(q),m)
-!
-!  REAL(QP) qs
-!  REAL(QP), ALLOCATABLE, DIMENSION(:)   :: bom
-!  REAL(QP), ALLOCATABLE, DIMENSION(:,:) :: arg
-!  INTEGER , ALLOCATABLE, DIMENSION(:)   :: routint
-!  INTEGER is
-!
-!  do is=1,size(q)
-!  
-!   qs=q(is)
-!   xq=qs
-!   call oangpp
-! 
-!   if(bla0)then
-!    write(6,*)"---------------------------------"
-!    write(6,*)
-!    write(6,*)"qs=",qs
-!    write(6,*)"ptbranchmtpp=",ptbranchmtpp
-!    write(6,*)"opp=",opp
-!   endif
-!
-!   allocate(bom(1:ptbranchmtpp+2))
-!   bom(1:ptbranchmtpp)=opp(1:ptbranchmtpp)
-!   bom(ptbranchmtpp+1)=4*opp(3)
-!   bom(ptbranchmtpp+2)=bmax
-!
-!   allocate(routint(1:ptbranchmtpp+1))
-!   routint(1:ptbranchmtpp)=mpnt
-!   routint(ptbranchmtpp+1)=rinf
-! 
-!   allocate(arg(1,1:ptbranchmtpp+1))
-!
-!   if(bla0)then
-!    write(6,FMT="(A6,5G20.10)")"bom=",bom
-!    write(6,*)"routint=",ecritrout(size(routint),routint)
-!    write(6,*)
-!   endif
-!    
-!   xi0=k**2+qs**2-x0
-!   xiP=k**2+qs**2+2.0_qp*k*qs-x0
-!   xiM=k**2+qs**2-2.0_qp*k*qs-x0
-!   epsP=sqrt(xiP**2+1.0_qp)
-!   epsM=sqrt(xiM**2+1.0_qp)
-! 
-!   xmin=epsP-xiP
-!   xmax=epsM-xiM
-!
-!   arg(1,:)=qs
-!   if(bla0)then
-!    write(6,*)"************************"
-!    write(6,*)
-!    write(6,*)"        decoupe         "
-!    write(6,*)
-!   endif
-!   intpasresq(is,:)=decoupevq(intpasresom,bom,m,arg,routint,EPSom,bla0)
-!   intpasresq(is,:)=intpasresq(is,:)*qs**2
-!   open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
-!    write(25,*)qs,intpasresq(is,:)
-!   close(25)
-!
-!   deallocate(bom,routint,arg)
-!  enddo
-!  END FUNCTION intpasresq
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!  FUNCTION intpasresom(om,arg,m) !Computes size(om) points of the function  to be integrate over om
-!   IMPLICIT NONE
-!   INTEGER,  INTENT(IN) :: m !m=6 
-!   REAL(QP), INTENT(IN), DIMENSION(:)  ::  om,arg !arg(1) should be the value of q
-!   REAL(QP), DIMENSION(size(om),m)       ::  intpasresom
-!
-!   COMPLEX(QPC) Gam(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
-!   REAL(QP) q,rho(1:2,1:2),ome,enP,enM
-!   REAL(QP) IuP(1:3),IuM(1:3)
-!   INTEGER is
-!
-!   q=arg(1) 
-!   intpasresom(:,:)=0.0_qp
-!
-!   if(bla00.AND.(size(om)==1))then
-!    write(6,*)"************************"
-!   endif
-!
-!   do is=1,size(om)
-!    ome=om(is)
-!
-!!value of the energy denominator passed on to the intu and Iuanaly functions
-!    enP= ome+zk
-!    enM= ome-zk
-!  
-!    IuP(:)=0.0_qp
-!    IuM(:)=0.0_qp
-!
-!    if((trois_ou_six==1).OR.(trois_ou_six==2)) IuM=real(Iuanaly(enM,k,q))
-!    if((trois_ou_six==1).OR.(trois_ou_six==3)) IuP=real(Iuanaly(enP,k,q))
-!  
-!    if(interpolation)then
-!     call estmat_pairfield(ome,e,det,Matt,Gam)
-!    else
-!     call mat_pairfield(ome,e,det,Matt,Gam)
-!    endif
-!    
-!    MatCat(1,1)=(Matt(1,1)+Matt(2,2))/2.0_qp+Matt(1,2)
-!    MatCat(2,2)=(Matt(1,1)+Matt(2,2))/2.0_qp-Matt(1,2)
-!    MatCat(1,2)=(Matt(2,2)-Matt(1,1))/2.0_qp
-!  
-!    Gam(1,1)= MatCat(2,2)/det
-!    Gam(2,2)= MatCat(1,1)/det
-!    Gam(1,2)=-MatCat(1,2)/det
-!  
-!    rho=-imag(Gam)/PI
-!  
-!    intpasresom(is,1)=-rho(1,1)*IuM(1)
-!    intpasresom(is,2)=-rho(2,2)*IuM(2)
-!    intpasresom(is,3)=-rho(1,2)*IuM(3)
-!  
-!    intpasresom(is,4)= rho(2,2)*IuP(2)
-!    intpasresom(is,5)= rho(1,1)*IuP(1)
-!    intpasresom(is,6)=-rho(1,2)*IuP(3)
-!  
-!    if(bla00)then
-!     write(6,FMT="(A21,8G20.10)")"q,ome,intpasresom=",q,ome,intpasresom(is,1)
-!    endif
-!
-!  enddo
-!  if(bla00)then
-!   write(6,*)
-!  endif
-!  END FUNCTION intpasresom
-!END FUNCTION intpasres
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE bornesk
 

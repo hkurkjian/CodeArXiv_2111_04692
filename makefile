@@ -11,20 +11,20 @@ LIB_PERSO=-L./libperso -lmalib
 encorr: dspec.o intldc.o encorr.o
 	$(COMP) -fcheck=bounds -O3 $^ $(LIB_PERSO) -o encorr
 
-HKtest: eqdetat.o dspec.o Zerom.o estM.o bestM.o intldc.o intpole.o HKtest.o
-	$(COMP) -O3 -fcheck=all -fbacktrace -fstack-arrays -fmax-array-constructor=300000000 $^ $(LIB_PERSO) -o HKtest
+hktest: eqdetat.o dspec.o Zerom.o bestM.o angularint.o intldc.o intpole.o hktest.o
+	$(COMP) -O3 -fcheck=all -fbacktrace -fstack-arrays -fmax-array-constructor=300000000 $^ $(LIB_PERSO) -o hktest
 
-SVLtest: eqdetat.o dspec.o Zerom.o bestM.o intldc.o intpole.o SVLtest.o
+SVLtest: eqdetat.o dspec.o Zerom.o angularint.o intldc.o intpole.o SVLtest.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o SVLtest
 
 pointsM: dspec.o pointsM.o
-	$(COMP) -O3 $^ $(LIB_PERSO) -o pointsM
-
-pointsMparra: dspec.o pointsMparra.o
-	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o pointsMparra
+	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o pointsM
 
 suppointsM: dspec.o suppointsM.o
 	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o suppointsM
+
+suppointsM2: dspec.o suppointsM2.o
+	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o suppointsM2
 
 spectre: eqdetat.o dspec.o Zerom.o spectre.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o spectre

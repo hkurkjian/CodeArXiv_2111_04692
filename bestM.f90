@@ -39,8 +39,8 @@ vecq(:,:)=1.0e50_qp
 
 open(13,file=trim(fich)//"grilleq.dat")
 read(13,*)
-!do ixq=1,sum(nqfen)
-do ixq=1,700
+do ixq=1,sum(nqfen)
+!do ixq=1,700
   read(13,*)ixqbis,xqlec,compteur
   xq=xqlec
   call oangpp
@@ -93,7 +93,7 @@ vecq_sup(:,:)=1.0e50_qp
 open(13,file=trim(fich)//"grilleq.dat")
 read(13,*)
 !do ixq=1,nqsup
-do ixq=1,7000
+do ixq=1,7990
   read(13,*)ixqbis,xqlec
   xq=xqlec
   call oangpp
@@ -150,24 +150,36 @@ USE modsim
 REAL(QP), INTENT(IN) :: om,q
 REAL(QP), DIMENSION(1:6) :: interpolM_recerr
 
-LOGICAL :: err(0:2)
+LOGICAL :: err(0:2),recom2
 REAL(QP),  DIMENSION(1:6) :: dinterpolM
 INTEGER iMm
 COMPLEX(QPC) Gg(1:2,1:2),Mm(1:2,1:2),det
+REAL(QP) dom2,dom2p
 
 interpolM_recerr=interpolM(q,om,dinterpolM,err)
 
 if(err(0).OR.err(1))then
  if(blaerr) write(6,*)"Récupération d’erreur de type 0"
- if((om>(opp(1)+opp(2))/2).AND.(om<(opp(2)+opp(3))/2))then
-!  if(blaerr) write(6,*)"Tentative de récupération par interpolom2"
+ recom2=.FALSE.
+
+ dom2 =(opp(2)-opp(1))/3
+ if(xq<xqjoin) dom2p=min((opp(2)-opp(1))/3,(opp(3)-opp(2))/3)
+ if(xq>xqjoin) dom2p=(opp(2)-opp(1))/3
+
+ if((om>opp(2)-dom2).AND.(om<opp(2)+dom2p))then
+  if(blaerr) write(6,*)"Tentative de récupération par interpolom2"
   interpolM_recerr=interpolom2(q,om,dinterpolM,err)
+  if(.NOT.(err(0).AND.err(1)))then 
+   if(blaerr) write(6,*)"Erreur récupérée par intom2"
+   recom2=.TRUE.
+  endif
  endif
- if(err(0).OR.err(1))then
-!  write(6,*)"Erreur sèche,q,om=",q,om
-  open(15,file="pts_horsgrille.dat",POSITION="APPEND")
-   write(15,*)q,opp(2),om
-  close(15)
+
+ if(.NOT.recom2)then
+  if(blaerr) write(6,*)"Erreur sèche,q,om=",q,om
+!  open(15,file="pts_horsgrille.dat",POSITION="APPEND")
+!   write(15,*)q,opp(2),om
+!  close(15)
   if(q<qpetit)then
    call mat_pairfield_pttq(om,0.0_qp,det,Mm,Gg)
   else
@@ -180,7 +192,7 @@ if(err(0).OR.err(1))then
   enddo
   endif
  else
-!  write(6,*)"Erreur récupérée par intom2"
+  if(blaerr) write(6,*)"Erreur récupérée par intom2"
  endif
 endif
 
@@ -259,11 +271,11 @@ if(fenq==1)then
  decalageq=0
  if(fenom.GE.2) decalageom=sum(nomred(1:fenom-1))
 elseif(fenq==2)then
- decalageq=nqfen(1)
+ decalageq=nqred(1)
  if(fenom==3) decalageom=nomred(1)
  if(fenom==4) decalageom=nomred(1)+nomred(3)
 elseif(fenq==3)then
- decalageq=nqfen(1)+nqfen(2)
+ decalageq=nqred(1)+nqred(2)
  if(fenom==4) decalageom=nomred(3)
 endif
 
@@ -280,7 +292,7 @@ if(((posq)<1).OR.((posq).GE.nq))then
    write(6,*)"*********************************************"
    write(6,*)
    write(6,*)"Erreur de type 0 venant de q"
-   write(6,*)"q,posq,fenetre=",q,posq,qsepred(fenq),qsepred(fenq+1)
+   write(6,*)"q,posq,fenq,intervalle=",q,posq,fenq,qsepred(fenq),qsepred(fenq+1)
    write(6,*)
    write(6,*)"*********************************************"
   endif
@@ -299,7 +311,7 @@ endif
 
 do iposq=posq-1,posq+2
  if((iposq<1).OR.(iposq>nq)) cycle
- sousgrille=donnees(1:4,decalageom+1:decalageom+nom,iposq)
+ sousgrille=donnees(1:4,decalageom+1:decalageom+nom,decalageq+iposq)
  if(fenom==4)then
   sousgrilley(1,:)  =1.0_qp/sousgrille(1,:)**(0.5_qp)
   sousgrilley(2:4,:)=sousgrille(2:4,:)
@@ -313,7 +325,7 @@ do iposq=posq-1,posq+2
   if(blaerr) write(6,*)"*********************************************"
   if(blaerr) write(6,*)
   if(blaerr) write(6,*)"om hors grille à posq,iposq=",posq,iposq
-  if(blaerr) write(6,*)"om,posom(nom)=",om,posom,"(",nom,")"
+  if(blaerr) write(6,*)"om,posom(nom),pts extrêmes=",om,posom,"(",nom,")",sousgrille(1,1),sousgrille(1,nom)
   if(blaerr) write(6,*)
   if(blaerr) write(6,*)"*********************************************"
   if(blaerr) blablaerr=.TRUE.
@@ -355,53 +367,17 @@ if(any(err).AND.(blaerr)) blablaerr=.TRUE.
 if(err(0).AND.err(1))then
  if(blaerr) write(6,*)"Erreur de type 0"
  if(blaerr) write(6,*)"*********************************************"
- return
 elseif(err(0))then
  if(blaerr) write(6,*)"Erreur de type 1 (pts(2:3) manquant à posq)"
  if(blaerr) write(6,*)"*********************************************"
- return
 elseif(err(1))then
  if(blaerr) write(6,*)"Erreur de type 1 (pts(2:3) manquant à posq+1)"
  if(blaerr) write(6,*)"*********************************************"
- return
 elseif(err(2))then
  if(blaerr) write(6,*)"Erreur de type 2 (le carré extérieur de 12 est incomplet)"
  if(blaerr) write(6,*)"*********************************************"
 endif
 
-
-
-do iMm=1,3
-  if(fenom==4)then
-!     if(err(0))then
-!      call polint(ptsy(2:3,3),ptsM(iMm,2:3,3),y,interpolM(iMm),dinterpolM(iMm))
-!     elseif(err(1))then
-!      call polint(ptsy(2:3,2),ptsM(iMm,2:3,2),y,interpolM(iMm),dinterpolM(iMm))
-     if(err(2))then
-      call polin2(ptsq(2:3),ptsy(2:3,2:3),ptsM(iMm,2:3,2:3),q,y,interpolM(iMm),dinterpolM(iMm))
-     else
-      call polin2(ptsq,ptsy,ptsM(iMm,:,:),q,y,interpolM(iMm),dinterpolM(iMm))
-     endif
-  else
-!     if(err(0))then
-!      call polint(ptsom(2:3,3),ptsM(iMm,2:3,3),om,interpolM(iMm),dinterpolM(iMm))
-!     elseif(err(1))then
-!      call polint(ptsom(2:3,2),ptsM(iMm,2:3,2),om,interpolM(iMm),dinterpolM(iMm))
-     if(err(2))then
-      call polin2(ptsq(2:3),ptsom(2:3,2:3),ptsM(iMm,2:3,2:3),q,om,interpolM(iMm),dinterpolM(iMm))
-     else
-      call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,om,interpolM(iMm),dinterpolM(iMm))
-     endif
-  endif
-  if(abs(dinterpolM(iMm)/interpolM(iMm))>0.01_qp)then
-    if(blaerr) blablaerr=.TRUE.
-    if(blaerr) write(6,*)"grosse erreur d’interpolation"
-  endif
-  if(abs(dinterpolM(iMm)/interpolM(iMm))>0.2_qp)then
-    err(0:1)=.TRUE.
-    if(blaerr) write(6,*)"trop grosse erreur d’interpolation"
-  endif
-enddo
 
 if(blaM.OR.blablaerr)then
  write(6,*)
@@ -441,6 +417,35 @@ if(blaM.OR.blablaerr)then
  write(6,*)"ptsM(1,3,:)=",ptsM(1,3,:)
  write(6,*)"ptsM(1,4,:)=",ptsM(1,4,:)
  write(6,*)
+endif
+
+if(err(0).OR.err(1)) return
+
+do iMm=1,3
+  if(fenom==4)then
+     if(err(2))then
+      call polin2(ptsq(2:3),ptsy(2:3,2:3),ptsM(iMm,2:3,2:3),q,y,interpolM(iMm),dinterpolM(iMm))
+     else
+      call polin2(ptsq,ptsy,ptsM(iMm,:,:),q,y,interpolM(iMm),dinterpolM(iMm))
+     endif
+  else
+     if(err(2))then
+      call polin2(ptsq(2:3),ptsom(2:3,2:3),ptsM(iMm,2:3,2:3),q,om,interpolM(iMm),dinterpolM(iMm))
+     else
+      call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,om,interpolM(iMm),dinterpolM(iMm))
+     endif
+  endif
+  if(abs(dinterpolM(iMm)/interpolM(iMm))>0.01_qp)then
+    if(blaerr) blablaerr=.TRUE.
+    if(blaerr) write(6,*)"grosse erreur d’interpolation"
+  endif
+  if(abs(dinterpolM(iMm)/interpolM(iMm))>0.2_qp)then
+    err(0:1)=.TRUE.
+    if(blaerr) write(6,*)"trop grosse erreur d’interpolation"
+  endif
+enddo
+
+if(blaM.OR.blablaerr)then
  do iMm=1,3
   write(6,*)"om,q,interpolM(1),dinterpolM(1)=",om,q,interpolM(iMm),dinterpolM(iMm)
  enddo
@@ -534,7 +539,8 @@ do iposq=posq-1,posq+2
   if(blaerr) write(6,*)"*********************************************"
   if(blaerr) write(6,*)
   if(blaerr) write(6,*)"om hors grille à posq,iposq=",posq,iposq
-  if(blaerr) write(6,*)"om,posom(nomsup)=",om,posom,"(",nomsup,")"
+  if(blaerr) write(6,*)"om,posom(nomsup),pts extrêmes=",om,posom,"(",nomsup,")",donnees_sup(1,1,iposq)&
+  ,donnees_sup(1,2*nomsup,iposq)
   if(blaerr) write(6,*)
   if(blaerr) write(6,*)"*********************************************"
   if(blaerr) blablaerr=.TRUE.
@@ -564,45 +570,17 @@ if(any(err).AND.(blaerr)) blablaerr=.TRUE.
 if(err(0).AND.err(1))then
  if(blaerr) write(6,*)"Erreur de type 0"
  if(blaerr) write(6,*)"*********************************************"
- return
 elseif(err(0))then
  if(blaerr) write(6,*)"Erreur de type 1 (pts(2:3) manquant à posq)"
  if(blaerr) write(6,*)"*********************************************"
- return
 elseif(err(1))then
  if(blaerr) write(6,*)"Erreur de type 1 (pts(2:3) manquant à posq+1)"
  if(blaerr) write(6,*)"*********************************************"
- return
 elseif(err(2))then
  if(blaerr) write(6,*)"Erreur de type 2 (le carré extérieur de 12 est incomplet)"
  if(blaerr) write(6,*)"*********************************************"
 endif
 
-
-
-do iMm=1,3
- if(om<opp(2))then 
-  if(err(2))then
-   call polin2(ptsq(2:3),ptsom(2:3,2:3),ptsM(iMm,2:3,2:3),q,y,interpolom2(iMm),dinterpolom2(iMm))
-  else
-   call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,y,interpolom2(iMm),dinterpolom2(iMm))
-  endif
- else
-  if(err(2))then
-   call polin2(ptsq(2:3),ptsom(2:3,2:3),ptsM(iMm,2:3,2:3),q,om,interpolom2(iMm),dinterpolom2(iMm))
-  else
-   call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,om,interpolom2(iMm),dinterpolom2(iMm))
-  endif
- endif
-  if(abs(dinterpolom2(iMm)/interpolom2(iMm))>0.01_qp)then
-    if(blaerr) blablaerr=.TRUE.
-    if(blaerr) write(6,*)"grosse erreur d’interpolation"
-  endif
-  if(abs(dinterpolom2(iMm)/interpolom2(iMm))>0.2_qp)then
-    err(0:1)=.TRUE.
-    if(blaerr) write(6,*)"trop grosse erreur d’interpolation"
-  endif
-enddo
 
 if(blaM.OR.blablaerr)then
  write(6,*)
@@ -636,6 +614,43 @@ if(blaM.OR.blablaerr)then
  write(6,*)"ptsM(1,3,:)=",ptsM(1,3,:)
  write(6,*)"ptsM(1,4,:)=",ptsM(1,4,:)
  write(6,*)
+endif
+
+if(err(0).AND.err(1)) return
+
+do iMm=1,3
+ if(om<opp(2))then 
+  if(err(0))then
+   call polint(ptsom(2:3,3),ptsM(iMm,2:3,3),y,interpolom2(iMm),dinterpolom2(iMm))
+  elseif(err(1))then
+   call polint(ptsom(2:3,2),ptsM(iMm,2:3,2),y,interpolom2(iMm),dinterpolom2(iMm))
+  elseif(err(2))then
+   call polin2(ptsq(2:3),ptsom(2:3,2:3),ptsM(iMm,2:3,2:3),q,y,interpolom2(iMm),dinterpolom2(iMm))
+  else
+   call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,y,interpolom2(iMm),dinterpolom2(iMm))
+  endif
+ else
+  if(err(0))then
+   call polint(ptsom(2:3,3),ptsM(iMm,2:3,3),om,interpolom2(iMm),dinterpolom2(iMm))
+  elseif(err(1))then
+   call polint(ptsom(2:3,2),ptsM(iMm,2:3,2),om,interpolom2(iMm),dinterpolom2(iMm))
+  elseif(err(2))then
+   call polin2(ptsq(2:3),ptsom(2:3,2:3),ptsM(iMm,2:3,2:3),q,om,interpolom2(iMm),dinterpolom2(iMm))
+  else
+   call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,om,interpolom2(iMm),dinterpolom2(iMm))
+  endif
+ endif
+  if(abs(dinterpolom2(iMm)/interpolom2(iMm))>0.01_qp)then
+    if(blaerr) blablaerr=.TRUE.
+    if(blaerr) write(6,*)"grosse erreur d’interpolation"
+  endif
+  if(abs(dinterpolom2(iMm)/interpolom2(iMm))>0.2_qp)then
+    err(0:1)=.TRUE.
+    if(blaerr) write(6,*)"trop grosse erreur d’interpolation"
+  endif
+enddo
+
+if(blaM.OR.blablaerr)then
  do iMm=1,3
   write(6,*)"om,q,interpolom2(1),dinterpolom2(1)=",om,q,interpolom2(iMm),dinterpolom2(iMm)
  enddo

@@ -1,5 +1,8 @@
-4.0  !read(10,*) x0
-0.05            !read(10,*) xqmin
-2000                   !read(10,*) nq
-30                   !read(10,*)  nom
-BCS_4_sup            !read(10,*) fichier
+100.0  !read(10,*) x0
+0.03            !read(10,*) xqmin
+30.05            !read(10,*) xqmin
+701                   !read(10,*) nq
+20000                   !read(10,*) nq
+20000                   !read(10,*) nq
+300                   !read(10,*)  nom
+BCS_100_sup2            !read(10,*) fichier

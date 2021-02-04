@@ -2,7 +2,7 @@ MODULE intpole
 USE nrtype
 USE modsim
 USE vars
-USE intldc
+USE angularint
 IMPLICIT NONE
 REAL(QP) :: c0,g0
 REAL(QP) :: lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
@@ -95,6 +95,7 @@ CONTAINS
 
  REAL(QP)  ptq(1:5),ptom(1:5),ptM(1:3,1:5),ptdM(1:3,1:5)
  REAL(QP)  qs,om,Ma(1:3),dM(1:3),MatCat(1:3),errom,errM(1:3),errdM(1:3)
+ REAL(QP) xiP,xiM,epsP,epsM,xmin,xmax
  REAL(QP)  ddet
  COMPLEX(QPC)  IuM(1:3),IuP(1:3)
  INTEGER is,ib,iq
@@ -142,7 +143,6 @@ CONTAINS
   MatCat(3)=(Ma(2)-Ma(1))/2.0_qp
 
   ! Energy functions for analytic angle integration
-  xi0=k**2+qs**2-x0
   xiP=k**2+qs**2+2.0_qp*k*qs-x0
   xiM=k**2+qs**2-2.0_qp*k*qs-x0
   epsP=sqrt(xiP**2+1.0_qp)
@@ -151,8 +151,8 @@ CONTAINS
   xmax=epsM-xiM
 
   ! Angle integration
-  IuP=Iuanaly(om+zk,k,qs)
-  IuM=conjg(Iuanaly(om-zk,k,qs))
+  IuP=Iuanaly(om+zk,k,qs,xmin,xmax)
+  IuM=conjg(Iuanaly(om-zk,k,qs,xmin,xmax))
 
   ! 1->2 process integrand
   integrandeq(is,1)=-MatCat(2)*IuM(1)/ddet

@@ -25,7 +25,12 @@ REAL(QP) ptq,ptom,ptM(1:3),ptdM(1:3)
 INTEGER iq, ik, iz, ix
 REAL(QP) nnn,mmm,intell
 
-LOGICAL interpol
+LOGICAL interpol,testpt,testdspec
+
+testpt=.TRUE.
+testpt=.FALSE.
+testdspec=.FALSE.
+testdspec=.TRUE.
 
 !Paramètres physiques
 x0=4.0_qp
@@ -33,11 +38,12 @@ k=4.1_qp
 zk=sqrt((k**2-x0)**2+1)-0.0001_qp
 k=2.1_qp
 zk=3.4_qp
-
+!k 0 to 3
+!zk 1 to 6
 
 !Paramètres de dspec
 temperaturenulle=.TRUE.
-EPSpp=1.0e-8_qp
+EPSpp=1.0e-9_qp
 x0crit=0.0_qp
 bla1=.TRUE.
 bla1=.FALSE.
@@ -51,6 +57,8 @@ blaerr=.TRUE.
 blaerr=.FALSE.
 qpetit=0.1_qp/x0
 qpetit=0.03_qp
+fich="BCSx04_nvo_augmente"
+fich2="BCS_4_sup"
 write(6,*)"qpetit=",qpetit
 
 
@@ -68,65 +76,99 @@ q1=  0.0_qp
 q2= 10.0_qp
 q3=100.0_qp
 profondeur=5
-prefixe="test"
+prefixe="avecbestM"
+interpol=.TRUE.
+fichom2 ="DONNEES/Tom1.dat"
+fichom2p="DONNEES/Tom1p.dat"
+!a tester, q,om= 
+!3.868616681         2.065740474
+!3.001119563         4.019856415
+!q=0.05 om=2.01035604672572088466101471645589475
+
 
 !Fichiers de données
 
-fich="BCSx04_nvo_augmente"
 fich ="BCS_4_2"
-fich2="BCS_4_sup"
 
-fichom2 ="DONNEES/Tom1.dat"
-fichom2p="DONNEES/Tom1p.dat"
 
 fichierlec1="grille_x04_1.dat"
 fichierlec2="grille_x04_2.dat"
 fichierlec3="grille_x04_3.dat"
 
-interpol=.TRUE.
 
-!call load_data(fich)
-!call loadom2(fich2)
-!
-!om= 3.0_qp
-!om= 2.00969499921292210131045_qp
-!xq=0.05_qp
-!xq=0.0499812499999999999999999999999
-!om=2.00968917749000663444
-!om=2.015
-!om=2.01000836809456590498816858862099477
-!xq=0.0500_qp
-!xq=0.098148148148148148148148148148148230
-!om=2.03813211050015212474015981164369636
-!xq=0.3322364370         
-!om=2.395419696
-!call oangpp
-!write(6,*)"opp=",opp(1:3)
-!
-!call estmat_pairfield(om,0.0_qp,det,Matt,Gamm)
-!write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
-!write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
-!write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
-!write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
-!write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
-!write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
-!write(6,*)
-!write(6,*)"det=",det
-!write(6,*)
-!
-!call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
-!write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
-!write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
-!write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
-!write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
-!write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
-!write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
-!write(6,*)
-!write(6,*)"det=",det
-!write(6,*)
-!
-!call unload_data
-!stop
+if(testpt)then
+ blaM=.TRUE.
+ blaerr=.TRUE.
+ call load_data(fich)
+ call loadom2(fich2)
+ 
+ call calcxqjoin
+ om= 3.0_qp
+ om= 2.00969499921292210131045_qp
+ xq=0.05_qp
+ xq=0.0499812499999999999999999999999
+ om=2.00968917749000663444
+ om=2.015
+ om=2.01000836809456590498816858862099477
+ xq=0.0500_qp
+ xq=0.098148148148148148148148148148148230
+ om=2.03813211050015212474015981164369636
+ xq=4.027187067         
+ om=2.012889604
+ call oangpp
+ write(6,*)"opp=",opp(1:3)
+ 
+ call estmat_pairfield(om,0.0_qp,det,Matt,Gamm)
+ write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
+ write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
+ write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
+ write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
+ write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
+ write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
+ write(6,*)
+ write(6,*)"det=",det
+ write(6,*)
+ 
+ call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
+ write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
+ write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
+ write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
+ write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
+ write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
+ write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
+ write(6,*)
+ write(6,*)"det=",det
+ write(6,*)
+ 
+ call unload_data
+ stop
+endif
+
+if(testdspec)then
+ bla1=.TRUE.
+ bla2=.TRUE.
+ bla2=.FALSE.
+ 
+ call calcxqjoin
+ xq=0.051_qp
+ om=2.01035604672572088466101471645589475_qp
+ om=2.01035604672572088466101471645589475
+ call oangpp
+ write(6,*)"opp=",opp(1:3)
+ 
+ call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
+ write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
+ write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
+ write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
+ write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
+ write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
+ write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
+ write(6,*)
+ write(6,*)"det=",det
+ write(6,*)
+ 
+ stop
+endif
 
 Mm2=intres(k,zk,interpol,(/fich,fich2/))
 write(6,*)"Mm2=",Mm2

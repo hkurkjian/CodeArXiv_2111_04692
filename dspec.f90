@@ -4,6 +4,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE vars
  USE nrtype
+ !$OMP THREADPRIVATE(xq,opp)
+ !!$OMP THREADPRIVATE(x0,xq,beta,xqjoin,opp,opt,ptbranchmtpp,ptbranchmtpt)
  IMPLICIT NONE
 ! Global variables
 
@@ -356,7 +358,7 @@ if(axer)then
       arg(1,1:9)  =       (/nsu,   su,   su,  nsu,  nsu,                 nsu,  nsu,                 nsu,  nsu/)
       choix(1:9)  =       (/mpnt,  mpnt, msqu,msql, msqu,                msql, msqu,                msql, rinf/)
       if(floor(num)==5) choix(3)=rinf
-      bornes(1:10)=       (/0.0_qp,ag(1),om0, ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),(ag(3)+ag(4))/2.0_qp,ag(4),2*ag(4),bmax/)
+      bornes(1:10)=       (/0.0_qp,ag(1),(ag(1)+ag(2))/2,ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),(ag(3)+ag(4))/2.0_qp,ag(4),2*ag(4),bmax/)
       intpp=decoupe(inter,bornes(1:10),arg(1:1,1:9),choix(1:9),EPSpp,bla1)
   
       Icomp=-r0*log((ag(2)-om0)/(om0-ag(1)))
@@ -1228,6 +1230,7 @@ else
   opp(4)=x2
  endif
 endif
+!write(6,*)"opp=",opp(1:3)
 END SUBROUTINE oangpp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE oangpt
