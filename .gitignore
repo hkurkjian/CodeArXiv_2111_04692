@@ -21,3 +21,4 @@ suppointsM
 libperso/libmalib.a
 DONNEES/
 mkInfoFile.inp
+*.exe
