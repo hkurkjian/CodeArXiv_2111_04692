@@ -14,7 +14,7 @@ encorr: dspec.o intldc.o encorr.o
 hktest: eqdetat.o dspec.o Zerom.o bestM.o angularint.o intldc.o intpole.o hktest.o
 	$(COMP) -O3 -fcheck=all -fbacktrace -fstack-arrays -fmax-array-constructor=300000000 $^ $(LIB_PERSO) -o hktest
 
-SVLtest: eqdetat.o dspec.o Zerom.o angularint.o intldc.o intpole.o SVLtest.o
+SVLtest: eqdetat.o dspec.o Zerom.o angularint.o bestM.o intldc.o intpole.o selfcons.o SVLtest.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o SVLtest
 
 pointsM: dspec.o pointsM.o
