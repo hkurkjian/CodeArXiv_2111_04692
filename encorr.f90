@@ -1,6 +1,7 @@
 PROGRAM encorr
 USE dspec
 USE intldc
+USE intpole
 IMPLICIT NONE
 
 REAL(QP) :: k,zk
@@ -9,7 +10,10 @@ REAL(QP) dk,dzk
 REAL(QP) kmin,kmax,zkmin,zkmax
 INTEGER nk,nzk,ik,izk
 CHARACTER(len=30) grille
+LOGICAL nvofich
 
+!k 0 to 3
+!zk 1 to 6
 open(10,file='encorr.inp')
  read(10,*)kmin
  read(10,*)kmax
@@ -19,7 +23,9 @@ open(10,file='encorr.inp')
  read(10,*)nzk
  read(10,*)suffixe
  read(10,*)bla0
+ read(10,*)bla00
  read(10,*)grille
+ read(10,*)nvofich
 close(10)
 
 
@@ -28,7 +34,6 @@ write(6,*)
 write(6,*)'Programme encorr'
 write(6,*)
 write(6,*)'suffixe=',suffixe
-write(6,*)'x0=',x0
 write(6,*)'kmin=',kmin
 write(6,*)'kmax=',kmax
 write(6,*)'nk=',nk
@@ -50,52 +55,84 @@ else
  dzk=(zkmax-zkmin)/nzk
 endif
 
-!precisions for mat_pairfield
-EPSpp=1.0e-8_qp
-EPSrpp=1.0e-10_qp
-
-!precisions for selfE 
-EPSu  =1.0e-9_qp
-EPSom =1.0e-6_qp
-EPSq  =1.0e-5_qp
-
+!Paramètres de dspec
 temperaturenulle=.TRUE.
+EPSpp=1.0e-8_qp
+x0crit=0.0_qp
+bla1=.TRUE.
+bla1=.FALSE.
+bla2=.TRUE.
+bla2=.FALSE.
 
+!Paramètres de estM
+blaM=.TRUE.
+blaM=.FALSE.
+blaerr=.TRUE.
+blaerr=.FALSE.
+qpetit=0.1_qp/x0
+qpetit=0.03_qp
+!Fichiers de données
+fichgri(1)="BCS_4_2"
+fichgri(2)="BCS_4_sup"
+
+
+!Paramètres de intpole
+fichier="BCS_4_pole"
+
+!Paramètres de intldc
+EPSom=1.0e-5_qp
+EPSq =1.0e-3_qp
+EPS=(/EPSq,EPSom/)
+bla0=.TRUE.
+bla00=.FALSE.
+!Paramètres de intldc/intpasres
+lecture=.TRUE.
+ecriture=.FALSE.
+!Paramètres de intldc/intres
+interpol=.TRUE.
+fichom2(1) ="DONNEES/Tom1.dat"
+fichom2(2) ="DONNEES/Tom1p.dat"
 
 write(6,*)trim(grille)
 open(15,file=trim(grille))
- read(15,*)x0,q1,q2,q3,q4,fichierlec1,fichierlec2,fichierlec3,profondeur
+ read(15,*)x0,bq(1),bq(2),bq(3),fichlec(1),fichlec(2),profondeur
+ write(6,*)
+ write(6,*)"Pour les points non résonnants"
+ write(6,*)
  write(6,*)"x0=",x0
- write(6,*)"q1,q2,q3,q4=",q1,q2,q3,q4
- write(6,*)"fichiers=",fichierlec1,fichierlec2,fichierlec3
+ write(6,*)"bq(1),bq(2),bq(3)=",bq(1),bq(2),bq(3)
+ write(6,*)"fichiers=",fichlec(1),fichlec(2)
  write(6,*)"profondeur=",profondeur
+ write(6,*)
 close(15)
-bla1=.TRUE.
-bla1=.FALSE.
-x0crit=9.0_qp
 
-call system("rm "// "selfE"//suffixe//".dat")
-open(14,file="selfE"//suffixe//".dat",POSITION="APPEND")
- write(14,*)"!Valeurs de k,zk et sE (l’autoénergie) pour x0=",x0
-close(14)
-
-lecture =.FALSE.
-lecture =.TRUE.
-ecriture=.TRUE.
-ecriture=.FALSE.
-st=.TRUE.
-st=.FALSE.
-profondeur=7
+if(nvofich)then
+ open(14,file="selfE"//trim(suffixe)//".dat")
+  write(14,*)"!Valeurs de k,zk et sE (l’autoénergie) pour x0=",x0
+ close(14)
+endif
 
 do ik=0,nk
  k=kmin+dk*ik
  write(6,*)"k=",k
+ call bornesk(bk)
+ write(6,*)"bk=",bk
  do izk=0,nzk
   zk=zkmin+dzk*izk
+  call lignesenergie(k,zk-2.0_qp,fichom2,le)
+  write(prefixe,FMT="(A1,I2,A1,I2)")"_",ik,"_",izk
+  write(6,*)trim(prefixe)
   write(6,*)"zk=",zk
-  sE=selfEldc(k,zk)
+  write(6,FMT="(A3,8G20.10)")"le=",le
+  if((zk-2.0_qp)<min(le))then
+   sE=intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,prefixe)
+  else
+   sE=intres   (k,zk,interpol,EPS,fichgri,bk,le,prefixe)
+  endif
+ 
+  sEpole=
 
-  open(14,file="selfE"//suffixe//".dat",POSITION="APPEND")
+  open(14,file="selfE"//trim(suffixe)//".dat",POSITION="APPEND")
    write(14,*)k,zk,real(sE),imag(sE)
   close(14)
 

@@ -998,6 +998,14 @@ MODULE modsim
         END FUNCTION func
        END SUBROUTINE racinfvq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! qromov(f,a,b,dim,arg,varchange,EPS): Romberg integration of the function f
+! with values in R^dim from a to b with precision EPS. arg is a vector of 
+! static parameters of the function,
+! varchange is a subroutine that performs a change of variable for improper integrals:
+! varchange=midpntvq when the function is integrated over a compact interval where it takes finite values
+! varchange=midinfvq when b -> +oo (b can be as large as allowed by machine precision) and f decays at least as 1/x^2
+! varchange=racinfvq when b -> +oo and f decays as 1/x^(3/2)
+! varchange=midsquvq/midsqlvq f has a 1/sqrt(b-x) or 1/sqrt(x-a) (integrable) divergence at the upper/lower bound of the integration interval
        FUNCTION qromovq(func,a,b,m,arg,choose,EPS)
        INTEGER,  INTENT(IN) :: m !Dimension du vecteur à intégrer
        REAL(QP), INTENT(IN) :: a,b
@@ -1038,6 +1046,8 @@ MODULE modsim
        write(6,*) 'Nombre d itération dépassé dans qromovq'
        END FUNCTION qromovq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Same of qromov but with romberg iterations limited to JMAX
+! err=.TRUE. is return if convergence to precision EPS is not reached at JMAX
        FUNCTION qromovqfixed(func,a,b,m,arg,choose,EPS,JMAX,err)
        INTEGER,  INTENT(IN) :: m !Dimension du vecteur à intégrer
        REAL(QP), INTENT(IN) :: a,b

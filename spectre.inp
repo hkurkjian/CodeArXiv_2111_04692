@@ -1,6 +1,6 @@
 4.0  !read(10,*) x0
-0.01 !read(10,*)xq
-4.0 !read(10,*)xq
-0                  !read(10,*) nxq
+0.005 !read(10,*)xq
+5.0 !read(10,*)xq
+20000                  !read(10,*) nxq
 0.1 !read(10,*) zdep(1) 
-BCSx010     !read(10,*) fichier
+BCS_4_pole     !read(10,*) fichier

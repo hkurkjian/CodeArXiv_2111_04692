@@ -4,95 +4,85 @@ USE dspec
 USE modsim
 USE angularint
 IMPLICIT NONE
-REAL(QP) EPSom,EPSu,EPSq
-LOGICAL lecture,ecriture,bla0,bla00,st
-INTEGER profondeur
-CHARACTER(len=30) fichierlec1,fichierlec2,fichierlec3,fichom2,fichom2p
-CHARACTER(len=50) suffixe_intq1,prefixe,suffixe
-REAL(QP) q1,q2,q3,q4
-REAL(QP) xiP,xiM,epsP,epsM,xmin,xmax
-REAL(QP) k0,k1,k2,k3,k4,k5,k6,k7,k8,k9,k10,k11,k12
+LOGICAL bla0,bla00
+REAL(QP) xiP,xiM,epsP,epsM,xmin,xmax,k0
 INTEGER, PARAMETER :: al=1,bet=2,gam=3,delt=4,epsi=5,alti=6,betti=7,deltti=8,epsiti=9
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION selfEldc(k,zk)
+FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,prefixe)
  REAL(QP), INTENT(IN) :: k,zk
- COMPLEX(QPC) selfEldc(1:6)
- COMPLEX(QPC) Iq1(1:6),Iq2(1:6),Iq3(1:6)
+ REAL(QP), INTENT(IN) :: bq(1:3),EPS(1:2)
+ LOGICAL, INTENT(IN)  :: lecture,ecriture
+ CHARACTER(len=*), INTENT(IN) ::  fichlec(1:2),prefixe
+ INTEGER, INTENT(IN) :: profondeur
+ REAL(QP) intpasres(1:6)
+
+ CHARACTER(len=90) suffixe
+ REAL(QP) Iq1(1:6),Iq2(1:6)
  REAL(QP) Iqinf(1:6)
- REAL(QP) argq(1:1),e
+ REAL(QP) argq(1:1),e,EPSq,EPSom
  LOGICAL err
  CHARACTER(len=250) chainebidon
 
  temperaturenulle=.TRUE.
 
  e=0.0_qp
+ EPSq =EPS(1)
+ EPSom=EPS(2)
 
  if(bla0)then
    write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
    write(6,*)
-   write(6,*)"+++++++++++++++++++++++++++++ selfEldc ++++++++++++++++++++++++++++"
+   write(6,*)"+++++++++++++++++++++++++++++ intpasres ++++++++++++++++++++++++++++"
    write(6,*)
    write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
    write(6,*)
    write(6,*)"k,zk=",k,zk
    write(6,*)"lecture,ecriture=",lecture,ecriture
-   write(6,*)"fichierlec1,fichierlec2: ",fichierlec1," ",fichierlec2
-   write(6,*)"q1,q2,q3=",q1,q2,q3
+   write(6,*)"fichlec: ",fichlec
+   write(6,*)"q1,q2,q3=",bq
    write(6,*)
    write(6,*)"EPSq,EPSom,profondeur=",EPSq,EPSom,profondeur
    write(6,*)
    write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
  endif
 
-! qromovq(f,a,b,dim,arg,varchange,EPS,jmax): Romberg integration of the function f
-! with values in R^dim from a to b with precision EPS. arg is a vector of 
-! static parameters of the function,
-! varchange is a subroutine that performs a change of variable for improper integrals:
-! varchange=midpntvq when the function is integrated over a compact interval where it takes finite values
-! varchange=midinfvq when b -> +oo (b can be as large as allowed by machine precision) and f decays at least as 1/x^2
-! varchange=racinfvq when b -> +oo and f decays as 1/x^(3/2)
-! varchange=midsquvq/midsqlvq f has a 1/sqrt(b-x) or 1/sqrt(x-a) (integrable) divergence at the upper/lower bound of the integration interval
-
  if(lecture)then
-  open(11,file=trim(fichierlec1))
+  open(11,file=trim(fichlec(1)))
   read(11,*)chainebidon
   write(6,*)chainebidon
-  open(12,file=trim(fichierlec2))
+  open(12,file=trim(fichlec(2)))
   read(12,*)chainebidon
   write(6,*)chainebidon
  endif
 
  if(ecriture)then
-  open (16,file=trim(fichierlec1))
-  write(16,*)"! grille de valeur de q,om et Mat de qmin=",q1,"à qmax=",q2," avec profondeur=",profondeur
-  open (17,file=trim(fichierlec2))
-  write(17,*)"! grille de valeur de q,om et Mat de qmin=",q2,"à qmax=",q3," avec profondeur=",profondeur
+  open (16,file=trim(fichlec(1)))
+  write(16,*)"! grille de valeur de q,om et Mat de qmin=",bq(1),"à qmax=",bq(2)," avec profondeur=",profondeur
+  open (17,file=trim(fichlec(2)))
+  write(17,*)"! grille de valeur de q,om et Mat de qmin=",bq(2),"à qmax=",bq(3)," avec profondeur=",profondeur
  endif
 
  Iq1(:)=0.0_qp
  Iq2(:)=0.0_qp
- Iq3(:)=0.0_qp
 
- suffixe="sEfixed"
- argq(1)=1.5_qp 
- Iq1=qromovfixed(intq,q1 ,   q2,   6,argq,midpntvcq,EPSq,profondeur,err)
- write(6,*)"re Iq1=",real(Iq1)
- write(6,*)"im Iq1=",imag(Iq1)
+ suffixe="pasres"
+ argq(1)=bidon
+ Iq1=qromovfixed(intq,bq(1) ,   bq(2),   6,argq,midpntvq,EPSq,profondeur,err)
+ write(6,*)"Iq1=",Iq1
  if(err)  call erreur("q")
 
-! argq(1)=2.5_qp 
-! Iq2=qromovfixed(intq,q2,    q3,   6,argq,midpntvcq,EPSq,profondeur,err)
-! write(6,*)"re Iq2=",real(Iq2)
-! write(6,*)"im Iq2=",imag(Iq2)
-! if(err)  call erreur("q")
+ argq(1)=bidon
+ Iq2=qromovfixed(intq,bq(2),    bq(3),   6,argq,midpntvq,EPSq,profondeur,err)
+ write(6,*)"Iq2=",Iq2
+ if(err)  call erreur("q")
 
  Iqinf(:)=0.0_qp
-! Iqinf(1)=1.0_qp/(2.0_qp*sqrt(3.0_qp)*PI**3*q3**4)
-! Iqinf(5)=-Iqinf(1)
+ Iqinf(1)=1.0_qp/(2.0_qp*sqrt(3.0_qp)*PI**3*bq(3)**4)
+ Iqinf(5)=-Iqinf(1)
 ! For the other integrals, the large q contribution (vanishing at least of 1/q3**6) is neglected
 
- selfEldc=2.0_qp*PI*(Iq1+Iq2+Iq3+Iqinf) !Integration sur phi
+ intpasres=2.0_qp*PI*(Iq1+Iq2+Iqinf) !Integration sur phi
 
  open(20,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
   write(20,*)
@@ -111,14 +101,13 @@ CONTAINS
   USE nrutil
   INTEGER,  INTENT(IN) :: m !m=6: the 3 coefficients of the 1<->3 self-energy matrix and the 3 coeff of the 4<->0 process
   REAL(QP), INTENT(IN), DIMENSION(:)  ::  q,argq
-  COMPLEX(QPC)  intq(size(q),m)
+  REAL(QP)  intq(size(q),m)
 
-  COMPLEX(QPC), DIMENSION(1:6) ::  I,Ia,Ib,Ic,Id,Ie
-  REAL(QPC)   , DIMENSION(1:6) ::  Iinf
-  REAL(QP) bmax,qs,fich
+  REAL(QP), DIMENSION(1:6) ::  I,Ia,Ib,Ic,Id,Ie
+  REAL(QP)   , DIMENSION(1:6) ::  Iinf
+  REAL(QP) bmax,qs
   INTEGER is
  
-  fich=argq(1)
   intq(:,:)=0.0_qp
  
   do is=1,size(q)
@@ -164,61 +153,53 @@ CONTAINS
    endif
   
    if(ptbranchmtpp==1)then !BEC-like behavior: integrated from branch cut lower-edge opp(1) to infinity
-     Ib=qromovfixed(intom,opp(1)         ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err) !deals with the 1/om^(3/2) decay at large om
+     Ib=qromovfixed(intom,opp(1)         ,bmax                ,6,(/qs/),racinfvq,EPSom,profondeur,err) !deals with the 1/om^(3/2) decay at large om
      if(bla0)then
-       write(6,FMT="(A10,6G20.10)")'real(Ib)=',real(Ib)
-       write(6,FMT="(A10,6G20.10)")'imag(Ib)=',imag(Ib)
+       write(6,FMT="(A10,6G20.10)")'Ib=',Ib
      endif
      if(err)  call erreur("omega")
 
    elseif(ptbranchmtpp==2)then !One angular point opp(2) besides the lower-edge
-    Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err) !Integrate from the edge to the angular point
+    Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs/),midpntvq,EPSom,profondeur,err) !Integrate from the edge to the angular point
     if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'real(Ib)=',real(Ib)
-      write(6,FMT="(A10,6G20.10)")'imag(Ib)=',imag(Ib)
+      write(6,FMT="(A10,6G20.10)")'Ib=',Ib
     endif
     if(err)  call erreur("omega")
 
-    Ic=qromovfixed(intom,opp(2)         ,2.0_qp*opp(2)       ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err) !then from opp(2) to 2*opp(2), this circumscribes the numerical difficulty around opp(2)
+    Ic=qromovfixed(intom,opp(2)         ,2.0_qp*opp(2)       ,6,(/qs/),midpntvq,EPSom,profondeur,err) !then from opp(2) to 2*opp(2), this circumscribes the numerical difficulty around opp(2)
     if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'real(Ic)=',real(Ic)
-      write(6,FMT="(A10,6G20.10)")'imag(Ic)=',imag(Ic)
+      write(6,FMT="(A10,6G20.10)")'Ic=',Ic
     endif
     if(err)  call erreur("omega")
 
-    Id=qromovfixed(intom,2.0_qp*opp(2)  ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err) !then from 2*opp(2) to infinity
+    Id=qromovfixed(intom,2.0_qp*opp(2)  ,bmax                ,6,(/qs/),racinfvq,EPSom,profondeur,err) !then from 2*opp(2) to infinity
     if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'real(Id)=',real(Id)
-      write(6,FMT="(A10,6G20.10)")'imag(Id)=',imag(Id)
+      write(6,FMT="(A10,6G20.10)")'Id=',Id
     endif
     if(err)  call erreur("omega")
 
    elseif(ptbranchmtpp==3)then !Two angular points opp(2) and opp(3) besides the lower-edge
-    Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
+    Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs/),midpntvq,EPSom,profondeur,err)
     if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'real(Ib)=',real(Ib)
-      write(6,FMT="(A10,6G20.10)")'imag(Ib)=',imag(Ib)
+      write(6,FMT="(A10,6G20.10)")'Ib=',Ib
     endif
     if(err)  call erreur("omega")
 
-    Ic=qromovfixed(intom,opp(2)         ,opp(3)              ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
+    Ic=qromovfixed(intom,opp(2)         ,opp(3)              ,6,(/qs/),midpntvq,EPSom,profondeur,err)
     if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'real(Ic)=',real(Ic)
-      write(6,FMT="(A10,6G20.10)")'imag(Ic)=',imag(Ic)
+      write(6,FMT="(A10,6G20.10)")'Ic=',Ic
     endif
     if(err)  call erreur("omega")
 
-    Id=qromovfixed(intom,opp(3)         ,2.0_qp*opp(3)       ,6,(/qs,fich/),midpntvcq,EPSom,profondeur,err)
+    Id=qromovfixed(intom,opp(3)         ,2.0_qp*opp(3)       ,6,(/qs/),midpntvq,EPSom,profondeur,err)
     if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'real(Id)=',real(Id)
-      write(6,FMT="(A10,6G20.10)")'imag(Id)=',imag(Id)
+      write(6,FMT="(A10,6G20.10)")'Id=',Id
     endif
     if(err)  call erreur("omega")
 
-    Ie=qromovfixed(intom,2.0_qp*opp(3)  ,bmax                ,6,(/qs,fich/),racinfvcq,EPSom,profondeur,err)
+    Ie=qromovfixed(intom,2.0_qp*opp(3)  ,bmax                ,6,(/qs/),racinfvq,EPSom,profondeur,err)
     if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'real(Ie)=',real(Ie)
-      write(6,FMT="(A10,6G20.10)")'imag(Ie)=',imag(Ie)
+      write(6,FMT="(A10,6G20.10)")'Ie=',Ie
     endif
     if(err)  call erreur("omega")
    endif
@@ -227,14 +208,13 @@ CONTAINS
    if(bla0)then
     write(6,*)
     write(6,FMT="(A12,7G20.10)")"qs,real(I)=",qs,real(I)
-    write(6,FMT="(A12,7G20.10)")"qs,imag(I)=",qs,imag(I)
    endif
 
 
    intq(is,:)=I(:)*qs**2 !Jacobian of the q integration
 
    open(20,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
-    write(20,*)qs,real(intq(is,1:6)),imag(intq(is,1:3))
+    write(20,*)qs,real(intq(is,1:6))
    close(20)
   
   enddo
@@ -246,17 +226,20 @@ CONTAINS
   IMPLICIT NONE
   INTEGER,  INTENT(IN) :: m !m=6 here
   REAL(QP), INTENT(IN), DIMENSION(:)  ::  om,arg !arg(1) should be the value of q
-  COMPLEX(QPC), DIMENSION(size(om),m)       ::  intom
+  REAL(QP), DIMENSION(size(om),m)       ::  intom
 
   COMPLEX(QPC) Gam(1:2,1:2),Mat(1:2,1:2),MatCat(1:2,1:2),det
   REAL(QP) reM11,reM22,reM12,reM21,imM11,imM22,imM12,imM21,omfi,xqfi
-  REAL(QP) q,argintu(1:2),rho(1:2,1:2),ome,enM,enP
+  REAL(QP) q,rho(1:2,1:2),ome,enM,enP
   COMPLEX(QPC) IuP(1:3),IuM(1:3)
   INTEGER is,fich
 
   q=arg(1) !value of q passed on to the intu function
-  fich=floor(arg(2))
-  argintu(2)=q
+  if(q>bq(2))then
+   fich=2
+  else
+   fich=1
+  endif
   intom(:,:)=0.0_qp
 
   if((bla00).AND.(size(om)==1))then
@@ -273,8 +256,6 @@ CONTAINS
 
    IuP(:)=0.0_qp
    IuM(:)=0.0_qp
-   argintu(1)=enM
-!   Iu=qromovq(intu,-1.0_qp,1.0_qp,3,argintu,midpntvq,EPSu) !computes int_-1^1 du (V^2,U^2,UV)/(ome-z+eps)
    IuM=conjg(Iuanaly(enM,k,q,xmin,xmax)) !enM a une (petite) partie imaginaire négative venant de -zk
    IuP=      Iuanaly(enP,k,q,xmin,xmax)
 
@@ -318,8 +299,7 @@ CONTAINS
    intom(is,6)=-rho(1,2)*IuP(3)
 
    if(bla00)then
-    write(6,FMT="(A19,8G20.10)")"q,ome,real(intom),imag(intom)=",q,ome,&
-        real(intom(is,1:6)),imag(intom(is,1:3))!*ome**(3.0_qp/2.0_qp)
+    write(6,FMT="(A19,8G20.10)")"q,ome,real(intom)=",q,ome,intom(is,1:6)
    endif
 
   enddo
@@ -329,73 +309,41 @@ CONTAINS
   endif
 
  END FUNCTION intom
-END FUNCTION selfEldc
+END FUNCTION intpasres
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE erreur(var)
 CHARACTER(len=*), INTENT(IN) :: var
- if(st)then
-  write(6,*) "convergence non atteinte dans l’intégrale sur "//var
-  stop
- else
-  write(6,*) "convergence non atteinte dans l’intégrale sur "//var
- endif
+write(6,*) "convergence non atteinte dans l’intégrale sur "//var
 END SUBROUTINE erreur
 
 ! @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!FUNCTION selfEldc2(k,zk,interpolation,fich)
-!USE estM
-!REAL(QP), INTENT(IN) :: k,zk
-!LOGICAL, INTENT(IN) :: interpolation
-!CHARACTER(len=90), INTENT(IN) :: fich
-!COMPLEX(QPC) selfEldc2(1:6)
-!
-!CHARACTER(len=2) reg
-!INTEGER tconf,config(1:7)
-!
-!REAL(QP) qmax,int6(1:6),le(1:8),bq(1:8)
-!
-!call bornesk
-!call bornesq (k,zk-2.0_qp,le,reg,tconf,config,bq)
-!temperaturenulle=.TRUE.
-!
-!suffixe="sEres"
-!open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
-!close(25)
-!selfEldc2(1:3)=intres(k,zk,interpolation,config(1:tconf),bq(1:tconf+1))
-!int6=intpasres(k,zk,interpolation,2,bq(tconf+1),qmax)
-!selfEldc2(1:3)=selfEldc2(1:3)+int6(1:3)
-!
-!suffixe="sEpasres"
-!open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
-!close(25)
-!int6=intpasres(k,zk,interpolation,3,0.0_qp,qmax)
-!selfEldc2(4:6)=int6(4:6)
-!
-!if(interpolation) call unload_data
-!
-!END FUNCTION selfEldc2
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION intres(k,zk,interpolation,fich)
+FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,prefixe)
  USE bestM
  USE recettes
  REAL(QP), INTENT(IN) :: k,zk
  LOGICAL,  INTENT(IN) :: interpolation
- CHARACTER(len=90), INTENT(IN), DIMENSION(1:2) :: fich
+ CHARACTER(len=*), INTENT(IN) :: fichgri(1:2),prefixe
+ REAL(QP), INTENT(IN) :: EPS(1:2),bk(0:12),le(1:8)
  COMPLEX(QPC) intres(1:6)
 
  INTEGER,  ALLOCATABLE, DIMENSION(:) :: config
  REAL(QP), ALLOCATABLE, DIMENSION(:) :: bq
 
  CHARACTER(len=2) reg
+ CHARACTER(len=90) :: suffixe
  INTEGER tconf,configbis(1:7)
- REAL(QP) e,qmax,le(1:8),bqbis(1:8)
+ REAL(QP) e,qmax,bqbis(1:8)
+ REAL(QP) EPSq,EPSom
 
  CHARACTER(len=250) chainebidon
  INTEGER grecque,igr
 
- call bornesk
- call bornesq (k,zk-2.0_qp,le,reg,tconf,configbis,bqbis)
+ EPSq =EPS(1)
+ EPSom=EPS(2)
+
+ k0=bk(0)
+ call bornesq (k,zk-2.0_qp,bk,le,reg,tconf,configbis,bqbis)
  temperaturenulle=.TRUE.
  e=0.0_qp
 
@@ -404,8 +352,8 @@ FUNCTION intres(k,zk,interpolation,fich)
  bq    =bqbis(1:tconf+1)
  config=configbis(1:tconf)
 
- if(interpolation) call load_data(fich(1))
- if(interpolation) call loadom2(fich(2))
+ if(interpolation) call load_data(fichgri(1))
+ if(interpolation) call loadom2(fichgri(2))
  
  if(bla0)then
    write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -546,45 +494,6 @@ FUNCTION intres(k,zk,interpolation,fich)
    arg(1,:)=qs
    arg(2,:)=vres(:)+0.5_qp
 
-!   bomf(1:6)=bom2
-!   trout=ttot-1
-!   do itai=ttot-1,1,-1
-!    p1=pos_bom(itai)
-!    p2=pos_bom(itai+1)
-!    if((p1>ptbranchmtpp).AND.(p2.LE.ptbranchmtpp))then
-!     routint(itai)=msql
-!    elseif((p1.LE.ptbranchmtpp).AND.(p2>ptbranchmtpp))then
-!     routint(itai)=msqu
-!    elseif((p1.LE.ptbranchmtpp).AND.(p2.LE.ptbranchmtpp))then
-!     routint(itai)=mpnt
-!    elseif((p1>ptbranchmtpp).AND.(p2>ptbranchmtpp))then
-!     trout=trout+1
-!     do jtai=ttot+3,itai+1,-1
-!      bomf(jtai+1)=bomf(jtai)
-!      routint(jtai+1)=routint(jtai)
-!     enddo
-!     bomf(itai+1)=(bom2(itai)+bom2(itai+1))/2
-!     routint(itai+1)=msqu
-!     routint(itai)  =msql
-!    endif
-!   enddo
-!   allocate(vres(1:trout))
-!   vres(:)=100
-!   if(grecque==0)then 
-!    vres(:)=0
-!   else
-!    do itai=1,trout
-!     ommil=(bomf(itai)+bomf(itai+1))/2.0_qp
-!     call locate(bom(1:tres+1),ommil,p1)
-!     if((p1==0).OR.(p1==tres+1))then
-!       vres(itai)=0
-!     else
-!       vres(itai)=res(p1)
-!     endif
-!    enddo
-!   endif
-
-
    if(bla0)then
     write(6,FMT="(A6,9G20.10)")"bomf=",bomf(1:trout+1)
     write(6,*)"routint=",ecritrout(trout,routint(1:trout))
@@ -674,119 +583,124 @@ FUNCTION intres(k,zk,interpolation,fich)
   END FUNCTION intresom
 END FUNCTION intres
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE bornesk
+SUBROUTINE bornesk(bk)
+REAL(QP), INTENT(OUT) :: bk(0:12)
 
-k0=sqrt(x0)
-k1=k0/sqrt(2.0_qp)
-k2=3*k0/5
-k3=k0/2
-k4=k0/sqrt(5.0_qp)
-k5=k0/3
-k6=(sqrt(2.0_qp)-1)*k0/2
-k7=k0/5
+bk(0)=sqrt(x0)
+bk(1)=k0/sqrt(2.0_qp)
+bk(2)=3*k0/5
+bk(3)=k0/2
+bk(4)=k0/sqrt(5.0_qp)
+bk(5)=k0/3
+bk(6)=(sqrt(2.0_qp)-1)*k0/2
+bk(7)=k0/5
 
-k8 =(1+sqrt(2.0_qp))*k0/2
-k9 =sqrt(2.0_qp)*k0
-k10=-k0+sqrt(4*k0**2+2*sqrt(k0**4+2*sqrt(1+k0**4)-2))
-k11=2*k0
-k12=3*k0
+bk(8) =(1+sqrt(2.0_qp))*k0/2
+bk(9) =sqrt(2.0_qp)*k0
+bk(10)=-k0+sqrt(4*k0**2+2*sqrt(k0**4+2*sqrt(1+k0**4)-2))
+bk(11)=2*k0
+bk(12)=3*k0
 
 END SUBROUTINE bornesk
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE lignesenergie(k,fichom2,le)
+USE recettes
+REAL(QP), INTENT(IN) :: k
+CHARACTER(len=*), INTENT(IN) :: fichom2(1:2)
+REAL(QP), INTENT(OUT) :: le(1:8)
+
+le(:)=1.0e50_qp
+
+!lignes d’énergie
+le(1)=epsBCS(k)
+le(5)=epsBCS(0.0_qp)
+if(k<k0)then
+ le(2)=epsBCS(2*k-k0)
+ le(3)=epsBCS(2*k+k0)
+ le(4)=epsBCS(k+sqrt(k0**2-k**2))
+elseif(k<3*k0)then
+ le(2)=epsBCS(2*k-k0)
+ le(3)=epsBCS(2*k+k0)+ec(k+k0)-2
+ if(k<2*k0)then
+  le(4)=solom2(k,fichom2(1))
+ endif
+ le(6)=ec(k+k0)-1
+ le(8)=1.0_qp
+else
+ le(2)=epsBCS(2*k-k0)+ec(k-k0)-2
+ le(3)=epsBCS(2*k+k0)+ec(k+k0)-2
+ le(6)=ec(k+k0)-1
+ le(7)=ec(k-k0)-1
+ le(8)=solom2(k,fichom2(2))
+endif
+END SUBROUTINE lignesenergie
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE bornesq(k,zkt,le,reg,tconf,config,bq)
+SUBROUTINE bornesq(k,zkt,bk,le,reg,tconf,config,bq)
 USE recettes
 REAL(QP), INTENT(IN) :: k,zkt
 CHARACTER(len=2), INTENT(OUT) :: reg
 INTEGER, INTENT(OUT) :: tconf
 INTEGER, DIMENSION(1:7), INTENT(OUT) :: config
 REAL(QP), INTENT(OUT) :: bq(1:8)
-REAL(QP), INTENT(OUT) :: le(1:8)
+REAL(QP), INTENT(IN)  :: le(1:8),bk(0:12)
 
 REAL(QP) km,kp,qm,q1m,q2m,q3m,q4m,q1p,q2p,q1mbis,q3mbis,q2pbis,qc,qd
-REAL(QP) l1,l2,l3,l4,l5,l6,l7,l8
 REAL(QP) vecq(1:13)
 
-l1=1.0e50_qp; l2=1.0e50_qp; l3=1.0e50_qp; l4=1.0e50_qp; 
-l5=1.0e50_qp; l6=1.0e50_qp; l7=1.0e50_qp; l8=1.0e50_qp;
-
-!lignes d’énergie
-l1=epsBCS(k)
-l5=epsBCS(0.0_qp)
-if(k<k0)then
- l2=epsBCS(2*k-k0)
- l3=epsBCS(2*k+k0)
- l4=epsBCS(k+sqrt(k0**2-k**2))
-elseif(k<3*k0)then
- l2=epsBCS(2*k-k0)
- l3=epsBCS(2*k+k0)+ec(k+k0)-2
- if(k<2*k0)then
-  l4=solom2(k,fichom2)
- endif
- l6=ec(k+k0)-1
- l8=1.0_qp
-else
- l2=epsBCS(2*k-k0)+ec(k-k0)-2
- l3=epsBCS(2*k+k0)+ec(k+k0)-2
- l6=ec(k+k0)-1
- l7=ec(k-k0)-1
- l8=solom2(k,fichom2p)
-endif
-le=(/l1,l2,l3,l4,l5,l6,l7,l8/)
-
 !reg et configuration
-if(k<k0)then
+if(k<bk(0))then
  if(zkt<1)then
   reg="00"
   tconf=0
- elseif(min(l1,l4)>zkt)then
+ elseif(min(le(1),le(4))>zkt)then
   reg="A0"
   tconf=6
   config(1:tconf)=(/0,alti,betti,gam,bet,al/)
- elseif((zkt>l1).AND.(min(l2,l4)>zkt))then
+ elseif((zkt>le(1)).AND.(min(le(2),le(4))>zkt))then
   reg="B0"
   tconf=6
   config(1:tconf)=(/deltti,alti,betti,gam,bet,al/)
- elseif((zkt>l4).AND.(min(l1,l2)>zkt))then
+ elseif((zkt>le(4)).AND.(min(le(1),le(2))>zkt))then
   reg="B1"
   tconf=7
   config(1:tconf)=(/0,alti,betti,epsiti,epsi,bet,al/)
- elseif((zkt>l2).AND.(l4>zkt))then
+ elseif((zkt>le(2)).AND.(le(4)>zkt))then
   reg="C0"
   tconf=6
   config(1:tconf)=(/deltti,epsiti,betti,gam,bet,al/)
- elseif((l2>zkt).AND.(zkt>max(l1,l4)))then
+ elseif((le(2)>zkt).AND.(zkt>max(le(1),le(4))))then
   reg="C1"
   tconf=7
   config(1:tconf)=(/deltti,alti,betti,epsiti,epsi,bet,al/)
- elseif((min(l1,l3)>zkt).AND.(zkt>l2))then
+ elseif((min(le(1),le(3))>zkt).AND.(zkt>le(2)))then
   reg="C2"
   tconf=7
   config(1:tconf)=(/0,alti,deltti,epsiti,epsi,bet,al/)
- elseif((zkt>l4).AND.(l5>zkt).AND.(k>k1))then
+ elseif((zkt>le(4)).AND.(le(5)>zkt).AND.(k>bk(1)))then
   reg="D0"
   tconf=7
   config(1:tconf)=(/deltti,epsiti,epsi,bet,gam,bet,al/)
- elseif((zkt>max(l2,l4)).AND.(l5>zkt).AND.(k>k3))then
+ elseif((zkt>max(le(2),le(4))).AND.(le(5)>zkt).AND.(k>bk(3)))then
   reg="D1"
   tconf=7
   config(1:tconf)=(/deltti,epsiti,betti,epsiti,epsi,bet,al/)
- elseif((zkt>max(l1,l2)).AND.(min(l3,l5)>zkt).AND.(k>k7))then
+ elseif((zkt>max(le(1),le(2))).AND.(min(le(3),le(5))>zkt).AND.(k>bk(7)))then
   reg="D2"
   tconf=7
   config(1:tconf)=(/deltti,alti,deltti,epsiti,epsi,bet,al/)
- elseif((l1>zkt).AND.(zkt> l3))then
+ elseif((le(1)>zkt).AND.(zkt> le(3)))then
   reg="D3"
   tconf=7
   config(1:tconf)=(/0,alti,deltti,epsiti,epsi,delt,al/)
- elseif((l3>zkt).AND.(zkt>l5))then
+ elseif((le(3)>zkt).AND.(zkt>le(5)))then
   reg="E0"
   tconf=5
   config(1:tconf)=(/deltti,epsiti,epsi,bet,al/)
- elseif((l5>zkt).AND.(zkt>max(l1,l3)))then
+ elseif((le(5)>zkt).AND.(zkt>max(le(1),le(3))))then
   reg="E1"
   tconf=7
   config(1:tconf)=(/deltti,alti,deltti,epsiti,epsi,delt,al/)
- elseif(zkt>max(l3,l5))then
+ elseif(zkt>max(le(3),le(5)))then
   reg="F0"
   tconf=5
   config(1:tconf)=(/deltti,epsiti,epsi,delt,al/)
@@ -794,54 +708,54 @@ if(k<k0)then
   stop "Erreur dans region k<k0"
  endif
 else
- if(l8>zkt)then
+ if(le(8)>zkt)then
   reg="00"
   tconf=0
- elseif((min(l1,l5)>zkt).AND.(zkt>l6))then
+ elseif((min(le(1),le(5))>zkt).AND.(zkt>le(6)))then
   reg="A0"
   tconf=6
   config(1:tconf)=(/0,al,bet,gam,bet,al/)
- elseif((min(l2,l5)>zkt).AND.(zkt>l1))then
+ elseif((min(le(2),le(5))>zkt).AND.(zkt>le(1)))then
   reg="B0"
   tconf=6
   config(1:tconf)=(/delt,al,bet,gam,bet,al/)
- elseif((zkt>max(l6,l5)).AND.(l1>zkt))then
+ elseif((zkt>max(le(6),le(5))).AND.(le(1)>zkt))then
   reg="B1"
   tconf=4
   config(1:tconf)=(/0,al,bet,al/)
- elseif((zkt>l2).AND.(l5>zkt))then
+ elseif((zkt>le(2)).AND.(le(5)>zkt))then
   reg="D0"
   tconf=6
   config(1:tconf)=(/delt,epsi,bet,gam,bet,al/)
- elseif((l2>zkt).AND.(zkt>max(l1,l5)))then
+ elseif((le(2)>zkt).AND.(zkt>max(le(1),le(5))))then
   reg="D1"
   tconf=4
   config(1:tconf)=(/delt,al,bet,al/)
- elseif((zkt>max(l2,l5)).AND.(l3>zkt))then
+ elseif((zkt>max(le(2),le(5))).AND.(le(3)>zkt))then
   reg="E0"
   tconf=4
   config(1:tconf)=(/delt,epsi,bet,al/)
- elseif(zkt>l3)then
+ elseif(zkt>le(3))then
   reg="F0"
   tconf=4
   config(1:tconf)=(/delt,epsi,delt,al/)
- elseif((k<k11).AND.((zkt<l4).OR.((zkt>l5).AND.(l6>zkt))))then
+ elseif((k<bk(11)).AND.((zkt<le(4)).OR.((zkt>le(5)).AND.(le(6)>zkt))))then
   reg="G0"
   tconf=4
   config(1:tconf)=(/0,al,bet,gam/)
- elseif((k>k11).AND.(k12>k).AND.(l6>zkt))then
+ elseif((k>bk(11)).AND.(bk(12)>k).AND.(le(6)>zkt))then
   reg="G0"
   tconf=4
   config(1:tconf)=(/0,al,bet,gam/)
- elseif((k>k12).AND.(l6>zkt).AND.(zkt>l7))then
+ elseif((k>bk(12)).AND.(le(6)>zkt).AND.(zkt>le(7)))then
   reg="G0"
   tconf=4
   config(1:tconf)=(/0,al,bet,gam/)
- elseif((k>k12).AND.(l7>zkt).AND.(zkt>l8))then
+ elseif((k>bk(12)).AND.(le(7)>zkt).AND.(zkt>le(8)))then
   reg="H0"
   tconf=2
   config(1:tconf)=(/0,al/)
- elseif((k<k11).AND.(min(l5,l6)>zkt).AND.(zkt>l4))then
+ elseif((k<bk(11)).AND.(min(le(5),le(6))>zkt).AND.(zkt>le(4)))then
   reg="J0"
   tconf=6
   config(1:tconf)=(/0,al,bet,gam,bet,gam/)
@@ -859,54 +773,54 @@ qc=    1.0e50_qp; qm=    1.0e50_qp;
 if(k<k0)then
  km=k0-k
  kp=k+k0
- if((l5>zkt).AND.(zkt>l1)) q1m=k-sqrt(k0**2-sqrt(zkt**2-1))
- if(l5>zkt)                q2m=k+sqrt(k0**2-sqrt(zkt**2-1))
-                           q3m=k+sqrt(k0**2+sqrt(zkt**2-1))
+ if((le(5)>zkt).AND.(zkt>le(1))) q1m=k-sqrt(k0**2-sqrt(zkt**2-1))
+ if(le(5)>zkt)                   q2m=k+sqrt(k0**2-sqrt(zkt**2-1))
+                                 q3m=k+sqrt(k0**2+sqrt(zkt**2-1))
 
 
  q3mbis=rtsafe(soleC,(/-1.0_qp,1.0_qp/),k+k0,1.e18_qp,1.e-18_qp)
  q3m=min(q3m,q3mbis)
 
- if(l1>zkt) q1p=-k+sqrt(k0**2-sqrt(zkt**2-1))
+ if(le(1)>zkt) q1p=-k+sqrt(k0**2-sqrt(zkt**2-1))
  q2p=-k+sqrt(k0**2+sqrt(zkt**2-1))
 
  q2pbis=rtsafe(soleC,(/ 1.0_qp,1.0_qp/),k0-k,1.e18_qp,1.e-18_qp)
  q2p=min(q2p,q2pbis)
 
- if(zkt>l4) qc=sqrt(k0**2-k**2)
+ if(zkt>le(4)) qc=sqrt(k0**2-k**2)
 
 else
- if(zkt>l1) q1p=rtsafe(soleC,(/ 1.0_qp,1.0_qp/),0.0_qp,1.e18_qp,1.e-18_qp)
- if(zkt>l6)then
+ if(zkt>le(1)) q1p=rtsafe(soleC,(/ 1.0_qp,1.0_qp/),0.0_qp,1.e18_qp,1.e-18_qp)
+ if(zkt>le(6))then
   q4m=rtsafe(soleC,(/-1.0_qp,1.0_qp/),k+k0  ,1.e18_qp,1.e-18_qp)
   kp=k0+k
- elseif(zkt>l7)then
+ elseif(zkt>le(7))then
   qm=sqrt(4*k0**2+2*sqrt((-1.0_qp + zkt)*(3.0_qp + zkt)))
  endif
  if(k<2*k0)then
   km=k-k0
-  if(zkt<l1) q1m=k-sqrt(k0**2+sqrt(zkt**2-1))
-  if(zkt<l5) q2m=k-sqrt(k0**2-sqrt(zkt**2-1))
-  if((l6>zkt).AND.(zkt>l4))then
+  if(zkt<le(1)) q1m=k-sqrt(k0**2+sqrt(zkt**2-1))
+  if(zkt<le(5)) q2m=k-sqrt(k0**2-sqrt(zkt**2-1))
+  if((le(6)>zkt).AND.(zkt>le(4)))then
     qd   =rtsafe(soleC,(/-1.0_qp,-1.0_qp/),k+1.0e-17_qp   ,k+k0    ,1.e-18_qp)
     q3m   =rtsafe(soleC,(/-1.0_qp, 1.0_qp/),k   ,qd     ,1.e-18_qp)
     q3mbis=rtsafe(soleC,(/-1.0_qp, 1.0_qp/),qd ,k+k0    ,1.e-18_qp)
   endif
-  if((l5>zkt).AND.(zkt>l6)) q3m=rtsafe(soleC,(/-1.0_qp,1.0_qp/),k ,k+k0    ,1.e-18_qp)
+  if((le(5)>zkt).AND.(zkt>le(6))) q3m=rtsafe(soleC,(/-1.0_qp,1.0_qp/),k ,k+k0    ,1.e-18_qp)
  elseif(k<3*k0)then
   km=k-k0
-  if(zkt<l1) q1m=k-sqrt(k0**2+sqrt(zkt**2-1))
-  if(zkt<l1) write(6,*)"top"
-  if(zkt<l6) q2m=rtsafe(soleC,(/-1.0_qp,1.0_qp/),k-k0 ,k+k0    ,1.e-18_qp)
+  if(zkt<le(1)) q1m=k-sqrt(k0**2+sqrt(zkt**2-1))
+  if(zkt<le(1)) write(6,*)"top"
+  if(zkt<le(6)) q2m=rtsafe(soleC,(/-1.0_qp,1.0_qp/),k-k0 ,k+k0    ,1.e-18_qp)
  else
-  if((zkt>l7).AND.(l6>zkt))then
+  if((zkt>le(7)).AND.(le(6)>zkt))then
    q1m=rtsafe(soleC,(/-1.0_qp,1.0_qp/),0.0_qp,k-k0    ,1.e-18_qp)
    q2m=rtsafe(soleC,(/-1.0_qp,1.0_qp/),k-k0  ,k+k0    ,1.e-18_qp)
    km=k-k0
-  elseif((zkt>l6).AND.(l1>zkt))then
+  elseif((zkt>le(6)).AND.(le(1)>zkt))then
    q1m=rtsafe(soleC,(/-1.0_qp,1.0_qp/),0.0_qp,k-k0    ,1.e-18_qp)
    km=k-k0
-  elseif((zkt>l8).AND.(l7>zkt))then
+  elseif((zkt>le(8)).AND.(le(7)>zkt))then
    qd=rtsafe(soleC,(/-1.0_qp,-1.0_qp/),0.0_qp,k-k0    ,1.e-18_qp)
    write(6,*)"qd=",qd
    q1m   =rtsafe(soleC,(/-1.0_qp,1.0_qp/),0.0_qp,qd    ,1.e-18_qp)

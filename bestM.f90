@@ -11,110 +11,6 @@ INTEGER nqfen(1:4),nomfen(1:8),nbidon,nqsup,nomsup
 LOGICAL blaM,blaerr,blablaerr
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE load_data(fich)
-INTEGER ixq,ixqbis,compteur,nn
-CHARACTER(len=90), INTENT(IN) :: fich
-REAL(QP) xqlec
-open(12,file=trim(fich)//".info")
- read(12,*)
- read(12,*) x0,qsep,nqfen,nomfen,nn,bmax
- if(blaM)then
-  write(6,*)"----------------------------------------"
-  write(6,*)
-  write(6,*)"Chargement du tableau de données"
-  write(6,*)
-  write(6,*)"x0,qsep=",x0,qsep
-  write(6,*)"nq1a,nq1b,nq2,nq3=",nqfen
-  write(6,*)"nom1a,nom1b,nom2a,nom2b,nom2c,nom3a,nom3b=",nomfen
-  write(6,*)"nn,bmax=",nn,bmax
-  write(6,*)
- endif
-close(12)
-
-allocate(donnees(1:7,1:sum(nomfen),1:sum(nqfen)))
-allocate(vecq(1:sum(nqfen),1:4))
-
-donnees(1,:,:)=1.0e50_qp
-vecq(:,:)=1.0e50_qp
-
-open(13,file=trim(fich)//"grilleq.dat")
-read(13,*)
-do ixq=1,sum(nqfen)
-!do ixq=1,700
-  read(13,*)ixqbis,xqlec,compteur
-  xq=xqlec
-  call oangpp
-  vecq(ixq,:)=(/xqlec,opp(1:3)/)
-  open(11,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
-   read(11,REC=ixq)donnees(1:7,1:sum(nomfen),ixq)
-   if(blaM)then 
-    write(6,*)"ixq,compteur,donnees(1:3,370,ixq)=",ixq,compteur,donnees(1:3,370,ixq)
-   endif
-   donnees(:,compteur+1:sum(nomfen),ixq)=0.0_qp
-  close(11)
-enddo
-close(13)
-
-if(blaM)then
- write(6,*)"Chargement terminé"
- write(6,*)
- write(6,*)"----------------------------------------"
-endif
-
-call system("rm pts_horsgrille.dat")
-END SUBROUTINE load_data
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE loadom2(fich)
-INTEGER ixq,ixqbis,compteur,nn
-CHARACTER(len=90), INTENT(IN) :: fich
-REAL(QP) xqlec
-open(12,file=trim(fich)//".info")
- read(12,*)
- read(12,*) x0,xq2,nqsup,nomsup,nn
- if(blaM)then
-  write(6,*)"----------------------------------------"
-  write(6,*)
-  write(6,*)"Chargement du tableau de données supplémentaires"
-  write(6,*)
-  write(6,*)"x0,xq2=",x0,xq2
-  write(6,*)"nqsup =",nqsup
-  write(6,*)"nomsup=",nomsup
-  write(6,*)"nn=",nn
-  write(6,*)
- endif
-close(12)
-
-allocate(donnees_sup(1:7,1:2*nomsup,1:nqsup))
-allocate(vecq_sup(1:nqsup,1:4))
-
-donnees_sup(1,:,:)=1.0e50_qp
-vecq_sup(:,:)=1.0e50_qp
-
-open(13,file=trim(fich)//"grilleq.dat")
-read(13,*)
-!do ixq=1,nqsup
-do ixq=1,7990
-  read(13,*)ixqbis,xqlec
-  xq=xqlec
-  call oangpp
-  vecq_sup(ixq,:)=(/xqlec,opp(1:3)/)
-  open(11,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
-   read(11,REC=ixq)donnees_sup(1:7,1:2*nomsup,ixq)
-   if(blaM)then 
-    write(6,*)"ixq,donnees_sup(1:3,75,ixq)=",ixq,xqlec,opp(2),donnees_sup(1:3,75,ixq)
-   endif
-  close(11)
-enddo
-close(13)
-
-if(blaM)then
- write(6,*)"Chargement terminé"
- write(6,*)
- write(6,*)"----------------------------------------"
-endif
-
-END SUBROUTINE loadom2
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE unload_data
 deallocate(donnees)
 deallocate(vecq)
@@ -473,7 +369,7 @@ REAL(QP), DIMENSION(1:6) :: interpolom2
 INTEGER posq,posom
 INTEGER iposq,iMm
 REAL(QP) ptsq(1:4),ptsom(1:4,1:4),ptsM(1:3,1:4,1:4)
-REAL(QP) y,opp2
+REAL(QP) y,opp1,opp2,opp3
 REAL(QP), DIMENSION(:,:), ALLOCATABLE :: sousgrille
 REAL(QP), DIMENSION(:,:),   ALLOCATABLE :: sousgrilleq
 
@@ -514,25 +410,39 @@ endif
 
 
 do iposq=posq-1,posq+2
+ opp1=sousgrilleq(iposq,2)
  opp2=sousgrilleq(iposq,3)
-! write(6,*)"m=",om
-! write(6,*)"opp2=",opp2
+ opp3=sousgrilleq(iposq,4)
  if((iposq<1).OR.(iposq>nqsup)) cycle
- if(om<opp(2))then 
-  sousgrille=donnees_sup(1:4,1:nomsup      ,iposq)
-  y=sqrt(opp(2)-om)
-!  write(6,*)"xq,y=",xq,y
+ if(om<(opp(1)+opp(2))/2)then 
+  opp=opp1
+  sousgrille=donnees_sup(1:4,0*nomsup+1:1*nomsup,iposq)
 
+  y=om-opp(1)
+  sousgrille(1,:)=sousgrille(1,:)-opp1
+  call locate(sousgrille(1,:),y,posom)
+ elseif(om<opp(2))then 
+  sousgrille=donnees_sup(1:4,1*nomsup+1:2*nomsup,iposq)
+
+  y=sqrt(opp(2)-om)
   sousgrille(1,:)  =sqrt(opp2-sousgrille(1,:))
   sousgrille(2:4,:)=sousgrille(2:4,:)
 
   call locate(sousgrille(1,:),y,posom)
+ elseif(om<opp(3))then
+  opp=opp2
+  sousgrille=donnees_sup(1:4,2*nomsup+1:3*nomsup,iposq)
+
+  y=om-opp(2)
+  sousgrille(1,:)=sousgrille(1,:)-opp2
+  call locate(sousgrille(1,:),y,posom)
  else
-  sousgrille=donnees_sup(1:4,nomsup+1:2*nomsup,iposq)
-!  do iMm=1,nomsup
-!   write(6,*)sousgrille(1,iMm)
-!  enddo
-  call locate(sousgrille(1,:),om,posom)
+  opp=opp3
+  sousgrille=donnees_sup(1:4,3*nomsup+1:4*nomsup,iposq)
+
+  y=om-opp(3)
+  sousgrille(1,:)=sousgrille(1,:)-opp3
+  call locate(sousgrille(1,:),y,posom)
  endif
 
  if((posom<1).OR.(posom.GE.nomsup))then
@@ -586,7 +496,7 @@ if(blaM.OR.blablaerr)then
  write(6,*)
  write(6,*)"------------- interpolom2 -------------------"
  write(6,*)
- write(6,*)"q,om=",q,om
+ write(6,*)"q,om,y=",q,om,y
  write(6,*)"opp=",xq,opp
  write(6,*)
  write(6,*)"posq,  sousgrilleq(posq)  =",posq,  sousgrilleq(posq,1)
@@ -597,15 +507,15 @@ if(blaM.OR.blablaerr)then
  write(6,*)"ptsq=",ptsq
  write(6,*)
  if(om<opp(2))then
-  write(6,*)"ptsom(1,:)=",opp(2)-ptsom(1,:)**2
-  write(6,*)"ptsom(2,:)=",opp(2)-ptsom(2,:)**2
-  write(6,*)"ptsom(3,:)=",opp(2)-ptsom(3,:)**2
-  write(6,*)"ptsom(4,:)=",opp(2)-ptsom(4,:)**2
+  write(6,*)"ptsom(1,:)=",opp2-ptsom(1,:)**2
+  write(6,*)"ptsom(2,:)=",opp2-ptsom(2,:)**2
+  write(6,*)"ptsom(3,:)=",opp2-ptsom(3,:)**2
+  write(6,*)"ptsom(4,:)=",opp2-ptsom(4,:)**2
  else
-  write(6,*)"ptsom(1,:)=",ptsom(1,:)
-  write(6,*)"ptsom(2,:)=",ptsom(2,:)
-  write(6,*)"ptsom(3,:)=",ptsom(3,:)
-  write(6,*)"ptsom(4,:)=",ptsom(4,:)
+  write(6,*)"ptsom(1,:)=",ptsom(1,:)+opp
+  write(6,*)"ptsom(2,:)=",ptsom(2,:)+opp
+  write(6,*)"ptsom(3,:)=",ptsom(3,:)+opp
+  write(6,*)"ptsom(4,:)=",ptsom(4,:)+opp
  endif
 
  write(6,*)
@@ -628,16 +538,6 @@ do iMm=1,3
    call polin2(ptsq(2:3),ptsom(2:3,2:3),ptsM(iMm,2:3,2:3),q,y,interpolom2(iMm),dinterpolom2(iMm))
   else
    call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,y,interpolom2(iMm),dinterpolom2(iMm))
-  endif
- else
-  if(err(0))then
-   call polint(ptsom(2:3,3),ptsM(iMm,2:3,3),om,interpolom2(iMm),dinterpolom2(iMm))
-  elseif(err(1))then
-   call polint(ptsom(2:3,2),ptsM(iMm,2:3,2),om,interpolom2(iMm),dinterpolom2(iMm))
-  elseif(err(2))then
-   call polin2(ptsq(2:3),ptsom(2:3,2:3),ptsM(iMm,2:3,2:3),q,om,interpolom2(iMm),dinterpolom2(iMm))
-  else
-   call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,om,interpolom2(iMm),dinterpolom2(iMm))
   endif
  endif
   if(abs(dinterpolom2(iMm)/interpolom2(iMm))>0.01_qp)then
@@ -666,4 +566,171 @@ deallocate(sousgrille)
 deallocate(sousgrilleq)
 
 END FUNCTION interpolom2
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE load_data(fich)
+INTEGER ixq,ixqbis,compteur,nn
+CHARACTER(len=90), INTENT(IN) :: fich
+REAL(QP) xqlec
+open(12,file=trim(fich)//".info")
+ read(12,*)
+ read(12,*) x0,qsep,nqfen,nomfen,nn,bmax
+ if(blaM)then
+  write(6,*)"----------------------------------------"
+  write(6,*)
+  write(6,*)"Chargement du tableau de données"
+  write(6,*)
+  write(6,*)"x0,qsep=",x0,qsep
+  write(6,*)"nq1a,nq1b,nq2,nq3=",nqfen
+  write(6,*)"nom1a,nom1b,nom2a,nom2b,nom2c,nom3a,nom3b=",nomfen
+  write(6,*)"nn,bmax=",nn,bmax
+  write(6,*)
+ endif
+close(12)
+
+allocate(donnees(1:7,1:sum(nomfen),1:sum(nqfen)))
+allocate(vecq(1:sum(nqfen),1:4))
+
+donnees(1,:,:)=1.0e50_qp
+vecq(:,:)=1.0e50_qp
+
+open(13,file=trim(fich)//"grilleq.dat")
+read(13,*)
+do ixq=1,sum(nqfen)
+!do ixq=1,700
+  read(13,*)ixqbis,xqlec,compteur
+  xq=xqlec
+  call oangpp
+  vecq(ixq,:)=(/xqlec,opp(1:3)/)
+  open(11,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
+   read(11,REC=ixq)donnees(1:7,1:sum(nomfen),ixq)
+   if(blaM)then 
+    write(6,*)"ixq,compteur,donnees(1:3,370,ixq)=",ixq,compteur,donnees(1:3,370,ixq)
+   endif
+   donnees(:,compteur+1:sum(nomfen),ixq)=0.0_qp
+  close(11)
+enddo
+close(13)
+
+if(blaM)then
+ write(6,*)"Chargement terminé"
+ write(6,*)
+ write(6,*)"----------------------------------------"
+endif
+
+call system("rm pts_horsgrille.dat")
+END SUBROUTINE load_data
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE loadom2(fich)
+INTEGER ixq,ixqbis,nn
+CHARACTER(len=90), INTENT(IN) :: fich
+REAL(QP) xqlec
+open(12,file=trim(fich)//".info")
+ read(12,*)
+ read(12,*) x0,xq2,nqsup,nomsup,nn
+ if(blaM)then
+  write(6,*)"----------------------------------------"
+  write(6,*)
+  write(6,*)"Chargement du tableau de données supplémentaires"
+  write(6,*)
+  write(6,*)"x0,xq2=",x0,xq2
+  write(6,*)"nqsup =",nqsup
+  write(6,*)"nomsup=",nomsup
+  write(6,*)"nn=",nn
+  write(6,*)
+ endif
+close(12)
+
+allocate(donnees_sup(1:7,1:4*nomsup,1:nqsup))
+allocate(vecq_sup(1:nqsup,1:4))
+
+donnees_sup(1,:,:)=1.0e50_qp
+vecq_sup(:,:)=1.0e50_qp
+
+open(13,file=trim(fich)//"grilleq.dat")
+read(13,*)
+!do ixq=1,nqsup
+do ixq=1,7990
+  read(13,*)ixqbis,xqlec
+  xq=xqlec
+  call oangpp
+  vecq_sup(ixq,:)=(/xqlec,opp(1:3)/)
+  open(11,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
+   read(11,REC=ixq)donnees_sup(1:7,1:4*nomsup,ixq)
+   if(blaM)then 
+    write(6,*)"ixq,donnees_sup(1:3,75,ixq)=",ixq,xqlec,opp(2),donnees_sup(1:3,75,ixq)
+   endif
+  close(11)
+enddo
+close(13)
+
+if(blaM)then
+ write(6,*)"Chargement terminé"
+ write(6,*)
+ write(6,*)"----------------------------------------"
+endif
+
+END SUBROUTINE loadom2
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE combineom2(fich,fich2)
+INTEGER ixq,ixqbis,compteur,nn
+CHARACTER(len=90), INTENT(IN) :: fich,fich2
+REAL(QP) xqlec
+REAL(QP), DIMENSION(:,:), ALLOCATABLE :: donnees_temp
+INTEGER nmin1,nmin2,nmax1,nmax2
+
+open(16,file=trim(fich)//".info")
+ read(16,*)
+ read(16,*) x0,xq2,nqsup,nomsup,nn
+close(16)
+
+allocate(donnees_temp(1:7,1:4*nomsup))
+open(13,file=trim(fich) //"grilleq.dat",ACTION="READ")
+ read(13,*)
+ read(13,*)nmin1,xqlec
+ write(6,*)nmin1
+ do 
+  read(13, *, End = 1 ) nmax1,xqlec
+!  write(6,*)nmax1
+ enddo
+ write(6,*)nmax1
+1 Continue
+close(13)
+open(14,file=trim(fich2)//"grilleq.dat",ACTION="READ")
+ read(14,*)
+ read(14,*)nmin2,xqlec
+ write(6,*)nmin2,xqlec
+ do 
+  read(14, *, End = 2 ) nmax2,xqlec
+!  write(6,*)nmax2
+ enddo
+ write(6,*)nmax2
+2 Continue
+close(14)
+write(6,*)nmin1,nmin2,nmax1,nmax2
+do ixq=nmin1,nmax1-1
+
+  open(11,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
+   read(11,REC=ixq)donnees_temp(1:7,1:4*nomsup)
+   write(6,*)"ixq,donnees_temp(1,1050)=",ixq,donnees_temp(1,1050)
+  close(11)
+
+  open(15,file=trim(fich)//"_comb.dat",ACTION="WRITE",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
+   write(15,REC=ixq)donnees_temp(1:7,1:4*nomsup)
+  close(15)
+
+enddo
+write(6,*)
+do ixq=nmin2,nmax2-1
+
+  open(12,file=trim(fich2)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
+   read(12,REC=ixq)donnees_temp(1:7,1:4*nomsup)
+   write(6,*)"ixq,donnees_temp(1,1050)=",ixq,donnees_temp(1,1050)
+  close(11)
+
+  open(15,file=trim(fich)//"_comb.dat",ACTION="WRITE",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
+   write(15,REC=ixq)donnees_temp(1:7,1:4*nomsup)
+  close(15)
+
+enddo
+END SUBROUTINE combineom2
 END MODULE bestM

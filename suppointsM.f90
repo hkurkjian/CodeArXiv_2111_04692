@@ -52,19 +52,19 @@ allocate(fini(1:nq))
 inquire(iolength=nn)donnees(:,:,1)
 write(6,*)"Taille de l’enregistrement en octets:",nn
 
-call system("rm "//trim(fichier)//".dat")
-call system("rm "//trim(fichier)//"grilleq.dat")
-call system("rm "//trim(fichier)//".info")
+!call system("rm "//trim(fichier)//".dat")
+!call system("rm "//trim(fichier)//"grilleq.dat")
+!call system("rm "//trim(fichier)//".info")
 
-open(12,file=trim(fichier)//".info")
- write(12,*)"!x0,xq2,nq,nom,nn"
- write(12,*)  x0,xq2,nq,nom,nn
-close(12)
-
-open(13,file=trim(fichier)//"grilleq.dat")
- write(13,*)"!ixq,xq"
-close(13)
-
+!open(12,file=trim(fichier)//".info")
+! write(12,*)"!x0,xq2,nq,nom,nn"
+! write(12,*)  x0,xq2,nq,nom,nn
+!close(12)
+!
+!open(13,file=trim(fichier)//"grilleq.dat")
+! write(13,*)"!ixq,xq"
+!close(13)
+!
 dxq=(xqmax-xqmin)/nq
 write(6,*)'--------------------'
 write(6,*)
@@ -94,7 +94,7 @@ do icb=(ixqdep-1)*4*nom+1,ixqfin*4*nom
 
  dom1 =(opp(2)-opp(1))/2
  dom2 =min(0.1_qp,(opp(3)-opp(2))/2)
- dom3 =0.1_qp
+ dom3 =0.05_qp*opp(3)
  dy=sqrt(dom1)/nom
  if(iom==1)then
   write(6,*)'--------------------'
@@ -124,7 +124,9 @@ do icb=(ixqdep-1)*4*nom+1,ixqfin*4*nom
  Mmv=(/real(Mm(1,1)),real(Mm(2,2)),real(Mm(1,2)),imag(Mm(1,1)),imag(Mm(2,2)),imag(Mm(1,2))/)
  donnees(1  ,iom,ixq)=om
  donnees(2:7,iom,ixq)=Mmv
+ !$OMP CRITICAL
  fini(ixq)=fini(ixq)+1
+ !$OMP END CRITICAL
  write(6,*)"ixq,iom,om,Mmv(1),pt=",ixq,iom,om,Mmv(1),"  ",fini(ixq)," sur ",nmax
  if(fini(ixq)==nmax)then
   write(6,*)ixq,"est fini"

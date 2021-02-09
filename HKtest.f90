@@ -12,25 +12,21 @@ IMPLICIT NONE
 
 REAL(QP) om,dom,M(1:2,1:2),dM(1:2,1:2),A(1:6),dMm(1:3),q
 COMPLEX(QPC) Mm2(1:6)
-REAL(QP) vec(1:2000,1:10000)
-REAL(QP) vec2(1:2000,1:10000)
-REAL(QP) :: xik,epsk,Uk2,Vk2,k,zk,zkmax,le(1:8),bq(1:10),arr(1:8),don(1:7,1:1000,0:100),don2(1:7,1:1000),est(1:6),dest(1:6)
-CHARACTER(len=90) fichdep,fich,fich2
-CHARACTER(len=2)  reg,regvieux
-INTEGER izk,taille,config(1:7),pos(1:8),nn,nn2,ixq,ixqbis,compteur,nxq,iom
+REAL(QP) bk(0:12),le(1:8)
+REAL(QP) EPSq,EPSom,EPS(1:2)
+REAL(QP) :: k,zk,bq(1:3)
+CHARACTER(len=90) fichom2(1:2),fichlec(1:2),fichgri(1:2),prefixe,suffixe
 COMPLEX(QPC) Gamm(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
-COMPLEX(QPC) SigPole(1:6)
 
 REAL(QP) ptq,ptom,ptM(1:3),ptdM(1:3)
-INTEGER iq, ik, iz, ix
-REAL(QP) nnn,mmm,intell
+INTEGER profondeur
 
-LOGICAL interpol,testpt,testdspec
+LOGICAL interpol,testpt,testdspec,lecture,ecriture
 
 testpt=.TRUE.
 testpt=.FALSE.
-testdspec=.FALSE.
 testdspec=.TRUE.
+testdspec=.FALSE.
 
 !Paramètres physiques
 x0=4.0_qp
@@ -57,14 +53,15 @@ blaerr=.TRUE.
 blaerr=.FALSE.
 qpetit=0.1_qp/x0
 qpetit=0.03_qp
-fich="BCSx04_nvo_augmente"
-fich2="BCS_4_sup"
-write(6,*)"qpetit=",qpetit
+!Fichiers de données
+fichgri(1)="BCS_4_2"
+fichgri(2)="BCS_4_sup_comb"
 
 
 !Paramètres de intldc
 EPSom=1.0e-5_qp
 EPSq =1.0e-3_qp
+EPS=(/EPSq,EPSom/)
 bla0=.TRUE.
 bla00=.FALSE.
 bla00=.TRUE.
@@ -72,35 +69,32 @@ lecture=.FALSE.
 lecture=.TRUE.
 ecriture=.TRUE.
 ecriture=.FALSE.
-q1=  0.0_qp
-q2= 10.0_qp
-q3=100.0_qp
+bq=(/0.0_qp,10.0_qp,100.0_qp/)
 profondeur=5
 prefixe="avecbestM"
 interpol=.TRUE.
-fichom2 ="DONNEES/Tom1.dat"
-fichom2p="DONNEES/Tom1p.dat"
+fichom2(1) ="DONNEES/Tom1.dat"
+fichom2(2) ="DONNEES/Tom1p.dat"
+fichlec(1) ="grille_x04_1.dat"
+fichlec(2) ="grille_x04_2.dat"
 !a tester, q,om= 
 !3.868616681         2.065740474
 !3.001119563         4.019856415
 !q=0.05 om=2.01035604672572088466101471645589475
 
 
-!Fichiers de données
-
-fich ="BCS_4_2"
-
-
-fichierlec1="grille_x04_1.dat"
-fichierlec2="grille_x04_2.dat"
-fichierlec3="grille_x04_3.dat"
+!fichgri(1)="BCS_4_sup2"
+!fichgri(2)="BCS_4_sup3"
+!
+!call combineom2(fichgri(1),fichgri(2))
+!stop
 
 
 if(testpt)then
  blaM=.TRUE.
  blaerr=.TRUE.
- call load_data(fich)
- call loadom2(fich2)
+ call load_data(fichgri(1))
+ call loadom2(fichgri(2))
  
  call calcxqjoin
  om= 3.0_qp
@@ -170,13 +164,17 @@ if(testdspec)then
  stop
 endif
 
-Mm2=intres(k,zk,interpol,(/fich,fich2/))
+call bornesk(bk)
+write(6,*)"bk=",bk
+call lignesenergie(k,fichom2,le)
+write(6,*)"le=",le
+Mm2=intres(k,zk,interpol,EPS,fichgri,bk,le,prefixe)
 write(6,*)"Mm2=",Mm2
 open(17,file="selfE"//trim(suffixe)//".dat")
  write(17,*)real(Mm2),imag(Mm2)
 close(17)
 
-!Mm2=selfEldc(k,zk)
+Mm2=intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,prefixe)
 open(17,file="selfE"//trim(suffixe)//".dat")
  write(17,*)real(Mm2),imag(Mm2)
 close(17)

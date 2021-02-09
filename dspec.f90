@@ -4,9 +4,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE vars
  USE nrtype
+ IMPLICIT NONE
  !$OMP THREADPRIVATE(xq,opp)
  !!$OMP THREADPRIVATE(x0,xq,beta,xqjoin,opp,opt,ptbranchmtpp,ptbranchmtpt)
- IMPLICIT NONE
 ! Global variables
 
 ! Input variables

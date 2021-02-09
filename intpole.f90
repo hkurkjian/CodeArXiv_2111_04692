@@ -16,7 +16,6 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION selfEpole(k,zk)
 USE modsim
-USE intldc
 IMPLICIT NONE
 REAL(QP), INTENT(IN) :: k,zk
 COMPLEX(QPC) :: selfEpole(1:6), SEint(1:6)
