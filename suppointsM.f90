@@ -71,7 +71,7 @@ write(6,*)
 write(6,*)"dxq=",dxq
 donnees(:,:,:)=0.0_qp
 fini(:)=0
-!$OMP PARALLEL DO PRIVATE(om,det,Mm,Gg,Mmv,ixq,iom,dom,dom1,dom2,dom3,y,dy) SHARED(fini,donnees) SCHEDULE(DYNAMIC)
+!$OMP PARALLEL DO PRIVATE(om,det,Mm,Gg,Mmv,ixq,iom,dom,dom1,dom2,dom3,nmax,y,dy) SHARED(fini,donnees) SCHEDULE(DYNAMIC)
 do icb=(ixqdep-1)*4*nom+1,ixqfin*4*nom
  ixq=icb/(4*nom)+1
  iom=MODULO(icb,4*nom)
@@ -88,12 +88,10 @@ do icb=(ixqdep-1)*4*nom+1,ixqfin*4*nom
  else
   nmax=4*nom
  endif
-! write(6,*)"ixq,xq,iom=",ixq,xq,iom
-! write(6,*)"opp=",opp(1:3)
 
 
  dom1 =(opp(2)-opp(1))/2
- dom2 =min(0.1_qp,(opp(3)-opp(2))/2)
+ dom2 =min(0.3_qp,(opp(3)-opp(2)))
  dom3 =0.05_qp*opp(3)
  dy=sqrt(dom1)/nom
  if(iom==1)then

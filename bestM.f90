@@ -62,13 +62,11 @@ if(err(0).OR.err(1))then
  if(xq<xqjoin) dom2p=min((opp(2)-opp(1))/3,(opp(3)-opp(2))/3)
  if(xq>xqjoin) dom2p=(opp(2)-opp(1))/3
 
- if((om>opp(2)-dom2).AND.(om<opp(2)+dom2p))then
-  if(blaerr) write(6,*)"Tentative de récupération par interpolom2"
-  interpolM_recerr=interpolom2(q,om,dinterpolM,err)
-  if(.NOT.(err(0).AND.err(1)))then 
-   if(blaerr) write(6,*)"Erreur récupérée par intom2"
-   recom2=.TRUE.
-  endif
+ if(blaerr) write(6,*)"Tentative de récupération par interpolom2"
+ interpolM_recerr=interpolom2(q,om,dinterpolM,err)
+ if(.NOT.(err(0).AND.err(1)))then 
+  if(blaerr) write(6,*)"Erreur récupérée par intom2"
+  recom2=.TRUE.
  endif
 
  if(.NOT.recom2)then
@@ -109,13 +107,13 @@ REAL(QP), DIMENSION(1:6), INTENT(OUT) :: dinterpolM
 REAL(QP), DIMENSION(1:6) :: interpolM
 
 INTEGER posq,posom,posy
-INTEGER nq,decalageq,fenq,nom,decalageom,fenom
+INTEGER nq,fenq,nom,decalageom,fenom
 INTEGER nqred(1:3),nomred(1:4)
 INTEGER iposq,iMm
 REAL(QP) y,qsepred(1:4),omsepred(1:5)
 REAL(QP) ptsq(1:4),ptsom(1:4,1:4),ptsy(1:4,1:4),ptsM(1:3,1:4,1:4)
+REAL(QP) opp1,opp2,opp3,oppref(1:4)
 REAL(QP), DIMENSION(:,:),   ALLOCATABLE :: sousgrille,sousgrilley
-REAL(QP), DIMENSION(:),     ALLOCATABLE :: sousgrilleq
 
 err(:)   =.FALSE.
 blablaerr=.FALSE.
@@ -160,35 +158,37 @@ endif
 nq =nqred(fenq)
 nom=nomred(fenom)
 
-if(fenom==4) y=1.0_qp/om**(0.5_qp)
+if(om<(opp(1)+opp(2))/2.0_qp)then 
+ y=om-opp(1)
+elseif(om<(opp(2)+opp(3))/2.0_qp)then
+ y=om-opp(2)
+elseif(om<4*opp(3))then
+ y=om-opp(3)
+else
+ y=1.0_qp/om**(0.5_qp)
+endif
 
 decalageom=0
 if(fenq==1)then
- decalageq=0
  if(fenom.GE.2) decalageom=sum(nomred(1:fenom-1))
 elseif(fenq==2)then
- decalageq=nqred(1)
  if(fenom==3) decalageom=nomred(1)
  if(fenom==4) decalageom=nomred(1)+nomred(3)
 elseif(fenq==3)then
- decalageq=nqred(1)+nqred(2)
  if(fenom==4) decalageom=nomred(3)
 endif
 
-allocate(sousgrilleq(1:nq))
 allocate(sousgrille (1:4,1:nom))
 allocate(sousgrilley(1:4,1:nom))
 
-sousgrilleq=vecq(decalageq+1:decalageq+nq,1)
-call locate(sousgrilleq,q,posq)
+call locate(vecq(:,1),q,posq)
 
-if(((posq)<1).OR.((posq).GE.nq))then
+if(((posq)<1).OR.((posq).GE.sum(nqred)))then
   err(0:1)=.TRUE.
   if(blaerr)then 
    write(6,*)"*********************************************"
    write(6,*)
    write(6,*)"Erreur de type 0 venant de q"
-   write(6,*)"q,posq,fenq,intervalle=",q,posq,fenq,qsepred(fenq),qsepred(fenq+1)
    write(6,*)
    write(6,*)"*********************************************"
   endif
@@ -198,30 +198,41 @@ endif
 if(((posq)<2).OR.((posq).GE.nq-1))then
   err(2)=.TRUE.
   if(blaerr) blablaerr=.TRUE.
-  ptsq(2:3)=sousgrilleq(posq:posq+1)
+  ptsq(2:3)=vecq(posq:posq+1,1)
 else
-  ptsq(1:4)=sousgrilleq(posq-1:posq+2)
+  ptsq(1:4)=vecq(posq-1:posq+2,1)
 endif
 
 
 
 do iposq=posq-1,posq+2
+ opp1=vecq(iposq,2)
+ opp2=vecq(iposq,3)
+ opp3=vecq(iposq,4)
  if((iposq<1).OR.(iposq>nq)) cycle
- sousgrille=donnees(1:4,decalageom+1:decalageom+nom,decalageq+iposq)
- if(fenom==4)then
-  sousgrilley(1,:)  =1.0_qp/sousgrille(1,:)**(0.5_qp)
-  sousgrilley(2:4,:)=sousgrille(2:4,:)
-  call locate(sousgrilley(1,1:nom),y,posy)
-  posom=posy
+ sousgrille=donnees(1:4,decalageom+1:decalageom+nom,iposq)
+ sousgrilley(2:4,:)=sousgrille(2:4,:)
+ if(om<(opp(1)+opp(2))/2.0_qp)then
+  oppref(iposq-posq+2)=opp1
+  sousgrilley(1,:)  =sousgrille(1,:)-opp1
+ elseif(om<(opp(2)+opp(3))/2.0_qp)then
+  oppref(iposq-posq+2)=opp2
+  sousgrilley(1,:)  =sousgrille(1,:)-opp2
+  write(6,*)sousgrilley(1,1),sousgrilley(1,nom)
+  write(6,*)sousgrille(1,1),sousgrille(1,nom)
+ elseif(om<4*opp(3))then
+  oppref(iposq-posq+2)=opp3
+  sousgrilley(1,:)  =sousgrille(1,:)-opp3
  else
-  call locate(sousgrille(1,1:nom),om,posom)
+  sousgrilley(1,:)  =1.0_qp/sousgrille(1,:)**(0.5_qp)
  endif
+ call locate(sousgrilley(1,1:nom),y,posy)
 
- if((posom<1).OR.(posom.GE.nom))then
+ if((posy<1).OR.(posy.GE.nom))then
   if(blaerr) write(6,*)"*********************************************"
   if(blaerr) write(6,*)
   if(blaerr) write(6,*)"om hors grille à posq,iposq=",posq,iposq
-  if(blaerr) write(6,*)"om,posom(nom),pts extrêmes=",om,posom,"(",nom,")",sousgrille(1,1),sousgrille(1,nom)
+  if(blaerr) write(6,*)"om,posom(nom),pts extrêmes=",om,posy,"(",nom,")",sousgrille(1,1),sousgrille(1,nom)
   if(blaerr) write(6,*)
   if(blaerr) write(6,*)"*********************************************"
   if(blaerr) blablaerr=.TRUE.
@@ -235,26 +246,14 @@ do iposq=posq-1,posq+2
   cycle
  endif
 
- if(fenom==4)then
-  if((posy<2).OR.(posy.GE.nom-1))then
-   err(2)=.TRUE.
-   ptsM(1:3,2:3,iposq-posq+2)=sousgrilley(2:4,posy:posy+1)
-   ptsy    (2:3,iposq-posq+2)=sousgrilley(1,  posy:posy+1)
- 
-  else
-   ptsM(1:3,1:4,iposq-posq+2)=sousgrilley(2:4,posy-1:posy+2)
-   ptsy    (1:4,iposq-posq+2)=sousgrilley(1,  posy-1:posy+2)
-  endif
+ if((posy<2).OR.(posy.GE.nom-1))then
+  err(2)=.TRUE.
+  ptsM(1:3,2:3,iposq-posq+2)=sousgrilley(2:4,posy:posy+1)
+  ptsy    (2:3,iposq-posq+2)=sousgrilley(1,  posy:posy+1)
+
  else
-  if((posom<2).OR.(posom.GE.nom-1))then
-   err(2)=.TRUE.
-   ptsM(1:3,2:3,iposq-posq+2)=sousgrille(2:4,posom:posom+1)
-   ptsom   (2:3,iposq-posq+2)=sousgrille(1,  posom:posom+1)
- 
-  else
-   ptsM(1:3,1:4,iposq-posq+2)=sousgrille(2:4,posom-1:posom+2)
-   ptsom   (1:4,iposq-posq+2)=sousgrille(1,  posom-1:posom+2)
-  endif
+  ptsM(1:3,1:4,iposq-posq+2)=sousgrilley(2:4,posy-1:posy+2)
+  ptsy    (1:4,iposq-posq+2)=sousgrilley(1,  posy-1:posy+2)
  endif
 enddo
 
@@ -280,7 +279,7 @@ if(blaM.OR.blablaerr)then
  write(6,*)"------------- interpolM -------------------"
  write(6,*)
  write(6,*)"q,om=",q,om
- write(6,*)"opp=",xq,opp
+ write(6,*)"opp=",opp
  write(6,*)
  write(6,*)"qsepred=",qsepred
  write(6,*)"omsepred=",omsepred
@@ -288,8 +287,8 @@ if(blaM.OR.blablaerr)then
  write(6,*)"fenq =",fenq
  write(6,*)"fenom=",fenom
  write(6,*)
- write(6,*)"posq,  sousgrilleq(posq)  =",posq,  sousgrilleq(posq)
- write(6,*)"posq+1,sousgrilleq(posq+1)=",posq+1,sousgrilleq(posq+1)
+ write(6,*)"posq,  vecq(posq)  =",posq,  vecq(posq,:)
+ write(6,*)"posq+1,vecq(posq+1)=",posq+1,vecq(posq+1,:)
  write(6,*)
  write(6,*)"--------------- Points retenus ---------------"
  write(6,*)
@@ -301,10 +300,10 @@ if(blaM.OR.blablaerr)then
   write(6,*)"ptsom(3,:)=",1.0_qp/ptsy(3,:)**(2.0_qp)
   write(6,*)"ptsom(4,:)=",1.0_qp/ptsy(4,:)**(2.0_qp)
  else
-  write(6,*)"ptsom(1,:)=",ptsom(1,:)
-  write(6,*)"ptsom(2,:)=",ptsom(2,:)
-  write(6,*)"ptsom(3,:)=",ptsom(3,:)
-  write(6,*)"ptsom(4,:)=",ptsom(4,:)
+  write(6,*)"ptsom(1,:)=",oppref(:)+ptsy(1,:)
+  write(6,*)"ptsom(2,:)=",oppref(:)+ptsy(2,:)
+  write(6,*)"ptsom(3,:)=",oppref(:)+ptsy(3,:)
+  write(6,*)"ptsom(4,:)=",oppref(:)+ptsy(4,:)
  endif
 
  write(6,*)
@@ -318,18 +317,10 @@ endif
 if(err(0).OR.err(1)) return
 
 do iMm=1,3
-  if(fenom==4)then
-     if(err(2))then
-      call polin2(ptsq(2:3),ptsy(2:3,2:3),ptsM(iMm,2:3,2:3),q,y,interpolM(iMm),dinterpolM(iMm))
-     else
-      call polin2(ptsq,ptsy,ptsM(iMm,:,:),q,y,interpolM(iMm),dinterpolM(iMm))
-     endif
+  if(err(2))then
+   call polin2(ptsq(2:3),ptsy(2:3,2:3),ptsM(iMm,2:3,2:3),q,y,interpolM(iMm),dinterpolM(iMm))
   else
-     if(err(2))then
-      call polin2(ptsq(2:3),ptsom(2:3,2:3),ptsM(iMm,2:3,2:3),q,om,interpolM(iMm),dinterpolM(iMm))
-     else
-      call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,om,interpolM(iMm),dinterpolM(iMm))
-     endif
+   call polin2(ptsq,ptsy,ptsM(iMm,:,:),q,y,interpolM(iMm),dinterpolM(iMm))
   endif
   if(abs(dinterpolM(iMm)/interpolM(iMm))>0.01_qp)then
     if(blaerr) blablaerr=.TRUE.
@@ -354,7 +345,6 @@ interpolM(6)=-PI*rhopp(3.5_qp,om,-1.0_qp)
 dinterpolM(4:6)=EPSpp
 
 deallocate(sousgrille)
-deallocate(sousgrilleq)
 deallocate(sousgrilley)
 
 END FUNCTION interpolM
@@ -369,7 +359,7 @@ REAL(QP), DIMENSION(1:6) :: interpolom2
 INTEGER posq,posom
 INTEGER iposq,iMm
 REAL(QP) ptsq(1:4),ptsom(1:4,1:4),ptsM(1:3,1:4,1:4)
-REAL(QP) y,opp1,opp2,opp3
+REAL(QP) y,opp1,opp2,opp3,opplu(1:4)
 REAL(QP), DIMENSION(:,:), ALLOCATABLE :: sousgrille
 REAL(QP), DIMENSION(:,:),   ALLOCATABLE :: sousgrilleq
 
@@ -380,10 +370,14 @@ ptsM (:,:,:)=0.0_qp
 ptsom(:,:)  =0.0_qp
 ptsq (:)    =0.0_qp
 
-allocate(sousgrilleq(1:nqsup,1:3))
+write(6,*)"interpolom2"
+allocate(sousgrilleq(1:nqsup,1:4))
 allocate(sousgrille (1:4,1:nomsup))
 
-sousgrilleq=vecq_sup(1:nqsup,1:3)
+xq=q
+call oangpp
+
+sousgrilleq=vecq_sup(1:nqsup,1:4)
 call locate(sousgrilleq(:,1),q,posq)
 
 if(((posq)<1).OR.((posq).GE.nqsup))then
@@ -415,7 +409,7 @@ do iposq=posq-1,posq+2
  opp3=sousgrilleq(iposq,4)
  if((iposq<1).OR.(iposq>nqsup)) cycle
  if(om<(opp(1)+opp(2))/2)then 
-  opp=opp1
+  opplu(iposq-posq+2)=opp1
   sousgrille=donnees_sup(1:4,0*nomsup+1:1*nomsup,iposq)
 
   y=om-opp(1)
@@ -430,14 +424,15 @@ do iposq=posq-1,posq+2
 
   call locate(sousgrille(1,:),y,posom)
  elseif(om<opp(3))then
-  opp=opp2
+  opplu(iposq-posq+2)=opp2
   sousgrille=donnees_sup(1:4,2*nomsup+1:3*nomsup,iposq)
 
   y=om-opp(2)
   sousgrille(1,:)=sousgrille(1,:)-opp2
   call locate(sousgrille(1,:),y,posom)
  else
-  opp=opp3
+  opplu(iposq-posq+2)=opp3
+  opplu(iposq-posq+2)=opp3
   sousgrille=donnees_sup(1:4,3*nomsup+1:4*nomsup,iposq)
 
   y=om-opp(3)
@@ -497,7 +492,7 @@ if(blaM.OR.blablaerr)then
  write(6,*)"------------- interpolom2 -------------------"
  write(6,*)
  write(6,*)"q,om,y=",q,om,y
- write(6,*)"opp=",xq,opp
+ write(6,*)"opp=",opp(1:3)
  write(6,*)
  write(6,*)"posq,  sousgrilleq(posq)  =",posq,  sousgrilleq(posq,1)
  write(6,*)"posq+1,sousgrilleq(posq+1)=",posq+1,sousgrilleq(posq+1,1)
@@ -512,10 +507,10 @@ if(blaM.OR.blablaerr)then
   write(6,*)"ptsom(3,:)=",opp2-ptsom(3,:)**2
   write(6,*)"ptsom(4,:)=",opp2-ptsom(4,:)**2
  else
-  write(6,*)"ptsom(1,:)=",ptsom(1,:)+opp
-  write(6,*)"ptsom(2,:)=",ptsom(2,:)+opp
-  write(6,*)"ptsom(3,:)=",ptsom(3,:)+opp
-  write(6,*)"ptsom(4,:)=",ptsom(4,:)+opp
+  write(6,*)"ptsom(1,:)=",ptsom(1,:)+opplu(:)
+  write(6,*)"ptsom(2,:)=",ptsom(2,:)+opplu(:)
+  write(6,*)"ptsom(3,:)=",ptsom(3,:)+opplu(:)
+  write(6,*)"ptsom(4,:)=",ptsom(4,:)+opplu(:)
  endif
 
  write(6,*)
@@ -529,7 +524,6 @@ endif
 if(err(0).AND.err(1)) return
 
 do iMm=1,3
- if(om<opp(2))then 
   if(err(0))then
    call polint(ptsom(2:3,3),ptsM(iMm,2:3,3),y,interpolom2(iMm),dinterpolom2(iMm))
   elseif(err(1))then
@@ -539,14 +533,13 @@ do iMm=1,3
   else
    call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,y,interpolom2(iMm),dinterpolom2(iMm))
   endif
- endif
   if(abs(dinterpolom2(iMm)/interpolom2(iMm))>0.01_qp)then
     if(blaerr) blablaerr=.TRUE.
-    if(blaerr) write(6,*)"grosse erreur d’interpolation"
+    if(blaerr) write(6,*)"grosse erreur d’interpolation iMm=",iMm
   endif
   if(abs(dinterpolom2(iMm)/interpolom2(iMm))>0.2_qp)then
     err(0:1)=.TRUE.
-    if(blaerr) write(6,*)"trop grosse erreur d’interpolation"
+    if(blaerr) write(6,*)"trop grosse erreur d’interpolation iMm=",iMm
   endif
 enddo
 
@@ -606,7 +599,7 @@ do ixq=1,sum(nqfen)
    if(blaM)then 
     write(6,*)"ixq,compteur,donnees(1:3,370,ixq)=",ixq,compteur,donnees(1:3,370,ixq)
    endif
-   donnees(:,compteur+1:sum(nomfen),ixq)=0.0_qp
+   donnees(:,compteur+1:sum(nomfen),ixq)=1.0e50_qp
   close(11)
 enddo
 close(13)

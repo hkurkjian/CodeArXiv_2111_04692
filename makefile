@@ -40,6 +40,7 @@ propre :
 	rm -f HKtest
 	rm -f SVLtest
 	rm -f encorr
+	rm -f mkInfoFile
 	rm -f *.aux
 	rm -f *.syntec.gz
 	rm -f spectre

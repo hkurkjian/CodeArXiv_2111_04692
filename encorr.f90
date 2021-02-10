@@ -1,7 +1,63 @@
-PROGRAM encorr
+MODULE selfE
+FUNCTION selfEtotk(mu,k,zk,
+                   interpolation,EPSldc,fichom2,fichldc,
+                   fichpol,EPSpole,
+                   nivobla)
 USE dspec
 USE intldc
 USE intpole
+
+!Paramètres de dspec
+temperaturenulle=.TRUE.
+EPSpp=1.0e-8_qp
+x0crit=0.0_qp
+bla1=.TRUE.
+bla1=.FALSE.
+bla2=.TRUE.
+bla2=.FALSE.
+
+if(nivobla==0)then
+ bla0 =.FALSE.
+ bla00=.FALSE.
+ blaM=.FALSE.
+ blaerr=.FALSE.
+ blaPole=.FALSE.
+elseif(nivobla==1)then
+ bla0 =.TRUE.
+ bla00=.FALSE.
+ blaM=.FALSE.
+ blaerr=.FALSE.
+ blaPole=.TRUE.
+elseif(nivobla==2)then
+ bla0 =.TRUE.
+ bla00=.FALSE.
+ blaM=.FALSE.
+ blaerr=.TRUE.
+ blaPole=.TRUE.
+elseif(nivobla==3)then
+ bla0 =.TRUE.
+ bla00=.TRUE.
+ blaM=.TRUE.
+ blaerr=.TRUE.
+ blaPole=.TRUE.
+endif
+
+
+if(nivobla>0) write(6,*)"-----------------------------------"
+if(nivobla>0) write(6,*)
+if(nivobla>0) write(6,*)"        Calcul de selfEldc"
+if(nivobla>0) write(6,*)
+call bornesk(bk)
+if(nivobla>0) write(6,*)"bk=",bk
+call lignesenergie(k,fichom2,le)
+if(nivobla>0) write(6,*)"le=",le
+
+
+END FUNCTION selfEtot
+END MODULE selfE
+
+PROGRAM encorr
+USE dspec
 IMPLICIT NONE
 
 REAL(QP) :: k,zk
@@ -55,15 +111,6 @@ else
  dzk=(zkmax-zkmin)/nzk
 endif
 
-!Paramètres de dspec
-temperaturenulle=.TRUE.
-EPSpp=1.0e-8_qp
-x0crit=0.0_qp
-bla1=.TRUE.
-bla1=.FALSE.
-bla2=.TRUE.
-bla2=.FALSE.
-
 !Paramètres de estM
 blaM=.TRUE.
 blaM=.FALSE.
@@ -82,6 +129,7 @@ fichier="BCS_4_pole"
 !Paramètres de intldc
 EPSom=1.0e-5_qp
 EPSq =1.0e-3_qp
+EPSpole =1.0e-6_qp
 EPS=(/EPSq,EPSom/)
 bla0=.TRUE.
 bla00=.FALSE.
@@ -125,12 +173,12 @@ do ik=0,nk
   write(6,*)"zk=",zk
   write(6,FMT="(A3,8G20.10)")"le=",le
   if((zk-2.0_qp)<min(le))then
-   sE=intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,prefixe)
+   sE=intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffintq)
   else
    sE=intres   (k,zk,interpol,EPS,fichgri,bk,le,prefixe)
   endif
  
-  sEpole=
+  sEpole=selfEpole(k,zk,EPSpole)
 
   open(14,file="selfE"//trim(suffixe)//".dat",POSITION="APPEND")
    write(14,*)k,zk,real(sE),imag(sE)

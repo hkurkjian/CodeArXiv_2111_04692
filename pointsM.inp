@@ -1,15 +1,16 @@
 4.0  !read(10,*) x0
 0.0  !read(10,*)xq
 5                   !read(10,*) nq1a
-10                  !read(10,*) nq1b
-7                   !read(10,*) nq2
+5                   !read(10,*) nq1b
+5                   !read(10,*) nq2
 8                   !read(10,*) nq3
-10                  !read(10,*) nom1a
-5                   !read(10,*) nom1b
-4                   !read(10,*) nom2a
-10                  !read(10,*) nom2b
-6                   !read(10,*) nom2c
-7                   !read(10,*) nom3a
-10                  !read(10,*) nom3b
-10                  !read(10,*) nominf
+8                   !read(10,*) nq3
+11                  !read(10,*) nom1a
+11                  !read(10,*) nom1b
+11                  !read(10,*) nom2a
+11                  !read(10,*) nom2b
+11                  !read(10,*) nom2c
+11                  !read(10,*) nom3a
+11                  !read(10,*) nom3b
+11                  !read(10,*) nominf
 BCSx04test          !read(10,*) fichier

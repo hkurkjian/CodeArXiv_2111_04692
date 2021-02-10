@@ -23,8 +23,8 @@ INTEGER profondeur
 
 LOGICAL interpol,testpt,testdspec,lecture,ecriture
 
-testpt=.TRUE.
 testpt=.FALSE.
+testpt=.TRUE.
 testdspec=.TRUE.
 testdspec=.FALSE.
 
@@ -39,7 +39,7 @@ zk=3.4_qp
 
 !Paramètres de dspec
 temperaturenulle=.TRUE.
-EPSpp=1.0e-9_qp
+EPSpp=1.0e-8_qp
 x0crit=0.0_qp
 bla1=.TRUE.
 bla1=.FALSE.
@@ -105,10 +105,10 @@ if(testpt)then
  om=2.015
  om=2.01000836809456590498816858862099477
  xq=0.0500_qp
+ xq=3.044030018         
+ om=3.910104303
  xq=0.098148148148148148148148148148148230
- om=2.03813211050015212474015981164369636
- xq=4.027187067         
- om=2.012889604
+ om=2.037004813211050015212474015981164369636
  call oangpp
  write(6,*)"opp=",opp(1:3)
  
@@ -147,6 +147,10 @@ if(testdspec)then
  xq=0.051_qp
  om=2.01035604672572088466101471645589475_qp
  om=2.01035604672572088466101471645589475
+ xq=3.868616681         
+ om=2.065740474
+ xq=4.237037874         
+ om=2.237778973
  call oangpp
  write(6,*)"opp=",opp(1:3)
  
@@ -174,7 +178,7 @@ open(17,file="selfE"//trim(suffixe)//".dat")
  write(17,*)real(Mm2),imag(Mm2)
 close(17)
 
-Mm2=intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,prefixe)
+!Mm2=intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,prefixe)
 open(17,file="selfE"//trim(suffixe)//".dat")
  write(17,*)real(Mm2),imag(Mm2)
 close(17)

@@ -305,7 +305,7 @@ if(axer)then
      elseif(om0<ag(2))then
       arg(1,1:5)=         (/nsu,    su,    su,    nsu,  nsu/)
       choix(1:5)=         (/msqu,   msql,  msqu,  msql, rinf/)
-      intpp=decoupe(inter,(/0.0_qp, ag(1), om0,   ag(2),2*ag(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+      intpp=decoupe(inter,(/0.0_qp, ag(1), (ag(1)+ag(2))/2.0_qp,   ag(2),2*ag(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
 
       Icomp=-r0*log((ag(2)-om0)/(om0-ag(1)))
      else
@@ -332,7 +332,7 @@ if(axer)then
      elseif(om0<ag(3))then
       arg(1,1:6)=         (/nsu,   nsu,   su,     su,   nsu,   nsu/)
       choix(1:6)=         (/mpnt,  msqu,  msql,   msqu, msql,  rinf/)
-      intpp=decoupe(inter,(/0.0_qp,ag(1), ag(2),  om0,  ag(3), 2*ag(3),bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
+      intpp=decoupe(inter,(/0.0_qp,ag(1), ag(2),  (ag(2)+ag(3))/2.0_qp,  ag(3), 2*ag(3),bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
 
       Icomp=-r0*log((ag(3)-om0)/(om0-ag(2)))
      else

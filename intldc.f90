@@ -9,15 +9,15 @@ REAL(QP) xiP,xiM,epsP,epsM,xmin,xmax,k0
 INTEGER, PARAMETER :: al=1,bet=2,gam=3,delt=4,epsi=5,alti=6,betti=7,deltti=8,epsiti=9
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,prefixe)
+FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
  REAL(QP), INTENT(IN) :: k,zk
  REAL(QP), INTENT(IN) :: bq(1:3),EPS(1:2)
  LOGICAL, INTENT(IN)  :: lecture,ecriture
- CHARACTER(len=*), INTENT(IN) ::  fichlec(1:2),prefixe
+ CHARACTER(len=*), INTENT(IN) ::  fichlec(1:2),suffixe
  INTEGER, INTENT(IN) :: profondeur
  REAL(QP) intpasres(1:6)
 
- CHARACTER(len=90) suffixe
+ CHARACTER(len=90) prefixe
  REAL(QP) Iq1(1:6),Iq2(1:6)
  REAL(QP) Iqinf(1:6)
  REAL(QP) argq(1:1),e,EPSq,EPSom
@@ -66,7 +66,7 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,prefixe)
  Iq1(:)=0.0_qp
  Iq2(:)=0.0_qp
 
- suffixe="pasres"
+ prefixe="pasres"
  argq(1)=bidon
  Iq1=qromovfixed(intq,bq(1) ,   bq(2),   6,argq,midpntvq,EPSq,profondeur,err)
  write(6,*)"Iq1=",Iq1
@@ -318,12 +318,12 @@ END SUBROUTINE erreur
 
 ! @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,prefixe)
+FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,suffixe)
  USE bestM
  USE recettes
  REAL(QP), INTENT(IN) :: k,zk
  LOGICAL,  INTENT(IN) :: interpolation
- CHARACTER(len=*), INTENT(IN) :: fichgri(1:2),prefixe
+ CHARACTER(len=*), INTENT(IN) :: fichgri(1:2),suffixe
  REAL(QP), INTENT(IN) :: EPS(1:2),bk(0:12),le(1:8)
  COMPLEX(QPC) intres(1:6)
 
@@ -331,7 +331,7 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,prefixe)
  REAL(QP), ALLOCATABLE, DIMENSION(:) :: bq
 
  CHARACTER(len=2) reg
- CHARACTER(len=90) :: suffixe
+ CHARACTER(len=90) :: prefixe
  INTEGER tconf,configbis(1:7)
  REAL(QP) e,qmax,bqbis(1:8)
  REAL(QP) EPSq,EPSom
@@ -370,7 +370,7 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,prefixe)
    write(6,*)                  "bq="    ,bq(1:tconf+1)
  endif
 
- suffixe="res"
+ prefixe="res"
 ! open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
 ! close(25)
 
@@ -382,7 +382,7 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,prefixe)
  if(tconf==0)then
   intres=qromovcq(intresq,0.0_qp,qmax,6,(/bidon/),midpntvcq,EPSq)
  else
-  do igr=5,size(config)
+  do igr=1,size(config)
    grecque=config(igr)
    if(bla0)then
     write(6,*)"---------------------------------"
@@ -397,7 +397,8 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,prefixe)
     write(6,*)"---------------------------------"
    endif
   enddo
-  intres=intres+qromovcq(intresq,bq(igr+1),qmax,6,(/bidon/),midpntvcq,EPSq)
+  grecque=0
+  intres=intres+qromovcq(intresq,bq(size(config)+1),qmax,6,(/bidon/),midpntvcq,EPSq)
  endif
  intres=2.0_qp*PI*intres
  if(interpolation) call unload_data
@@ -587,6 +588,7 @@ SUBROUTINE bornesk(bk)
 REAL(QP), INTENT(OUT) :: bk(0:12)
 
 bk(0)=sqrt(x0)
+k0=bk(0)
 bk(1)=k0/sqrt(2.0_qp)
 bk(2)=3*k0/5
 bk(3)=k0/2

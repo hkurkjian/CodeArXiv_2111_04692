@@ -14,13 +14,13 @@ INTEGER nq,nn,nqeff
 LOGICAL blaPole
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION selfEpole(k,zk)
+FUNCTION selfEpole(k,zk,EPSpole)
 USE modsim
 IMPLICIT NONE
 REAL(QP), INTENT(IN) :: k,zk
 COMPLEX(QPC) :: selfEpole(1:6), SEint(1:6)
 
-REAL(QP) :: q,EPS,kmin,kmax,dk,bq(1:7)
+REAL(QP) :: q,EPSpole,kmin,kmax,dk,bq(1:7)
 INTEGER ix,nx,iq,nbq
 INTEGER nbounds, ibound
 REAL(QP) bounds(1:9)
@@ -60,13 +60,13 @@ if (blaPole)then
 endif
 
 ! Calculate q-integral
-EPS =1.0e-6_qp
+EPSpole =1.0e-6_qp
 selfEpole(:)=cmplx(0.0_qp,0.0_qp,kind=qpc)
 do ibound=1,nbounds-1
  if (blaPole)then
   write(6,*)"Integration from ",bounds(ibound)," to ",bounds(ibound+1)
  endif
- SEint=qromovcq(integrandeq  ,bounds(ibound),bounds(ibound+1),6,(/bidon/),midpntvcq,EPS)
+ SEint=qromovcq(integrandeq  ,bounds(ibound),bounds(ibound+1),6,(/bidon/),midpntvcq,EPSpole)
  selfEpole(:)=selfEpole(:)+SEint(:)
  if (blaPole)then
   write(6,*)"Solution = ",SEint(:)
