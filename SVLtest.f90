@@ -6,6 +6,7 @@ USE vars
 USE Zerom
 USE intpole
 USE eqdetat
+USE selfcons
 IMPLICIT NONE
 
 ! REAL(QP) om,dom,M(1:2,1:2),dM(1:2,1:2),A(1:6),dMm(1:3),q
@@ -26,22 +27,39 @@ IMPLICIT NONE
 ! LOGICAL errtype1,errtype2,interpol
 ! REAL(QP) ThetaT, XxT, ccheckT
 
-REAL(QP) qVal,omq,k,zk,contK
-COMPLEX(QPC) SigPole(1:6)
+! REAL(QP) qVal,omq,k,zk,contK
+! COMPLEX(QPC) SigPole(1:6)
+! INTEGER ik
+
+REAL(QP) k,zk
 INTEGER ik
 
 ! x0=0.860436686125678599999999999999999961_qp
-fichier="./datSpectre/specx0_4.0"
+fichier="./datSpectre/specUni"
 ! blaPole=.TRUE.
 
-open(14,file="tstCONT.dat")
-do ik=1,350
-    k=ik/70.0_qp
-    contK=contPole(k) 
-    write(6,*)k,contK
-    write(14,*)k,contK
+blaSC=.TRUE.
+
+! k=2.0_qp
+zk=1.0_qp
+
+open(14,file="tstSCEN.dat")
+do ik=1,16
+    k=ik/10.0_qp
+    call SCenergy(k,zk)
+    write(6,*)"k,zk=",k,zk
+    write(14,*)k,zk
 enddo
 close(14)
+
+! open(14,file="tstCONT.dat")
+! do ik=1,350
+!     k=ik/70.0_qp
+!     contK=contPole(k) 
+!     write(6,*)k,contK
+!     write(14,*)k,contK
+! enddo
+! close(14)
 ! k=1.18_qp
 ! contK=contPole(k) 
 ! write(6,*)k,contK
