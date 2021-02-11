@@ -11,8 +11,8 @@ REAL(QP) :: mu,k,zk
 COMPLEX(QPC) selfEtot(1:6),selfEldc(1:6),selfEpol(1:6)
 REAL(QP) dk,dzk
 REAL(QP) kmin,kmax,zkmin,zkmax,EPS(1:3)
-REAL(QP) bk(0:12),le(1:8),bk2(0:12),le2(1:8)
-INTEGER nk,nzk,ik,izk,nivobla
+REAL(QP) bk(0:12),le(1:8),bk2(0:12),le2(1:8),bqbidon(1:3)
+INTEGER nk,nzk,ik,izk,nivobla,profondeurbidon
 CHARACTER(len=90) fichldc(1:2),fichlec,fichom2(1:2),fichierpole,suffixe,suffintq
 CHARACTER(len=5) cik,cizk
 LOGICAL nvofich
@@ -58,20 +58,6 @@ write(6,*)'fichiers:',trim(fichom2(1))," ",trim(fichom2(2))
 write(6,*)'fichiers:',trim(fichlec)," ",trim(fichierpole)
 write(6,*)'precision:',EPS
 
-!Initialisation de bestM
-qpetit=0.03_qp
-call load_data(fichldc(1))
-call loadom2  (fichldc(2))
-
-!Initialisation de dspec
-x0=mu
-temperaturenulle=.TRUE.
-EPSpp=1.0e-7_qp
-x0crit=0.0_qp
-
-!Initialisation de intpole
-fichpol=fichierpole
-
 !Niveaux de blabla (blaPole: intpole, bla0 et bla00: intldc, blaM et blaerr: estM)
 if(nivobla==0)then
  bla0 =.FALSE.
@@ -99,6 +85,20 @@ elseif(nivobla==3)then
  blaPole=.TRUE.
 endif
 
+!Initialisation de bestM
+qpetit=0.03_qp
+!call load_data(fichldc(1))
+!call loadom2  (fichldc(2))
+
+!Initialisation de dspec
+x0=mu
+temperaturenulle=.TRUE.
+EPSpp=1.0e-7_qp
+x0crit=0.0_qp
+
+!Initialisation de intpole
+fichpol=fichierpole
+
 if(nk==0)then
  dk=0.0
 else
@@ -112,13 +112,13 @@ else
 endif
 
 if(nvofich)then
- open(20,file="selfEldc"//trim(suffixe)//".dat")
+ open(20,file="DONNEES/selfEldc"//trim(suffixe)//".dat")
   write(20,*)"!Valeurs de k,zk et selfEldc pour x0=",x0
  close(20)
- open(21,file="selfEpol"//trim(suffixe)//".dat")
+ open(21,file="DONNEES/selfEpol"//trim(suffixe)//".dat")
   write(21,*)"!Valeurs de k,zk et selfEpol pour x0=",x0
  close(21)
- open(22,file="selfEtot"//trim(suffixe)//".dat")
+ open(22,file="DONNEES/selfEtot"//trim(suffixe)//".dat")
   write(22,*)"!Valeurs de k,zk et selfEtot pour x0=",x0
  close(22)
 endif
@@ -150,13 +150,15 @@ do ik=0,nk
   if(nivobla>0) write(6,FMT="(A3,12G20.10)")"bk=",bk2
   if(nivobla>0) write(6,FMT="(A3,8G20.10)")"le=",le2
   
-!  if((zk-2.0_qp)<MINVAL(le))then
-!   selfEldc   =cmplx(intpasres(k,zk,.TRUE.,.FALSE.,intbidon,EPS(1:2),(/bidon,bidon,bidon/),fichlec,suffintq),0.0_qp,kind=qpc)
-!  else
-!   selfEldc=intres   (k,zk,.TRUE.,EPS(1:2),bk,le,suffintq)
-!  endif
+  profondeurbidon=intbidon
+  bqbidon(:)=bidon
+  if((zk-2.0_qp)<MINVAL(le))then
+   selfEldc   =cmplx(intpasres(k,zk,.TRUE.,.FALSE.,profondeurbidon,EPS(1:2),bqbidon,fichlec,suffintq),0.0_qp,kind=qpc)
+  else
+   selfEldc=intres   (k,zk,.TRUE.,EPS(1:2),bk,le,suffintq)
+  endif
   
-  open(20,file="selfEldc"//trim(suffixe)//".dat",POSITION="APPEND")
+  open(20,file="DONNEES/selfEldc"//trim(suffixe)//".dat",POSITION="APPEND")
    write(20,*)k,zk,real(selfEldc),imag(selfEldc)
   close(20)
 
@@ -167,13 +169,13 @@ do ik=0,nk
   
   selfEpol=selfEpole(k,zk,EPS(3))
 
-  open(21,file="selfEpol"//trim(suffixe)//".dat",POSITION="APPEND")
+  open(21,file="DONNEES/selfEpol"//trim(suffixe)//".dat",POSITION="APPEND")
    write(21,*)k,zk,real(selfEpol),imag(selfEpol)
   close(21)
 
   selfEtot=selfEpol+selfEldc
 
-  open(22,file="selfEtot"//trim(suffixe)//".dat",POSITION="APPEND")
+  open(22,file="DONNEES/selfEtot"//trim(suffixe)//".dat",POSITION="APPEND")
    write(22,*)k,zk,real(selfEtot),imag(selfEtot)
   close(22)
 

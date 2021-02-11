@@ -574,8 +574,8 @@ vecq_sup(:,:)=1.0e50_qp
 
 open(213,file=trim(fich)//"grilleq.dat")
 read(213,*)
-!do ixq=1,nqsup
-do ixq=1,7990
+do ixq=1,nqsup
+!do ixq=1,7990
   read(213,*)ixqbis,xqlec
   xq=xqlec
   call oangpp
@@ -653,7 +653,7 @@ do ixq=nmin1,nmax1-1
 
 enddo
 write(6,*)
-do ixq=nmin2,nmax2-1
+do ixq=nmin2,nmax2
 
   open(212,file=trim(fich2)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
    read(212,REC=ixq)donnees_temp(1:7,1:4*nomsup)

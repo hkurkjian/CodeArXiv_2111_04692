@@ -2,29 +2,18 @@
 2.1      ! read(10,*)kmin
 2.1      ! read(10,*)kmax
 0        ! read(10,*)nk
-3.4      ! read(10,*)zkmin
-3.4      ! read(10,*)zkmax
+1.4      ! read(10,*)zkmin
+2.4      ! read(10,*)zkmax
 2        ! read(10,*)nzk
-BCS_4_2              ! read(10,*)fichldc(1)
-BCS_4_sup_comb      ! read(10,*)fichldc(2)
-grille_x04           ! read(10,*)fichlec
+"DONNEES/BCS_4_2"              ! read(10,*)fichldc(1)
+"DONNEES/BCS_4_sup_comb"       ! read(10,*)fichldc(2)
+"DONNEES/grille_x04"           ! read(10,*)fichlec
 "DONNEES/Tom1.dat"       ! read(10,*)fichom2(1)
 "DONNEES/Tom1p.dat"      ! read(10,*)fichom2(2)
-BCS_4_pole             ! read(10,*)fichierpole
+"DONNEES/BCS_4_pole"     ! read(10,*)fichierpole
 1.0e-3      ! read(10,*)EPS(1)!EPSq  pour intldc
 1.0e-5      ! read(10,*)EPS(2)!EPSom pour intldc
 1.0e-6      ! read(10,*)EPS(3)!EPSq  pour intpole
-1           ! read(10,*)nivobla
+3           ! read(10,*)nivobla
 test        ! read(10,*)suffixe
-T           ! read(10,*)nvofich
-
-0.01       !  read(10,*)kmin
-10.0       !  read(10,*)kmax
-10            !  read(10,*)nk
-3.5         !  read(10,*)zkmin
-4.0         !  read(10,*)zkmax
-10            !  read(10,*)nzk
-petit        !  read(10,*)suffixe
-T            !  read(10,*)bla0
-"DONNEES/grillex0_10.info"                                    !read(10,*) grille
-"DONNEES/grillex0_10.info"                                    !read(10,*) grille
+F           ! read(10,*)nvofich

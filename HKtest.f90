@@ -24,6 +24,13 @@ INTEGER profondeur
 
 LOGICAL interpol,testpt,testdspec,lecture,ecriture
 
+blaM=.TRUE.
+fichgri(1)="DONNEES/BCS_4_sup2"
+fichgri(2)="DONNEES/BCS_4_sup3"
+
+call combineom2(fichgri(1),fichgri(2))
+stop
+
 Mmbid=(/1.0_qp,2.0_qp,3.0_qp,4.0_qp,5.0_qp,6.0_qp/)
 Mm2=cmplx(Mmbid,0.0_qp,kind=qpc)
 write(6,*)Mm2
@@ -84,11 +91,6 @@ fichom2(2) ="DONNEES/Tom1p.dat"
 fichlec ="grille_x04"
 
 
-!fichgri(1)="BCS_4_sup2"
-!fichgri(2)="BCS_4_sup3"
-!
-!call combineom2(fichgri(1),fichgri(2))
-!stop
 
 
 if(testpt)then

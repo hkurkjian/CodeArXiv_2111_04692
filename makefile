@@ -9,7 +9,7 @@ LIB_PERSO=-L./libperso -lmalib
 	$(COMP) -I$(MOD) -fopenmp -fcheck=all -fbacktrace -fstack-arrays -fmax-array-constructor=300000000 -O3 -c $< -o $@
 
 encorr: dspec.o bestM.o angularint.o intldc.o intpole.o encorr.o
-	$(COMP) -fcheck=bounds -O3 $^ $(LIB_PERSO) -o encorr
+	$(COMP) -fcheck=all -fbacktrace -O3 $^ $(LIB_PERSO) -o encorr
 
 hktest: eqdetat.o dspec.o Zerom.o bestM.o angularint.o intldc.o intpole.o hktest.o
 	$(COMP) -O3 -fcheck=all -fbacktrace -fstack-arrays -fmax-array-constructor=300000000 $^ $(LIB_PERSO) -o hktest

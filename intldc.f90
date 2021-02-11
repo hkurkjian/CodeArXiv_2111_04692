@@ -12,10 +12,10 @@ CONTAINS
 FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
  REAL(QP), INTENT(IN) :: k,zk
  REAL(QP), INTENT(IN) :: EPS(1:2)
- REAL(QP) :: bq(1:3)
+ REAL(QP), INTENT(INOUT) :: bq(1:3)
  LOGICAL, INTENT(IN)  :: lecture,ecriture
  CHARACTER(len=*), INTENT(IN) ::  fichlec,suffixe
- INTEGER :: profondeur
+ INTEGER, INTENT(INOUT) :: profondeur
  REAL(QP) intpasres(1:6)
 
  CHARACTER(len=90) prefixe
@@ -30,12 +30,18 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
  EPSq =EPS(1)
  EPSom=EPS(2)
 
+ write(6,*)  profondeur,bq(:)
+ profondeur=7
+ write(6,*)  profondeur
+ bq=(/1.0_qp,2.0_qp,3.0_qp/)
+ write(6,*)  profondeur,bq(:)
  if(lecture)then
   open(101,file=trim(fichlec)//".info")
    read(101,*) chainebidon
-   write(6,*)  trim(chainebidon)
-   read(101,*) profondeur,bq
-   write(6,*)  profondeur,bq
+   write(6,*)  chainebidon
+   read(101,*) profondeur,bq(:) 
+   write(6,*) profondeur,bq(:) 
+!  stop
   close(101)
  endif
 
@@ -260,7 +266,7 @@ CONTAINS
    IuP=      Iuanaly(enP,k,q,xmin,xmax)
 
    if(lecture)then
-    read(10+fich,*)xqfi,omfi,reM11,reM12,reM21,reM22,imM11,imM12,imM21,imM22
+    read(110+fich,*)xqfi,omfi,reM11,reM12,reM21,reM22,imM11,imM12,imM21,imM22
     Mat(1,1)=cmplx(reM11,imM11,kind=qpc)
     Mat(2,2)=cmplx(reM22,imM22,kind=qpc)
     Mat(1,2)=cmplx(reM12,imM12,kind=qpc)
@@ -276,7 +282,7 @@ CONTAINS
    else
     call mat_pairfield(ome,e,det,Mat,Gam)
     if(ecriture)then
-     write(10+fich,*)q,ome,real(Mat),imag(Mat)
+     write(110+fich,*)q,ome,real(Mat),imag(Mat)
     endif
    endif
    
