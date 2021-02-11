@@ -12,16 +12,22 @@ IMPLICIT NONE
 
 REAL(QP) om,dom,M(1:2,1:2),dM(1:2,1:2),A(1:6),dMm(1:3),q
 COMPLEX(QPC) Mm2(1:6)
+REAL(QP) Mmbid(1:6)
 REAL(QP) bk(0:12),le(1:8)
 REAL(QP) EPSq,EPSom,EPS(1:2)
 REAL(QP) :: k,zk,bq(1:3)
-CHARACTER(len=90) fichom2(1:2),fichlec(1:2),fichgri(1:2),suffintq,suffsE
+CHARACTER(len=90) fichom2(1:2),fichlec,fichgri(1:2),suffintq,suffsE
 COMPLEX(QPC) Gamm(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
 
 REAL(QP) ptq,ptom,ptM(1:3),ptdM(1:3)
 INTEGER profondeur
 
 LOGICAL interpol,testpt,testdspec,lecture,ecriture
+
+Mmbid=(/1.0_qp,2.0_qp,3.0_qp,4.0_qp,5.0_qp,6.0_qp/)
+Mm2=cmplx(Mmbid,0.0_qp,kind=qpc)
+write(6,*)Mm2
+stop
 
 testpt=.TRUE.
 testpt=.FALSE.
@@ -47,10 +53,10 @@ bla2=.TRUE.
 bla2=.FALSE.
 
 !Paramètres de estM
-blaM=.FALSE.
 blaM=.TRUE.
-blaerr=.FALSE.
+blaM=.FALSE.
 blaerr=.TRUE.
+blaerr=.FALSE.
 qpetit=0.1_qp/x0
 qpetit=0.03_qp
 !Fichiers de données
@@ -75,8 +81,7 @@ suffintq="nvobestM"
 interpol=.TRUE.
 fichom2(1) ="DONNEES/Tom1.dat"
 fichom2(2) ="DONNEES/Tom1p.dat"
-fichlec(1) ="grille_x04_1.dat"
-fichlec(2) ="grille_x04_2.dat"
+fichlec ="grille_x04"
 
 
 !fichgri(1)="BCS_4_sup2"
@@ -115,6 +120,8 @@ if(testpt)then
  om=2.000006628
  xq=3.998061894         
  om=2.000005701
+ xq=3.83949150788132214545869000883031738         
+ om=2.00003640756404596983471624895772570
  call oangpp
  write(6,*)"opp=",opp(1:3)
  
@@ -174,11 +181,14 @@ if(testdspec)then
  stop
 endif
 
+call load_data(fichgri(1))
+call loadom2  (fichgri(2))
+
 call bornesk(bk)
 write(6,*)"bk=",bk
 call lignesenergie(k,fichom2,le)
 write(6,*)"le=",le
-Mm2=intres(k,zk,interpol,EPS,fichgri,bk,le,suffintq)
+Mm2=intres(k,zk,interpol,EPS,bk,le,suffintq)
 write(6,*)"Mm2=",Mm2
 open(17,file="selfE"//trim(suffsE)//".dat")
  write(17,*)real(Mm2),imag(Mm2)

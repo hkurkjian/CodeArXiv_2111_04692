@@ -25,7 +25,6 @@ MODULE vars
  REAL(QP) x0crit     !In the far BCS regime (x0>x0crit) use an optimized routine for the omega integral
 
 ! Parameters
- REAL(QP), PARAMETER :: bidon=-1.0e300_qp
  REAL(QP), PARAMETER, DIMENSION(1:6) :: eta=(/1.0,1.0, 1.0,1.0,-1.0,-1.0/) !Matrice eta   (B3) dans [1]: eta=signe devant Sigma dans (36)
  REAL(QP), PARAMETER, DIMENSION(1:6) :: sig=(/1.0,1.0,-1.0,1.0,-1.0, 1.0/) !Matrice sigma (B5) dans [1]: sig=+1 pour S^epsilon et -1 pour S^omega
 END MODULE vars
@@ -327,6 +326,7 @@ if(axer)then
        arg(1,1:7)=         (/nsu,   su,   su,  nsu,  nsu,                 nsu,  nsu/)
        choix(1:7)=         (/mpnt,  mpnt, msqu,msql, msqu,                msql, rinf/)
        bornes(1:8)=        (/0.0_qp,ag(1),(ag(1)+ag(2))/2.1_qp,ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),2*ag(3),bmax/)
+       bornes(1:8)=        (/0.0_qp,ag(1),om0                 ,ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),2*ag(3),bmax/)
        intpp=decoupe(inter,bornes(1:8),arg(1:1,1:7),choix(1:7),EPSpp,bla1)
 
        Icomp=-r0*log((ag(2)-om0)/(om0-ag(1)))

@@ -63,9 +63,6 @@ if(err(0).OR.err(1))then
   if(blaerr) write(6,*)"Erreur récupérée par intom2"
  else
   if(blaerr) write(6,*)"Erreur sèche,q,om=",q,om
-!  open(15,file="pts_horsgrille.dat",POSITION="APPEND")
-!   write(15,*)q,opp(2),om
-!  close(15)
   if(q<qpetit)then
    call mat_pairfield_pttq(om,0.0_qp,det,Mm,Gg)
   else
@@ -166,6 +163,8 @@ do iposq=posq-1,posq+2
  else
   if(fenom==4) decalageom=nomred(3)
   if(fenom==1) err(2)=.TRUE.
+  if(fenom==1.AND.(iposq==posq)) err(0)=.TRUE.
+  if(fenom==1.AND.(iposq==posq+1)) err(1)=.TRUE.
   if(fenom==1) cycle
  endif
 
@@ -318,7 +317,6 @@ ptsM (:,:,:)=0.0_qp
 ptsom(:,:)  =0.0_qp
 ptsq (:)    =0.0_qp
 
-write(6,*)"interpolom2"
 allocate(sousgrille (1:4,1:nomsup))
 
 xq=q
@@ -500,9 +498,9 @@ SUBROUTINE load_data(fich)
 INTEGER ixq,ixqbis,compteur,nn
 CHARACTER(len=90), INTENT(IN) :: fich
 REAL(QP) xqlec
-open(12,file=trim(fich)//".info")
- read(12,*)
- read(12,*) x0,qsep,nqfen,nomfen,nn,bmax
+open(212,file=trim(fich)//".info")
+ read(212,*)
+ read(212,*) x0,qsep,nqfen,nomfen,nn,bmax
  if(blaM)then
   write(6,*)"----------------------------------------"
   write(6,*)
@@ -514,7 +512,7 @@ open(12,file=trim(fich)//".info")
   write(6,*)"nn,bmax=",nn,bmax
   write(6,*)
  endif
-close(12)
+close(212)
 
 allocate(donnees(1:7,1:sum(nomfen),1:sum(nqfen)))
 allocate(vecq(1:sum(nqfen),1:4))
@@ -522,23 +520,23 @@ allocate(vecq(1:sum(nqfen),1:4))
 donnees(1,:,:)=1.0e50_qp
 vecq(:,:)=1.0e50_qp
 
-open(13,file=trim(fich)//"grilleq.dat")
-read(13,*)
+open(213,file=trim(fich)//"grilleq.dat")
+read(213,*)
 do ixq=1,sum(nqfen)
 !do ixq=1,700
-  read(13,*)ixqbis,xqlec,compteur
+  read(213,*)ixqbis,xqlec,compteur
   xq=xqlec
   call oangpp
   vecq(ixq,:)=(/xqlec,opp(1:3)/)
-  open(11,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
-   read(11,REC=ixq)donnees(1:7,1:sum(nomfen),ixq)
+  open(211,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
+   read(211,REC=ixq)donnees(1:7,1:sum(nomfen),ixq)
    if(blaM)then 
     write(6,*)"ixq,compteur,donnees(1:3,370,ixq)=",ixq,compteur,donnees(1:3,370,ixq)
    endif
    donnees(:,compteur+1:sum(nomfen),ixq)=1.0e50_qp
-  close(11)
+  close(211)
 enddo
-close(13)
+close(213)
 
 if(blaM)then
  write(6,*)"Chargement terminé"
@@ -546,16 +544,15 @@ if(blaM)then
  write(6,*)"----------------------------------------"
 endif
 
-call system("rm pts_horsgrille.dat")
 END SUBROUTINE load_data
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE loadom2(fich)
 INTEGER ixq,ixqbis,nn
 CHARACTER(len=90), INTENT(IN) :: fich
 REAL(QP) xqlec
-open(12,file=trim(fich)//".info")
- read(12,*)
- read(12,*) x0,xq2,nqsup,nomsup,nn
+open(212,file=trim(fich)//".info")
+ read(212,*)
+ read(212,*) x0,xq2,nqsup,nomsup,nn
  if(blaM)then
   write(6,*)"----------------------------------------"
   write(6,*)
@@ -567,7 +564,7 @@ open(12,file=trim(fich)//".info")
   write(6,*)"nn=",nn
   write(6,*)
  endif
-close(12)
+close(212)
 
 allocate(donnees_sup(1:7,1:4*nomsup,1:nqsup))
 allocate(vecq_sup(1:nqsup,1:4))
@@ -575,22 +572,22 @@ allocate(vecq_sup(1:nqsup,1:4))
 donnees_sup(1,:,:)=1.0e50_qp
 vecq_sup(:,:)=1.0e50_qp
 
-open(13,file=trim(fich)//"grilleq.dat")
-read(13,*)
+open(213,file=trim(fich)//"grilleq.dat")
+read(213,*)
 !do ixq=1,nqsup
 do ixq=1,7990
-  read(13,*)ixqbis,xqlec
+  read(213,*)ixqbis,xqlec
   xq=xqlec
   call oangpp
   vecq_sup(ixq,:)=(/xqlec,opp(1:3)/)
-  open(11,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
-   read(11,REC=ixq)donnees_sup(1:7,1:4*nomsup,ixq)
+  open(211,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
+   read(211,REC=ixq)donnees_sup(1:7,1:4*nomsup,ixq)
    if(blaM)then 
     write(6,*)"ixq,donnees_sup(1:3,75,ixq)=",ixq,xqlec,opp(2),donnees_sup(1:3,75,ixq)
    endif
-  close(11)
+  close(211)
 enddo
-close(13)
+close(213)
 
 if(blaM)then
  write(6,*)"Chargement terminé"
@@ -614,58 +611,58 @@ REAL(QP) xqlec
 REAL(QP), DIMENSION(:,:), ALLOCATABLE :: donnees_temp
 INTEGER nmin1,nmin2,nmax1,nmax2
 
-open(16,file=trim(fich)//".info")
- read(16,*)
- read(16,*) x0,xq2,nqsup,nomsup,nn
-close(16)
+open(216,file=trim(fich)//".info")
+ read(216,*)
+ read(216,*) x0,xq2,nqsup,nomsup,nn
+close(216)
 
 allocate(donnees_temp(1:7,1:4*nomsup))
-open(13,file=trim(fich) //"grilleq.dat",ACTION="READ")
- read(13,*)
- read(13,*)nmin1,xqlec
+open(213,file=trim(fich) //"grilleq.dat",ACTION="READ")
+ read(213,*)
+ read(213,*)nmin1,xqlec
  write(6,*)nmin1
  do 
-  read(13, *, End = 1 ) nmax1,xqlec
+  read(213, *, End = 1 ) nmax1,xqlec
 !  write(6,*)nmax1
  enddo
  write(6,*)nmax1
 1 Continue
-close(13)
-open(14,file=trim(fich2)//"grilleq.dat",ACTION="READ")
- read(14,*)
- read(14,*)nmin2,xqlec
+close(213)
+open(214,file=trim(fich2)//"grilleq.dat",ACTION="READ")
+ read(214,*)
+ read(214,*)nmin2,xqlec
  write(6,*)nmin2,xqlec
  do 
-  read(14, *, End = 2 ) nmax2,xqlec
+  read(214, *, End = 2 ) nmax2,xqlec
 !  write(6,*)nmax2
  enddo
  write(6,*)nmax2
 2 Continue
-close(14)
+close(214)
 write(6,*)nmin1,nmin2,nmax1,nmax2
 do ixq=nmin1,nmax1-1
 
-  open(11,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
-   read(11,REC=ixq)donnees_temp(1:7,1:4*nomsup)
+  open(211,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
+   read(211,REC=ixq)donnees_temp(1:7,1:4*nomsup)
    write(6,*)"ixq,donnees_temp(1,1050)=",ixq,donnees_temp(1,1050)
-  close(11)
+  close(211)
 
-  open(15,file=trim(fich)//"_comb.dat",ACTION="WRITE",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
-   write(15,REC=ixq)donnees_temp(1:7,1:4*nomsup)
-  close(15)
+  open(215,file=trim(fich)//"_comb.dat",ACTION="WRITE",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
+   write(215,REC=ixq)donnees_temp(1:7,1:4*nomsup)
+  close(215)
 
 enddo
 write(6,*)
 do ixq=nmin2,nmax2-1
 
-  open(12,file=trim(fich2)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
-   read(12,REC=ixq)donnees_temp(1:7,1:4*nomsup)
+  open(212,file=trim(fich2)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
+   read(212,REC=ixq)donnees_temp(1:7,1:4*nomsup)
    write(6,*)"ixq,donnees_temp(1,1050)=",ixq,donnees_temp(1,1050)
-  close(11)
+  close(212)
 
-  open(15,file=trim(fich)//"_comb.dat",ACTION="WRITE",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
-   write(15,REC=ixq)donnees_temp(1:7,1:4*nomsup)
-  close(15)
+  open(215,file=trim(fich)//"_comb.dat",ACTION="WRITE",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
+   write(215,REC=ixq)donnees_temp(1:7,1:4*nomsup)
+  close(215)
 
 enddo
 END SUBROUTINE combineom2

@@ -23,9 +23,6 @@ pointsM: dspec.o pointsM.o
 suppointsM: dspec.o suppointsM.o
 	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o suppointsM
 
-suppointsM2: dspec.o suppointsM2.o
-	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o suppointsM2
-
 spectre: eqdetat.o dspec.o Zerom.o spectre.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o spectre
 

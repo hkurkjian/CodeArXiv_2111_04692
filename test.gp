@@ -10,7 +10,7 @@ intq2="intqgrdk2.dat"
 
 intq ="intqavecbestMres.dat"
 intq3="intqavecbestMpasres.dat"
-intq4="intqresnvobestM.dat"
+intq4="intqres_0_0.dat"
 intq2="intqexact2.dat"
 #intq3="intqtest4.dat"
 

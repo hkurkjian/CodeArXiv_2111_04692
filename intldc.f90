@@ -11,10 +11,11 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
  REAL(QP), INTENT(IN) :: k,zk
- REAL(QP), INTENT(IN) :: bq(1:3),EPS(1:2)
+ REAL(QP), INTENT(IN) :: EPS(1:2)
+ REAL(QP) :: bq(1:3)
  LOGICAL, INTENT(IN)  :: lecture,ecriture
- CHARACTER(len=*), INTENT(IN) ::  fichlec(1:2),suffixe
- INTEGER, INTENT(IN) :: profondeur
+ CHARACTER(len=*), INTENT(IN) ::  fichlec,suffixe
+ INTEGER :: profondeur
  REAL(QP) intpasres(1:6)
 
  CHARACTER(len=90) prefixe
@@ -22,13 +23,28 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
  REAL(QP) Iqinf(1:6)
  REAL(QP) argq(1:1),e,EPSq,EPSom
  LOGICAL err
- CHARACTER(len=250) chainebidon
 
  temperaturenulle=.TRUE.
 
  e=0.0_qp
  EPSq =EPS(1)
  EPSom=EPS(2)
+
+ if(lecture)then
+  open(101,file=trim(fichlec)//".info")
+   read(101,*) chainebidon
+   write(6,*)  trim(chainebidon)
+   read(101,*) profondeur,bq
+   write(6,*)  profondeur,bq
+  close(101)
+ endif
+
+ if(ecriture)then
+  open(101,file=trim(fichlec)//".info")
+   write(101,*)"! grille de valeur de q,om et Mat de qmin. bq, profondeur="
+   write(101,*) profondeur,bq
+  close(101)
+ endif
 
  if(bla0)then
    write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -39,7 +55,7 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
    write(6,*)
    write(6,*)"k,zk=",k,zk
    write(6,*)"lecture,ecriture=",lecture,ecriture
-   write(6,*)"fichlec: ",fichlec
+   write(6,*)"fichlec: ",trim(fichlec)
    write(6,*)"q1,q2,q3=",bq
    write(6,*)
    write(6,*)"EPSq,EPSom,profondeur=",EPSq,EPSom,profondeur
@@ -47,21 +63,8 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
    write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
  endif
 
- if(lecture)then
-  open(11,file=trim(fichlec(1)))
-  read(11,*)chainebidon
-  write(6,*)chainebidon
-  open(12,file=trim(fichlec(2)))
-  read(12,*)chainebidon
-  write(6,*)chainebidon
- endif
-
- if(ecriture)then
-  open (16,file=trim(fichlec(1)))
-  write(16,*)"! grille de valeur de q,om et Mat de qmin=",bq(1),"à qmax=",bq(2)," avec profondeur=",profondeur
-  open (17,file=trim(fichlec(2)))
-  write(17,*)"! grille de valeur de q,om et Mat de qmin=",bq(2),"à qmax=",bq(3)," avec profondeur=",profondeur
- endif
+ open(111,file=trim(fichlec)//"_1.dat")
+ open(112,file=trim(fichlec)//"_2.dat")
 
  Iq1(:)=0.0_qp
  Iq2(:)=0.0_qp
@@ -80,19 +83,16 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
  Iqinf(:)=0.0_qp
  Iqinf(1)=1.0_qp/(2.0_qp*sqrt(3.0_qp)*PI**3*bq(3)**4)
  Iqinf(5)=-Iqinf(1)
-! For the other integrals, the large q contribution (vanishing at least of 1/q3**6) is neglected
+! For the other integrals, the large q contribution (vanishing at least as 1/bq3**6) is neglected
 
  intpasres=2.0_qp*PI*(Iq1+Iq2+Iqinf) !Integration sur phi
 
- open(20,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
-  write(20,*)
- close(20)
+ open(120,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
+  write(120,*)
+ close(120)
 
- close(11)
- close(12)
-
- close(16)
- close(17)
+ close(111)
+ close(112)
 
 CONTAINS
 
@@ -213,9 +213,9 @@ CONTAINS
 
    intq(is,:)=I(:)*qs**2 !Jacobian of the q integration
 
-   open(20,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
-    write(20,*)qs,real(intq(is,1:6))
-   close(20)
+   open(120,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
+    write(120,*)qs,real(intq(is,1:6))
+   close(120)
   
   enddo
 
@@ -276,7 +276,7 @@ CONTAINS
    else
     call mat_pairfield(ome,e,det,Mat,Gam)
     if(ecriture)then
-     write(15+fich,*)q,ome,real(Mat),imag(Mat)
+     write(10+fich,*)q,ome,real(Mat),imag(Mat)
     endif
    endif
    
@@ -318,12 +318,12 @@ END SUBROUTINE erreur
 
 ! @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,suffixe)
+FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
  USE bestM
  USE recettes
  REAL(QP), INTENT(IN) :: k,zk
  LOGICAL,  INTENT(IN) :: interpolation
- CHARACTER(len=*), INTENT(IN) :: fichgri(1:2),suffixe
+ CHARACTER(len=*), INTENT(IN) :: suffixe
  REAL(QP), INTENT(IN) :: EPS(1:2),bk(0:12),le(1:8)
  COMPLEX(QPC) intres(1:6)
 
@@ -336,7 +336,6 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,suffixe)
  REAL(QP) e,qmax,bqbis(1:8)
  REAL(QP) EPSq,EPSom
 
- CHARACTER(len=250) chainebidon
  INTEGER grecque,igr
 
  EPSq =EPS(1)
@@ -352,9 +351,6 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,suffixe)
  bq    =bqbis(1:tconf+1)
  config=configbis(1:tconf)
 
- if(interpolation) call load_data(fichgri(1))
- if(interpolation) call loadom2(fichgri(2))
- 
  if(bla0)then
    write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
    write(6,*)
@@ -364,15 +360,12 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,suffixe)
    write(6,*)
    write(6,*)
    write(6,*)"k,zk=",k,zk
-   write(6,FMT="(A21,8G20.10)")"lignes d’énergie=",le
    write(6,*)                  "reg=",reg
    write(6,*)                  "config=",ecritconfig(tconf-1,config) 
    write(6,*)                  "bq="    ,bq(1:tconf+1)
  endif
 
  prefixe="res"
-! open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
-! close(25)
 
  intres(:)=cmplx(0.0_qp,0.0_qp,kind=qpc)
 
@@ -382,7 +375,7 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,suffixe)
  if(tconf==0)then
   intres=qromovcq(intresq,0.0_qp,qmax,6,(/bidon/),midpntvcq,EPSq)
  else
-  do igr=5,size(config)
+  do igr=1,size(config)
    grecque=config(igr)
    if(bla0)then
     write(6,*)"---------------------------------"
@@ -401,7 +394,6 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,suffixe)
   intres=intres+qromovcq(intresq,bq(size(config)+1),qmax,6,(/bidon/),midpntvcq,EPSq)
  endif
  intres=2.0_qp*PI*intres
- if(interpolation) call unload_data
 
  CONTAINS
   FUNCTION intresq(q,argq,m)
@@ -443,7 +435,7 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,suffixe)
     write(6,*)"grecque=",ecritc(grecque)
     write(6,*)"ptbranchmtpp=",ptbranchmtpp
     write(6,*)"opp=",opp
-    write(6,*)"res=",res
+    write(6,*)"res=",res(1:tres)
     write(6,FMT="(A5,3G20.10)")"bom=",bom
    endif
 
@@ -495,7 +487,7 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,suffixe)
    arg(1,:)=qs
    arg(2,:)=vres(:)+0.5_qp
 
-   if(bla0)then
+   if(bla00)then
     write(6,FMT="(A6,9G20.10)")"bomf=",bomf(1:trout+1)
     write(6,*)"routint=",ecritrout(trout,routint(1:trout))
     write(6,*)"vres="   ,vres(1:trout)
@@ -505,11 +497,11 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,suffixe)
     write(6,*)"        decoupe         "
     write(6,*)
    endif
-   intresq(is,:)=decoupevcq(intresom,bomf(1:trout+1),6,arg,routint(1:trout),EPSom,bla0)
+   intresq(is,:)=decoupevcq(intresom,bomf(1:trout+1),6,arg,routint(1:trout),EPSom,bla00)
    intresq(is,:)=intresq(is,:)*qs**2
-   open(25,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
-    write(25,*)qs,real(intresq(is,:)),imag(intresq(is,1:3))
-   close(25)
+   open(125,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
+    write(125,*)qs,real(intresq(is,:)),imag(intresq(is,1:3))
+   close(125)
    deallocate(bomf)
    deallocate(routint)
    deallocate(vres)
@@ -974,12 +966,12 @@ REAL(QP) solom2
 REAL(QP) qdep,zdep,klu,vec(1:2)
 INTEGER ik
 
-open(25,file=trim(fichdep))
+open(126,file=trim(fichdep))
  do ik=1,10000
-  read(25,*)klu,qdep,zdep
+  read(126,*)klu,qdep,zdep
   if(klu>k)exit
  enddo
-close(25)
+close(126)
 vec=(/qdep,zdep/)
 call mnewt_q(20,vec,1.e-11_qp,1.e-9_qp,solP)
 solom2=vec(2)-2

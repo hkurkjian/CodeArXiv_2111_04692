@@ -9,7 +9,7 @@ REAL(QP) :: lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
 REAL(QP) :: ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
 REAL(QP) :: kMM,kMP
 REAL(QP) :: qThr,qmin,qmax,dq
-CHARACTER(len=90) fichier
+CHARACTER(len=90) fichpol
 INTEGER nq,nn,nqeff
 LOGICAL blaPole
 CONTAINS
@@ -17,10 +17,10 @@ CONTAINS
 FUNCTION selfEpole(k,zk,EPSpole)
 USE modsim
 IMPLICIT NONE
-REAL(QP), INTENT(IN) :: k,zk
+REAL(QP), INTENT(IN) :: k,zk,EPSpole
 COMPLEX(QPC) :: selfEpole(1:6), SEint(1:6)
 
-REAL(QP) :: q,EPSpole,kmin,kmax,dk,bq(1:7)
+REAL(QP) :: q,kmin,kmax,dk,bq(1:7)
 INTEGER ix,nx,iq,nbq
 INTEGER nbounds, ibound
 REAL(QP) bounds(1:9)
@@ -60,7 +60,6 @@ if (blaPole)then
 endif
 
 ! Calculate q-integral
-EPSpole =1.0e-6_qp
 selfEpole(:)=cmplx(0.0_qp,0.0_qp,kind=qpc)
 do ibound=1,nbounds-1
  if (blaPole)then
@@ -105,15 +104,15 @@ CONTAINS
    dM(3)=ldMpm0+ldMpm2*qs**2.0_qp
   else
   ! Else, use interpolation from data file
-   open(10,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=nn)
+   open(30,file=trim(fichpol)//".dat",action="read",access="direct",form="unformatted",recl=nn)
    
   ! Select 5 data points around q
    iq=floor((qs-qmin)/dq)+1
-   read(10,rec=iq-2)ptq(1),ptom(1),ptM(:,1),ptdM(:,1)
-   read(10,rec=iq-1)ptq(2),ptom(2),ptM(:,2),ptdM(:,2)
-   read(10,rec=iq  )ptq(3),ptom(3),ptM(:,3),ptdM(:,3)
-   read(10,rec=iq+1)ptq(4),ptom(4),ptM(:,4),ptdM(:,4)
-   read(10,rec=iq+2)ptq(5),ptom(5),ptM(:,5),ptdM(:,5)
+   read(30,rec=iq-2)ptq(1),ptom(1),ptM(:,1),ptdM(:,1)
+   read(30,rec=iq-1)ptq(2),ptom(2),ptM(:,2),ptdM(:,2)
+   read(30,rec=iq  )ptq(3),ptom(3),ptM(:,3),ptdM(:,3)
+   read(30,rec=iq+1)ptq(4),ptom(4),ptM(:,4),ptdM(:,4)
+   read(30,rec=iq+2)ptq(5),ptom(5),ptM(:,5),ptdM(:,5)
   
 !   write(6,*)qs,ptq(3:4)
   ! Interpolation scheme for omega_q
@@ -123,7 +122,7 @@ CONTAINS
     call polint(ptq, ptM(ib,:),qs, Ma(ib),errM(ib))
     call polint(ptq,ptdM(ib,:),qs,dM(ib),errdM(ib))
    enddo
-   close(10) 
+   close(30) 
   endif
 
   ! Derivative of the determinant
@@ -190,9 +189,9 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
   qX(3)=1.0e50_qp
 
   ! Open file for interpolation of omega_q
-  open(11,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=nn)
+  open(31,file=trim(fichpol)//".dat",action="read",access="direct",form="unformatted",recl=nn)
   ! Read last value for omqMax
-  read(11,rec=nqeff)qMax,omqMax,mMax(:),dmMax(:)
+  read(31,rec=nqeff)qMax,omqMax,mMax(:),dmMax(:)
 
   ! Initialize nqM and nqP (number of bounds)
   nqM=0
@@ -207,7 +206,7 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
   do iq=1,nqeff
    
    ! Second data point
-   read(11,rec=iq)qT,omqT,mT(:),dmT(:)
+   read(31,rec=iq)qT,omqT,mT(:),dmT(:)
    if(qT<qThr)then
     ! Below threshhold, use linear approximation for omq
     call intOmQ(qT,omqT)
@@ -243,7 +242,7 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
   enddo
 
   ! Close file
-  close(11)
+  close(31)
 
   ! Sort all q bounds
   iP=1
@@ -359,18 +358,18 @@ SUBROUTINE intOmQ(qVal,omq)
  else
 
    ! Open file for interpolation of omega_q
-   open(12,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=nn)
+   open(32,file=trim(fichpol)//".dat",action="read",access="direct",form="unformatted",recl=nn)
    
    ! Read 5 points around qVal
    iq=floor((qVal-qmin)/dq)+1
-   read(12,rec=iq-2)ptq(1),ptom(1),ptM(:,1),ptdM(:,1)
-   read(12,rec=iq-1)ptq(2),ptom(2),ptM(:,2),ptdM(:,2)
-   read(12,rec=iq  )ptq(3),ptom(3),ptM(:,3),ptdM(:,3)
-   read(12,rec=iq+1)ptq(4),ptom(4),ptM(:,4),ptdM(:,4)
-   read(12,rec=iq+2)ptq(5),ptom(5),ptM(:,5),ptdM(:,5)
+   read(32,rec=iq-2)ptq(1),ptom(1),ptM(:,1),ptdM(:,1)
+   read(32,rec=iq-1)ptq(2),ptom(2),ptM(:,2),ptdM(:,2)
+   read(32,rec=iq  )ptq(3),ptom(3),ptM(:,3),ptdM(:,3)
+   read(32,rec=iq+1)ptq(4),ptom(4),ptM(:,4),ptdM(:,4)
+   read(32,rec=iq+2)ptq(5),ptom(5),ptM(:,5),ptdM(:,5)
 
    ! Close file
-   close(12)
+   close(32)
 
    ! Interpolation scheme for omega_q
    call polint(ptq,ptom,qVal,omq,errom)
@@ -378,29 +377,29 @@ SUBROUTINE intOmQ(qVal,omq)
 
 END SUBROUTINE intOmQ
 SUBROUTINE rdInfo()
-  ! Read the fichier.info file for all needed variables for interpolation
+  ! Read the fichpol.info file for all needed variables for interpolation
   IMPLICIT NONE
   INTEGER taille
 
-  open(11,file=trim(fichier)//".info")
-    read(11,*)x0,qmin,qmax,nq,nn
-    read(11,*)c0,g0
-    read(11,*)lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
-    read(11,*)ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
-    read(11,*)kMM,kMP
+  open(31,file=trim(fichpol)//".info")
+    read(31,*)x0,qmin,qmax,nq,nn
+    read(31,*)c0,g0
+    read(31,*)lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
+    read(31,*)ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
+    read(31,*)kMM,kMP
   if (blaPole)then
     write(6,*)"c0,g0",c0,g0
     write(6,*)"lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3",lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
     write(6,*)"ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2",ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
     write(6,*)"kMM,kMP",kMM,kMP
   endif
-  close(11)
+  close(31)
 
   ! q step
   dq=(qmax-qmin)/nq
 
   ! Effective q length
-  inquire(file=trim(fichier)//".dat", size=taille)
+  inquire(file=trim(fichpol)//".dat", size=taille)
   nqeff=taille/nn-2
 
   ! Select threshhold q below which omq is approximated by c q
@@ -437,9 +436,9 @@ FUNCTION contPole(k)
   call rdInfo()
 
   ! Open file for interpolation of omega_q
-  open(11,file=trim(fichier)//".dat",action="read",access="direct",form="unformatted",recl=nn)
+  open(31,file=trim(fichpol)//".dat",action="read",access="direct",form="unformatted",recl=nn)
   ! Read last value for omqMax
-  read(11,rec=nqeff)qMax,omqMax,mMax(:),dmMax(:)
+  read(31,rec=nqeff)qMax,omqMax,mMax(:),dmMax(:)
   
   if((kMM<=k).AND.(k<=kMP))then
     ! Close to minimum: contPole = eps_k
@@ -467,11 +466,11 @@ FUNCTION contPole(k)
     do iq=30,nqeff-2
 
       ! Calculate derivative at q point
-      read(11,rec=iq-2)ptq(1),ptom(1),ptM(:,1),ptdM(:,1)
-      read(11,rec=iq-1)ptq(2),ptom(2),ptM(:,2),ptdM(:,2)
-      read(11,rec=iq  )ptq(3),ptom(3),ptM(:,3),ptdM(:,3)
-      read(11,rec=iq+1)ptq(4),ptom(4),ptM(:,4),ptdM(:,4)
-      read(11,rec=iq+2)ptq(5),ptom(5),ptM(:,5),ptdM(:,5)
+      read(31,rec=iq-2)ptq(1),ptom(1),ptM(:,1),ptdM(:,1)
+      read(31,rec=iq-1)ptq(2),ptom(2),ptM(:,2),ptdM(:,2)
+      read(31,rec=iq  )ptq(3),ptom(3),ptM(:,3),ptdM(:,3)
+      read(31,rec=iq+1)ptq(4),ptom(4),ptM(:,4),ptdM(:,4)
+      read(31,rec=iq+2)ptq(5),ptom(5),ptM(:,5),ptdM(:,5)
       qT=ptq(3)         ! q value
       omqT=ptom(3)      ! omq at qT
 
@@ -519,7 +518,7 @@ FUNCTION contPole(k)
     
   endif
   ! Close file
-  close(11)
+  close(31)
 CONTAINS
   SUBROUTINE rootFunContQ(qIn,arg,x,dx)
     IMPLICIT NONE
