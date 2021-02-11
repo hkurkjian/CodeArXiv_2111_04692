@@ -15,7 +15,7 @@ COMPLEX(QPC) Mm2(1:6)
 REAL(QP) bk(0:12),le(1:8)
 REAL(QP) EPSq,EPSom,EPS(1:2)
 REAL(QP) :: k,zk,bq(1:3)
-CHARACTER(len=90) fichom2(1:2),fichlec(1:2),fichgri(1:2),prefixe,suffixe
+CHARACTER(len=90) fichom2(1:2),fichlec(1:2),fichgri(1:2),suffintq,suffsE
 COMPLEX(QPC) Gamm(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
 
 REAL(QP) ptq,ptom,ptM(1:3),ptdM(1:3)
@@ -23,8 +23,8 @@ INTEGER profondeur
 
 LOGICAL interpol,testpt,testdspec,lecture,ecriture
 
-testpt=.FALSE.
 testpt=.TRUE.
+testpt=.FALSE.
 testdspec=.TRUE.
 testdspec=.FALSE.
 
@@ -39,7 +39,7 @@ zk=3.4_qp
 
 !Paramètres de dspec
 temperaturenulle=.TRUE.
-EPSpp=1.0e-8_qp
+EPSpp=1.0e-7_qp
 x0crit=0.0_qp
 bla1=.TRUE.
 bla1=.FALSE.
@@ -47,10 +47,10 @@ bla2=.TRUE.
 bla2=.FALSE.
 
 !Paramètres de estM
-blaM=.TRUE.
 blaM=.FALSE.
-blaerr=.TRUE.
+blaM=.TRUE.
 blaerr=.FALSE.
+blaerr=.TRUE.
 qpetit=0.1_qp/x0
 qpetit=0.03_qp
 !Fichiers de données
@@ -71,16 +71,12 @@ ecriture=.TRUE.
 ecriture=.FALSE.
 bq=(/0.0_qp,10.0_qp,100.0_qp/)
 profondeur=5
-prefixe="avecbestM"
+suffintq="nvobestM"
 interpol=.TRUE.
 fichom2(1) ="DONNEES/Tom1.dat"
 fichom2(2) ="DONNEES/Tom1p.dat"
 fichlec(1) ="grille_x04_1.dat"
 fichlec(2) ="grille_x04_2.dat"
-!a tester, q,om= 
-!3.868616681         2.065740474
-!3.001119563         4.019856415
-!q=0.05 om=2.01035604672572088466101471645589475
 
 
 !fichgri(1)="BCS_4_sup2"
@@ -107,8 +103,18 @@ if(testpt)then
  xq=0.0500_qp
  xq=3.044030018         
  om=3.910104303
- xq=0.098148148148148148148148148148148230
- om=2.037004813211050015212474015981164369636
+ xq=4.008148148148148148148148148148148230
+ om=4.135004813211050015212474015981164369636
+ xq=3.998061894         
+ om=2.000000251
+ xq=3.99806189438834344822296565562925469         
+ om=2.00000625736580466510151499713304150
+ xq=3.99806189438834344822296565562925469         
+ om=2.00000375441948279906090899827982475
+ xq=3.998061894         
+ om=2.000006628
+ xq=3.998061894         
+ om=2.000005701
  call oangpp
  write(6,*)"opp=",opp(1:3)
  
@@ -172,14 +178,14 @@ call bornesk(bk)
 write(6,*)"bk=",bk
 call lignesenergie(k,fichom2,le)
 write(6,*)"le=",le
-Mm2=intres(k,zk,interpol,EPS,fichgri,bk,le,prefixe)
+Mm2=intres(k,zk,interpol,EPS,fichgri,bk,le,suffintq)
 write(6,*)"Mm2=",Mm2
-open(17,file="selfE"//trim(suffixe)//".dat")
+open(17,file="selfE"//trim(suffsE)//".dat")
  write(17,*)real(Mm2),imag(Mm2)
 close(17)
 
-!Mm2=intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,prefixe)
-open(17,file="selfE"//trim(suffixe)//".dat")
+!Mm2=intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffintq)
+open(17,file="selfE"//trim(suffsE)//".dat")
  write(17,*)real(Mm2),imag(Mm2)
 close(17)
 

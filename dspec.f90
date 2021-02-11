@@ -326,7 +326,8 @@ if(axer)then
      elseif(om0<ag(2))then
        arg(1,1:7)=         (/nsu,   su,   su,  nsu,  nsu,                 nsu,  nsu/)
        choix(1:7)=         (/mpnt,  mpnt, msqu,msql, msqu,                msql, rinf/)
-       intpp=decoupe(inter,(/0.0_qp,ag(1),om0, ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),2*ag(3),bmax/),arg(1:1,1:7),choix(1:7),EPSpp,bla1)
+       bornes(1:8)=        (/0.0_qp,ag(1),(ag(1)+ag(2))/2.1_qp,ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),2*ag(3),bmax/)
+       intpp=decoupe(inter,bornes(1:8),arg(1:1,1:7),choix(1:7),EPSpp,bla1)
 
        Icomp=-r0*log((ag(2)-om0)/(om0-ag(1)))
      elseif(om0<ag(3))then

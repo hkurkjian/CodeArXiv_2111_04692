@@ -382,7 +382,7 @@ FUNCTION intres(k,zk,interpolation,EPS,fichgri,bk,le,suffixe)
  if(tconf==0)then
   intres=qromovcq(intresq,0.0_qp,qmax,6,(/bidon/),midpntvcq,EPSq)
  else
-  do igr=1,size(config)
+  do igr=5,size(config)
    grecque=config(igr)
    if(bla0)then
     write(6,*)"---------------------------------"
