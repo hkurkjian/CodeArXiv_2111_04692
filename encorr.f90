@@ -87,8 +87,8 @@ endif
 
 !Initialisation de bestM
 qpetit=0.03_qp
-!call load_data(fichldc(1))
-!call loadom2  (fichldc(2))
+call load_data(fichldc(1))
+call loadom2  (fichldc(2))
 
 !Initialisation de dspec
 x0=mu
@@ -153,7 +153,8 @@ do ik=0,nk
   profondeurbidon=intbidon
   bqbidon(:)=bidon
   if((zk-2.0_qp)<MINVAL(le))then
-   selfEldc   =cmplx(intpasres(k,zk,.TRUE.,.FALSE.,profondeurbidon,EPS(1:2),bqbidon,fichlec,suffintq),0.0_qp,kind=qpc)
+   selfEldc=intres   (k,zk,.TRUE.,EPS(1:2),bk,le,suffintq)
+!   selfEldc   =cmplx(intpasres(k,zk,.TRUE.,.FALSE.,profondeurbidon,EPS(1:2),bqbidon,fichlec,suffintq),0.0_qp,kind=qpc)
   else
    selfEldc=intres   (k,zk,.TRUE.,EPS(1:2),bk,le,suffintq)
   endif

@@ -1,8 +1,8 @@
 4.0      ! read(10,*)mu
-2.1      ! read(10,*)kmin
+0.5      ! read(10,*)kmin
 2.1      ! read(10,*)kmax
 0        ! read(10,*)nk
-1.4      ! read(10,*)zkmin
+3.88      ! read(10,*)zkmin
 2.4      ! read(10,*)zkmax
 2        ! read(10,*)nzk
 "DONNEES/BCS_4_2"              ! read(10,*)fichldc(1)
@@ -14,6 +14,6 @@
 1.0e-3      ! read(10,*)EPS(1)!EPSq  pour intldc
 1.0e-5      ! read(10,*)EPS(2)!EPSom pour intldc
 1.0e-6      ! read(10,*)EPS(3)!EPSq  pour intpole
-3           ! read(10,*)nivobla
+1           ! read(10,*)nivobla
 test        ! read(10,*)suffixe
 F           ! read(10,*)nvofich

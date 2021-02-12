@@ -30,11 +30,6 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
  EPSq =EPS(1)
  EPSom=EPS(2)
 
- write(6,*)  profondeur,bq(:)
- profondeur=7
- write(6,*)  profondeur
- bq=(/1.0_qp,2.0_qp,3.0_qp/)
- write(6,*)  profondeur,bq(:)
  if(lecture)then
   open(101,file=trim(fichlec)//".info")
    read(101,*) chainebidon
@@ -367,7 +362,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    write(6,*)
    write(6,*)"k,zk=",k,zk
    write(6,*)                  "reg=",reg
-   write(6,*)                  "config=",ecritconfig(tconf-1,config) 
+   write(6,*)                  "config=",ecritconfig(tconf,config) 
    write(6,*)                  "bq="    ,bq(1:tconf+1)
  endif
 
@@ -379,6 +374,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
  qmax= 16.0_qp
 
  if(tconf==0)then
+  grecque=0
   intres=qromovcq(intresq,0.0_qp,qmax,6,(/bidon/),midpntvcq,EPSq)
  else
   do igr=1,size(config)
@@ -441,7 +437,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     write(6,*)"grecque=",ecritc(grecque)
     write(6,*)"ptbranchmtpp=",ptbranchmtpp
     write(6,*)"opp=",opp
-    write(6,*)"res=",res(1:tres)
+    if(grecque.NE.0) write(6,*)"res=",res(1:tres)
     write(6,FMT="(A5,3G20.10)")"bom=",bom
    endif
 
@@ -529,7 +525,6 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    q=arg(1) 
    r=floor(arg(2))!Number of resonance angles
    intresom(:,:)=0.0_qp
-!   if(r==0) return
 
    if(bla00.AND.(size(om)==1))then
     write(6,*)"************************"
@@ -887,6 +882,7 @@ else
  s=-1.0_qp
 endif
 
+res(:)=0
 if((grecque==al).OR.(grecque==alti))then
  tres=1
  bom(1)=ec(q)
@@ -1027,6 +1023,10 @@ INTEGER, DIMENSION(:), INTENT(IN) :: config
 CHARACTER(len=90) :: ecritconfig
 
 INTEGER itai
+if(tconf==0)then
+ ecritconfig="0"
+ return
+endif
 ecritconfig=trim(ecritc(config(1)))
 do itai=2,tconf
  ecritconfig=trim(ecritconfig)//"  "//trim(ecritc(config(itai)))
