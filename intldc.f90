@@ -609,6 +609,7 @@ le(:)=1.0e50_qp
 !lignes d’énergie
 le(1)=epsBCS(k)
 le(5)=epsBCS(0.0_qp)
+le(8)=1.0_qp
 if(k<k0)then
  le(2)=epsBCS(2*k-k0)
  le(3)=epsBCS(2*k+k0)
@@ -620,7 +621,6 @@ elseif(k<3*k0)then
   le(4)=solom2(k,fichom2(1))
  endif
  le(6)=ec(k+k0)-1
- le(8)=1.0_qp
 else
  le(2)=epsBCS(2*k-k0)+ec(k-k0)-2
  le(3)=epsBCS(2*k+k0)+ec(k+k0)-2
@@ -644,7 +644,7 @@ REAL(QP) vecq(1:13)
 
 !reg et configuration
 if(k<bk(0))then
- if(zkt<1)then
+ if(zkt<le(8))then
   reg="00"
   tconf=0
  elseif(min(le(1),le(4))>zkt)then
