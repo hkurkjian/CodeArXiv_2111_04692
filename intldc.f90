@@ -4,7 +4,8 @@ USE dspec
 USE modsim
 USE angularint
 IMPLICIT NONE
-LOGICAL bla0,bla00
+LOGICAL bla0,bla00,ecrintq
+INTEGER ecrintq
 REAL(QP) xiP,xiM,epsP,epsM,xmin,xmax,k0
 INTEGER, PARAMETER :: al=1,bet=2,gam=3,delt=4,epsi=5,alti=6,betti=7,deltti=8,epsiti=9
 CONTAINS
@@ -67,6 +68,11 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
  open(111,file=trim(fichlec)//"_1.dat")
  open(112,file=trim(fichlec)//"_2.dat")
 
+ if(ecrintq.GE.2)
+  open(120,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
+  close(120)
+ endif
+
  Iq1(:)=0.0_qp
  Iq2(:)=0.0_qp
 
@@ -88,9 +94,6 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
 
  intpasres=2.0_qp*PI*(Iq1+Iq2+Iqinf) !Integration sur phi
 
- open(120,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
-  write(120,*)
- close(120)
 
  close(111)
  close(112)
@@ -214,9 +217,11 @@ CONTAINS
 
    intq(is,:)=I(:)*qs**2 !Jacobian of the q integration
 
+  if(ecrintq.GE.1)
    open(120,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
     write(120,*)qs,real(intq(is,1:6))
    close(120)
+  endif
   
   enddo
 
@@ -373,6 +378,13 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
  bmax =1.e6_qp
  qmax= 16.0_qp
 
+ if(ecrintq.GE.2)then
+  open(125,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
+  close(125)
+ endif
+
+ if((.NOT.allocated(donnees)).AND.(interpolation)) stop "Impossible d’interpoler, donnees est vide"
+
  if(tconf==0)then
   grecque=0
   intres=qromovcq(intresq,0.0_qp,qmax,6,(/bidon/),midpntvcq,EPSq)
@@ -501,9 +513,13 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    endif
    intresq(is,:)=decoupevcq(intresom,bomf(1:trout+1),6,arg,routint(1:trout),EPSom,bla00)
    intresq(is,:)=intresq(is,:)*qs**2
-   open(125,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
-    write(125,*)qs,real(intresq(is,:)),imag(intresq(is,1:3))
-   close(125)
+
+   if(ecrintq.GE.1)then
+    open(125,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
+     write(125,*)qs,real(intresq(is,:)),imag(intresq(is,1:3))
+    close(125)
+   endif
+
    deallocate(bomf)
    deallocate(routint)
    deallocate(vres)

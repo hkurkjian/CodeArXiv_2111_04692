@@ -9,15 +9,14 @@ REAL(QP) :: lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
 REAL(QP) :: ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
 REAL(QP) :: kMM,kMP
 REAL(QP) :: qThr,qmin,qmax,dq
-CHARACTER(len=90) fichpol
 INTEGER nq,nn,nqeff
 LOGICAL blaPole
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION selfEpole(k,zk,EPSpole)
+FUNCTION selfEpole(k,zk,EPSpole,fichpol)
 USE modsim
-IMPLICIT NONE
 REAL(QP), INTENT(IN) :: k,zk,EPSpole
+CHARACTER(len=90), INTENT(IN) :: fichpol
 COMPLEX(QPC) :: selfEpole(1:6), SEint(1:6)
 
 REAL(QP) :: q,kmin,kmax,dk,bq(1:7)
@@ -33,7 +32,7 @@ REAL(QP) bounds(1:9)
 !   kMM, kMP
 !   qThr,qmin,qmax,dq
 !   nqeff
-call rdInfo()
+call rdInfo(fichpol)
 
 ! Open file for interpolation of omega_q
 open(32,file=trim(fichpol)//".dat",action="read",access="direct",form="unformatted",recl=nn)
@@ -82,7 +81,6 @@ close(32)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CONTAINS
  FUNCTION integrandeq(q,arg,m) 
- IMPLICIT NONE
 
  INTEGER,  INTENT(IN) :: m
  REAL(QP), INTENT(IN), DIMENSION(:) :: q,arg
@@ -168,7 +166,6 @@ CONTAINS
 SUBROUTINE boundsQ(k,zk,bq,nbq)
  ! Calculate all bounds on q for integration above emission continuum
   USE recettes, ONLY : rtsafe
-  IMPLICIT NONE
   REAL(QP), INTENT(IN) :: k,zk
   REAL(QP), INTENT(OUT) :: bq(1:7) ! q bounds, max lengths = 7
   INTEGER, INTENT(OUT) :: nbq ! number of q bounds (max 7)
@@ -287,7 +284,6 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
  END SUBROUTINE boundsQ
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  SUBROUTINE rootFunQ0(qIn,arg,x,dx)
-  IMPLICIT NONE
   REAL(QP), INTENT(IN) :: qIn
   REAL(QP), DIMENSION(:), INTENT(IN) :: arg
   REAL(QP), INTENT(OUT) :: x,dx
@@ -312,7 +308,6 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
  END SUBROUTINE rootFunQ0
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  SUBROUTINE rootFunQEps(qIn,arg,x,dx)
-  IMPLICIT NONE
   REAL(QP), INTENT(IN) :: qIn
   REAL(QP), DIMENSION(:), INTENT(IN) :: arg
   REAL(QP), INTENT(OUT) :: x,dx
@@ -344,7 +339,6 @@ SUBROUTINE boundsQ(k,zk,bq,nbq)
 END FUNCTION selfEpole 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE intOmQ(qVal,omq)
- IMPLICIT NONE
  REAL(QP), INTENT(IN) :: qVal
  REAL(QP), INTENT(OUT) :: omq
 
@@ -369,9 +363,10 @@ SUBROUTINE intOmQ(qVal,omq)
  endif
 
 END SUBROUTINE intOmQ
-SUBROUTINE rdInfo()
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE rdInfo(fichpol)
   ! Read the fichpol.info file for all needed variables for interpolation
-  IMPLICIT NONE
+  CHARACTER(len=90), INTENT(IN) :: fichpol
   INTEGER taille
 
   open(31,file=trim(fichpol)//".info")
@@ -403,7 +398,6 @@ END SUBROUTINE rdInfo
 FUNCTION contPole(k) 
   ! Calculate the lower continuum edge for the 1->2 process
   USE recettes, ONLY : rtsafe
-  IMPLICIT NONE
   REAL(QP), INTENT(IN) :: k
   REAL(QP) :: contPole
 
@@ -511,7 +505,6 @@ FUNCTION contPole(k)
   ! Close file
 CONTAINS
   SUBROUTINE rootFunContQ(qIn,arg,x,dx)
-    IMPLICIT NONE
     REAL(QP), INTENT(IN) :: qIn
     REAL(QP), DIMENSION(:), INTENT(IN) :: arg
     REAL(QP), INTENT(OUT) :: x,dx

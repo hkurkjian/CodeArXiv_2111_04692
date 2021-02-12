@@ -17,3 +17,4 @@
 1           ! read(10,*)nivobla
 test        ! read(10,*)suffixe
 F           ! read(10,*)nvofich
+1           ! read(10,*)ecrintq

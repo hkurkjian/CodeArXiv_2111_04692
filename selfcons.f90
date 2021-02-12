@@ -1,18 +1,19 @@
 MODULE selfcons
   USE modsim
   USE vars
-  USE intpole
+  USE selftot
   IMPLICIT NONE
   LOGICAL blaSC
 
 CONTAINS
-  SUBROUTINE SCenergy(k,zk)
-    USE intpole
+  SUBROUTINE SCenergy(mu,k,zk,fichiers,EPS)
     USE recettes, ONLY : rtsafe
     USE recettes, ONLY : mnewt
     IMPLICIT NONE
     REAL(QP), INTENT(IN) :: k
     REAL(QP), INTENT(INOUT) :: zk
+    REAL(QP), INTENT(IN) :: EPS(1:3)
+    CHARACTER(len=90), INTENT(IN) fichiers(1:6) !1:2 fichldc, 3 fichlec, 4:5 fichom2, 6 fichpol
 
     REAL(QP) contK, xik, e0, Uk, Vk, OS
     REAL(QP) SigZero(1:6), SigCont(1:6), eZero, eCont
@@ -26,11 +27,11 @@ CONTAINS
     e0=sqrt(xik*xik+1.0_qp)
     Uk=sqrt((1.0_qp+xik/e0)/2.0_qp)
     Vk=sqrt((1.0_qp-xik/e0)/2.0_qp)
-
+    
     ! Look for a solution below the continuum
     OS=1.e-6_qp
-    SigZero=selfEpole(k,OS)
-    SigCont=selfEpole(k,contK-OS)
+    SigZero=detG(k,      OS,fich(3),EPS)
+    SigCont=detG(k,contK-OS,fich(3),EPS)
     eZero=-OS+e0-(Uk*Uk*SigZero(1)+Vk*Vk*SigZero(2)+2.0_qp*Uk*Vk*SigZero(3))
     eCont=-contK+OS+e0-(Uk*Uk*SigCont(1)+Vk*Vk*SigCont(2)+2.0_qp*Uk*Vk*SigCont(3))
 
@@ -44,6 +45,9 @@ CONTAINS
       write(6,*)"Solution is inside the continuum"
     endif
 
+    if(routres)then
+     call(unload_data)
+    endif
 
   CONTAINS 
     SUBROUTINE rootFunSC(zkIn,arg,f,df)

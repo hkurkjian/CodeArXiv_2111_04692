@@ -36,9 +36,10 @@ open(10,file='encorr.inp')
  read(10,*)EPS(1)!EPSq  pour intldc
  read(10,*)EPS(2)!EPSom pour intldc
  read(10,*)EPS(3)!EPSq  pour intpole
- read(10,*)nivobla
- read(10,*)suffixe
- read(10,*)nvofich
+ read(10,*)nivobla !Verbose level, from 0 to 3
+ read(10,*)suffixe !terminaison of intqfiles
+ read(10,*)nvofich !TRUE to overwrite output files
+ read(10,*)ecrintq !0 to avoid writing intq files, 1 to write, 2 to overwrite
 close(10)
 
 
@@ -56,7 +57,7 @@ write(6,*)'nzk=',nzk
 write(6,*)'fichiers:',trim(fichldc(1))," ",trim(fichldc(2))
 write(6,*)'fichiers:',trim(fichom2(1))," ",trim(fichom2(2))
 write(6,*)'fichiers:',trim(fichlec)," ",trim(fichierpole)
-write(6,*)'precision:',EPS
+write(6,*)'precisions:',EPS
 
 !Niveaux de blabla (blaPole: intpole, bla0 et bla00: intldc, blaM et blaerr: estM)
 if(nivobla==0)then
@@ -96,8 +97,6 @@ temperaturenulle=.TRUE.
 EPSpp=1.0e-7_qp
 x0crit=0.0_qp
 
-!Initialisation de intpole
-fichpol=fichierpole
 
 if(nk==0)then
  dk=0.0
@@ -126,9 +125,11 @@ endif
 do ik=0,nk
  k=kmin+dk*ik
  write(6,*)"k=",k
+
  do izk=0,nzk
   zk=zkmin+dzk*izk
   write(6,*)"zk=",zk
+
   write(cik, FMT="(I2)")ik
   write(cizk,FMT="(I2)")izk
   cik=adjustl(cik)
@@ -137,18 +138,19 @@ do ik=0,nk
   suffintq=adjustl(suffintq)
   write(6,*)"suffintq:",trim(suffintq)
 
-  if(nivobla>0) write(6,*)"-----------------------------------"
-  if(nivobla>0) write(6,*)
-  if(nivobla>0) write(6,*)"        Calcul de selfEldc"
-  if(nivobla>0) write(6,*)
+  write(6,*)"-----------------------------------"
+  write(6,*)
+  write(6,*)"        Calcul de selfEldc"
+  write(6,*)
   
   call bornesk(bk)
   call lignesenergie(k,fichom2,le)
   bk2=bk; le2=le
   call tri(bk2)
   call tri(le2)
-  if(nivobla>0) write(6,FMT="(A3,12G20.10)")"bk=",bk2
-  if(nivobla>0) write(6,FMT="(A3,8G20.10)")"le=",le2
+
+  write(6,FMT="(A3,12G20.10)")"bk=",bk2
+  write(6,FMT="(A3,8G20.10)")"le=",le2
   
   profondeurbidon=intbidon
   bqbidon(:)=bidon
@@ -161,6 +163,8 @@ do ik=0,nk
   
   open(20,file="DONNEES/selfEldc"//trim(suffixe)//".dat",POSITION="APPEND")
    write(20,*)k,zk,real(selfEldc),imag(selfEldc)
+   write(6,*)"k,zk,re(selfEldc)=",k,zk,real(selfEldc)
+   write(6,*)"k,zk,re(selfEldc)=",k,zk,imag(selfEldc)
   close(20)
 
   if(nivobla>0) write(6,*)"-----------------------------------"
@@ -168,16 +172,20 @@ do ik=0,nk
   if(nivobla>0) write(6,*)"        Calcul de selfEpole"
   if(nivobla>0) write(6,*)
   
-  selfEpol=selfEpole(k,zk,EPS(3))
+  selfEpol=selfEpole(k,zk,EPS(3),fichierpole)
 
   open(21,file="DONNEES/selfEpol"//trim(suffixe)//".dat",POSITION="APPEND")
    write(21,*)k,zk,real(selfEpol),imag(selfEpol)
+   write(6,*)"k,zk,re(selfEpol)=",k,zk,real(selfEpol)
+   write(6,*)"k,zk,re(selfEpol)=",k,zk,imag(selfEpol)
   close(21)
 
   selfEtot=selfEpol+selfEldc
 
   open(22,file="DONNEES/selfEtot"//trim(suffixe)//".dat",POSITION="APPEND")
    write(22,*)k,zk,real(selfEtot),imag(selfEtot)
+   write(6,*)"k,zk,re(selfEtot)=",k,zk,real(selfEtot)
+   write(6,*)"k,zk,re(selfEtot)=",k,zk,imag(selfEtot)
   close(22)
 
  enddo
