@@ -428,6 +428,9 @@ FUNCTION contPole(k)
   ! Read info file
   call rdInfo()
 
+  ! Open file for interpolation of omega_q
+  open(32,file=trim(fichpol)//".dat",action="read",access="direct",form="unformatted",recl=nn)
+
   ! Read last value for omqMax
   read(32,rec=nqeff)qMax,omqMax,mMax(:),dmMax(:)
   
@@ -508,7 +511,10 @@ FUNCTION contPole(k)
     contPole=minval(contTMP)
     
   endif
+  
   ! Close file
+  close(32)
+  
 CONTAINS
   SUBROUTINE rootFunContQ(qIn,arg,x,dx)
     IMPLICIT NONE
