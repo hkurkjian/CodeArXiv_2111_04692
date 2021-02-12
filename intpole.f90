@@ -395,9 +395,10 @@ SUBROUTINE rdInfo(fichpol)
   
 END SUBROUTINE rdInfo
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION contPole(k) 
+FUNCTION contPole(k,fichpol) 
   ! Calculate the lower continuum edge for the 1->2 process
   USE recettes, ONLY : rtsafe
+  CHARACTER(len=90), INTENT(IN) :: fichpol
   REAL(QP), INTENT(IN) :: k
   REAL(QP) :: contPole
 
