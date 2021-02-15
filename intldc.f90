@@ -4,7 +4,7 @@ USE dspec
 USE modsim
 USE angularint
 IMPLICIT NONE
-LOGICAL bla0,bla00,ecrintq
+LOGICAL bla0,bla00
 INTEGER ecrintq
 REAL(QP) xiP,xiM,epsP,epsM,xmin,xmax,k0
 INTEGER, PARAMETER :: al=1,bet=2,gam=3,delt=4,epsi=5,alti=6,betti=7,deltti=8,epsiti=9
@@ -68,7 +68,7 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
  open(111,file=trim(fichlec)//"_1.dat")
  open(112,file=trim(fichlec)//"_2.dat")
 
- if(ecrintq.GE.2)
+ if(ecrintq.GE.2)then
   open(120,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
   close(120)
  endif
@@ -217,7 +217,7 @@ CONTAINS
 
    intq(is,:)=I(:)*qs**2 !Jacobian of the q integration
 
-  if(ecrintq.GE.1)
+  if(ecrintq.GE.1)then
    open(120,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
     write(120,*)qs,real(intq(is,1:6))
    close(120)
@@ -339,6 +339,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
  CHARACTER(len=2) reg
  CHARACTER(len=90) :: prefixe
  INTEGER tconf,configbis(1:7)
+ REAL(QP) :: bk2(0:12),le2(1:8)
  REAL(QP) e,qmax,bqbis(1:8)
  REAL(QP) EPSq,EPSom
 
@@ -357,6 +358,11 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
  bq    =bqbis(1:tconf+1)
  config=configbis(1:tconf)
 
+ bk2=bk; le2=le
+ call tri(bk2)
+ call tri(le2)
+
+
  if(bla0)then
    write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
    write(6,*)
@@ -366,6 +372,8 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    write(6,*)
    write(6,*)
    write(6,*)"k,zk=",k,zk
+   write(6,FMT="(A3,12G20.10)")"bk=",bk2
+   write(6,FMT="(A3,8G20.10)") "le=",le2
    write(6,*)                  "reg=",reg
    write(6,*)                  "config=",ecritconfig(tconf,config) 
    write(6,*)                  "bq="    ,bq(1:tconf+1)
@@ -625,6 +633,7 @@ le(:)=1.0e50_qp
 !lignes d’énergie
 le(1)=epsBCS(k)
 le(5)=epsBCS(0.0_qp)
+le(7)=1.0_qp
 le(8)=1.0_qp
 if(k<k0)then
  le(2)=epsBCS(2*k-k0)
@@ -813,7 +822,7 @@ else
   if(zkt<le(1)) q1m=k-sqrt(k0**2+sqrt(zkt**2-1))
   if(zkt<le(5)) q2m=k-sqrt(k0**2-sqrt(zkt**2-1))
   if((le(6)>zkt).AND.(zkt>le(4)))then
-    qd   =rtsafe(soleC,(/-1.0_qp,-1.0_qp/),k+1.0e-17_qp   ,k+k0    ,1.e-18_qp)
+    qd    =rtsafe(soleC,(/-1.0_qp,-1.0_qp/),k+1.0e-17_qp   ,k+k0    ,1.e-18_qp)
     q3m   =rtsafe(soleC,(/-1.0_qp, 1.0_qp/),k   ,qd     ,1.e-18_qp)
     q3mbis=rtsafe(soleC,(/-1.0_qp, 1.0_qp/),qd ,k+k0    ,1.e-18_qp)
   endif

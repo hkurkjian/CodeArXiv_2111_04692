@@ -1,19 +1,16 @@
 PROGRAM encorr
 USE vars
-USE dspec
-USE bestM
-USE intldc
-USE intpole
 USE recettes
+USE selftot
 IMPLICIT NONE
 
 REAL(QP) :: mu,k,zk
-COMPLEX(QPC) selfEtot(1:6),selfEldc(1:6),selfEpol(1:6)
+COMPLEX(QPC) sigma(1:2,1:6),sigcomb(1:3),det
 REAL(QP) dk,dzk
 REAL(QP) kmin,kmax,zkmin,zkmax,EPS(1:3)
-REAL(QP) bk(0:12),le(1:8),bk2(0:12),le2(1:8),bqbidon(1:3)
+REAL(QP) bqbidon(1:3),th(1:2)
 INTEGER nk,nzk,ik,izk,nivobla,profondeurbidon
-CHARACTER(len=90) fichldc(1:2),fichlec,fichom2(1:2),fichierpole,suffixe,suffintq
+CHARACTER(len=90) fichldc(1:2),fichiers(1:6),suffixe,suffintq
 CHARACTER(len=5) cik,cizk
 LOGICAL nvofich
 
@@ -27,15 +24,15 @@ open(10,file='encorr.inp')
  read(10,*)zkmin
  read(10,*)zkmax
  read(10,*)nzk
- read(10,*)fichldc(1)
- read(10,*)fichldc(2)
- read(10,*)fichlec
- read(10,*)fichom2(1)
- read(10,*)fichom2(2)
- read(10,*)fichierpole
- read(10,*)EPS(1)!EPSq  pour intldc
- read(10,*)EPS(2)!EPSom pour intldc
- read(10,*)EPS(3)!EPSq  pour intpole
+ read(10,*)fichiers(1) !pour charger bestM/donnees
+ read(10,*)fichiers(2) !pour charger bestM/donnees_sup
+ read(10,*)fichiers(3) !pour intldc/intpasres
+ read(10,*)fichiers(4) !pour intldc/lignesenergie
+ read(10,*)fichiers(5) !pour intldc/lignesenergie
+ read(10,*)fichiers(6) !pour intpole
+ read(10,*)EPS(1)      !intldc/EPSq
+ read(10,*)EPS(2)      !intldc/EPSom
+ read(10,*)EPS(3)      !intpole/EPSq
  read(10,*)nivobla !Verbose level, from 0 to 3
  read(10,*)suffixe !terminaison of intqfiles
  read(10,*)nvofich !TRUE to overwrite output files
@@ -54,49 +51,13 @@ write(6,*)'nk=',nk
 write(6,*)'zkmin=',zkmin
 write(6,*)'zkmax=',zkmax
 write(6,*)'nzk=',nzk
-write(6,*)'fichiers:',trim(fichldc(1))," ",trim(fichldc(2))
-write(6,*)'fichiers:',trim(fichom2(1))," ",trim(fichom2(2))
-write(6,*)'fichiers:',trim(fichlec)," ",trim(fichierpole)
+write(6,*)'fichiers ldc:',trim(fichiers(1))," ",trim(fichiers(2))
+write(6,*)'fichiers om2:',trim(fichiers(4))," ",trim(fichiers(5))
+write(6,*)'fichier  lec:',trim(fichiers(3))
+write(6,*)'fichier pole:',trim(fichiers(6))
 write(6,*)'precisions:',EPS
 
-!Niveaux de blabla (blaPole: intpole, bla0 et bla00: intldc, blaM et blaerr: estM)
-if(nivobla==0)then
- bla0 =.FALSE.
- bla00=.FALSE.
- blaM=.FALSE.
- blaerr=.FALSE.
- blaPole=.FALSE.
-elseif(nivobla==1)then
- bla0 =.TRUE.
- bla00=.FALSE.
- blaM=.FALSE.
- blaerr=.FALSE.
- blaPole=.TRUE.
-elseif(nivobla==2)then
- bla0 =.TRUE.
- bla00=.FALSE.
- blaM=.FALSE.
- blaerr=.TRUE.
- blaPole=.TRUE.
-elseif(nivobla==3)then
- bla0 =.TRUE.
- bla00=.TRUE.
- blaM=.TRUE.
- blaerr=.TRUE.
- blaPole=.TRUE.
-endif
-
-!Initialisation de bestM
-qpetit=0.03_qp
-call load_data(fichldc(1))
-call loadom2  (fichldc(2))
-
-!Initialisation de dspec
-x0=mu
-temperaturenulle=.TRUE.
-EPSpp=1.0e-7_qp
-x0crit=0.0_qp
-
+call initialisation(mu,nivobla,.TRUE.,fichiers(1:2))
 
 if(nk==0)then
  dk=0.0
@@ -138,60 +99,43 @@ do ik=0,nk
   suffintq=adjustl(suffintq)
   write(6,*)"suffintq:",trim(suffintq)
 
-  write(6,*)"-----------------------------------"
-  write(6,*)
-  write(6,*)"        Calcul de selfEldc"
-  write(6,*)
-  
-  call bornesk(bk)
-  call lignesenergie(k,fichom2,le)
-  bk2=bk; le2=le
-  call tri(bk2)
-  call tri(le2)
-
-  write(6,FMT="(A3,12G20.10)")"bk=",bk2
-  write(6,FMT="(A3,8G20.10)")"le=",le2
-  
-  profondeurbidon=intbidon
-  bqbidon(:)=bidon
-  if((zk-2.0_qp)<MINVAL(le))then
-!   selfEldc=intres   (k,zk,.TRUE.,EPS(1:2),bk,le,suffintq)
-   selfEldc   =cmplx(intpasres(k,zk,.TRUE.,.FALSE.,profondeurbidon,EPS(1:2),bqbidon,fichlec,suffintq),0.0_qp,kind=qpc)
+  th=thresholds(mu,k,(/fichiers(4:6)/))
+  if(zk<th(2))then
+   det=detG(k,zk,(/fichiers(3),fichiers(6)/),EPS,sigma)
+!   det=detGres(k,zk,(/fichiers(3),fichiers(6)/),EPS,sigcomb)
   else
-   selfEldc=intres   (k,zk,.TRUE.,EPS(1:2),bk,le,suffintq)
+   det=detGres(k,zk,(/fichiers(4:6)/),EPS,sigma)
   endif
   
+  sigcomb(1:3)=sigma(1,1:3)+sigma(1,4:6)+sigma(2,1:3)+sigma(2,4:6)
+
   open(20,file="DONNEES/selfEldc"//trim(suffixe)//".dat",POSITION="APPEND")
-   write(20,*)k,zk,real(selfEldc),imag(selfEldc)
-   write(6,*)"k,zk,re(selfEldc)=",k,zk,real(selfEldc)
-   write(6,*)"k,zk,re(selfEldc)=",k,zk,imag(selfEldc)
-  close(20)
-
-  if(nivobla>0) write(6,*)"-----------------------------------"
-  if(nivobla>0) write(6,*)
-  if(nivobla>0) write(6,*)"        Calcul de selfEpole"
-  if(nivobla>0) write(6,*)
-  
-  selfEpol=selfEpole(k,zk,EPS(3),fichierpole)
-
   open(21,file="DONNEES/selfEpol"//trim(suffixe)//".dat",POSITION="APPEND")
-   write(21,*)k,zk,real(selfEpol),imag(selfEpol)
-   write(6,*)"k,zk,re(selfEpol)=",k,zk,real(selfEpol)
-   write(6,*)"k,zk,re(selfEpol)=",k,zk,imag(selfEpol)
-  close(21)
-
-  selfEtot=selfEpol+selfEldc
-
   open(22,file="DONNEES/selfEtot"//trim(suffixe)//".dat",POSITION="APPEND")
-   write(22,*)k,zk,real(selfEtot),imag(selfEtot)
-   write(6,*)"k,zk,re(selfEtot)=",k,zk,real(selfEtot)
-   write(6,*)"k,zk,re(selfEtot)=",k,zk,imag(selfEtot)
+  open(23,file="DONNEES/continuum"//trim(suffixe)//".dat",POSITION="APPEND")
+   write(6,*)"k,zk,bords des continua=",k,zk,th
+   write(6,*)"re(selfEldc)=",real(sigma(1,1:6))
+   write(6,*)"im(selfEldc)=",imag(sigma(1,1:6))
+   write(6,*)"re(selfEpol)=",real(sigma(2,1:6))
+   write(6,*)"im(selfEpol)=",imag(sigma(2,1:6))
+   write(6,*)"re(selfEtot)=",real(sigcomb(1:3))
+   write(6,*)"im(selfEtot)=",imag(sigcomb(1:3))
+   write(20,*)k,zk,real(sigma(1,1:6))
+   write(20,*)k,zk,imag(sigma(1,1:6))
+   write(21,*)k,zk,real(sigma(2,1:6))
+   write(21,*)k,zk,imag(sigma(2,1:6))
+   write(22,*)k,zk,real(sigcomb(1:3))
+   write(22,*)k,zk,imag(sigcomb(1:3))
+   write(23,*)k,th
+  close(20)
+  close(21)
   close(22)
+  close(23)
 
  enddo
 enddo
 
-call unload_data
+call desinit
 END PROGRAM encorr
 
 !CONTAINS

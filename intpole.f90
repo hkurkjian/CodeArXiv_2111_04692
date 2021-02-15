@@ -32,17 +32,41 @@ REAL(QP) bounds(1:9)
 !   kMM, kMP
 !   qThr,qmin,qmax,dq
 !   nqeff
-call rdInfo(fichpol)
 
+if (blaPole)then
+  write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  write(6,*)
+  write(6,*)"++++++++++++++++++++++++++++ selfEpole ++++++++++++++++++++++++++++"
+  write(6,*)
+  write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+endif
+
+call rdInfo(fichpol)
 ! Open file for interpolation of omega_q
 open(32,file=trim(fichpol)//".dat",action="read",access="direct",form="unformatted",recl=nn)
 
 ! Calculate q bounds
-call boundsQ(k,zk,bq,nbq)
 
 if (blaPole)then
+  write(6,*)
   write(6,*)"dq,nqeff,qmax=",dq,nqeff,qmin+nqeff*dq
   write(6,*)"Calculating all q-bounds for k,zk=",k,zk
+  write(6,*)
+endif
+call boundsQ(k,zk,bq,nbq)
+if (blaPole)then
+  write(6,*)
+  write(6,*)"            Coefficients of the low q expansion"
+  write(6,*)
+  write(6,FMT="(A6 ,2G20.10)")"c0,g0=",c0,g0
+  write(6,FMT="(A42,7G20.10)")"lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3=",lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
+  write(6,FMT="(A42,6G20.10)")"ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2=",ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
+  write(6,FMT="(A8 ,2G20.10)")"kMM,kMP=",kMM,kMP
+  write(6,*)
+  write(6,*)"---------------------------------------------"
+endif
+if (blaPole)then
+  write(6,*)
   write(6,*)nbq," q bounds found:",bq(1:nbq)
 endif
 
@@ -58,7 +82,9 @@ else
 endif
 
 if (blaPole)then
+ write(6,*)
  write(6,*)"All integration boundaries:",bounds(1:nbounds)
+ write(6,*)"---------------------------------------------"
 endif
 
 ! Calculate q-integral
@@ -70,12 +96,27 @@ do ibound=1,nbounds-1
  SEint=qromovcq(integrandeq  ,bounds(ibound),bounds(ibound+1),6,(/bidon/),midpntvcq,EPSpole)
  selfEpole(:)=selfEpole(:)+SEint(:)
  if (blaPole)then
-  write(6,*)"Solution = ",SEint(:)
+  write(6,*)"re selfEpole (1<->2)= ",real(SEint(1:3))
+  write(6,*)"im selfEpole (1<->2)= ",imag(SEint(1:3))
+  write(6,*)"re selfEpole (3<->0)= ",real(SEint(4:6))
+  write(6,*)"im selfEpole (3<->0)= ",imag(SEint(4:6))
+  write(6,*)
+  write(6,*)"---------------------------------------------"
  endif
 enddo
 
 ! Calculate phi-integral
 selfEpole=selfEpole*2.0_qp*PI
+
+if (blaPole)then
+  write(6,*)"Total"
+  write(6,*)"re selfEpole (1<->2)= ",real(selfEpole(1:3))
+  write(6,*)"im selfEpole (1<->2)= ",imag(selfEpole(1:3))
+  write(6,*)"re selfEpole (3<->0)= ",real(selfEpole(4:6))
+  write(6,*)"im selfEpole (3<->0)= ",imag(selfEpole(4:6))
+  write(6,*)
+  write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+endif
 
 close(32)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -375,12 +416,6 @@ SUBROUTINE rdInfo(fichpol)
     read(31,*)lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
     read(31,*)ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
     read(31,*)kMM,kMP
-  if (blaPole)then
-    write(6,*)"c0,g0",c0,g0
-    write(6,*)"lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3",lMpp2,lMpp4,lMmm0,lMmm2,lMmm4,lMpm1,lMpm3
-    write(6,*)"ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2",ldMpp1,ldMpp3,ldMmm1,ldMmm3,ldMpm0,ldMpm2
-    write(6,*)"kMM,kMP",kMM,kMP
-  endif
   close(31)
 
   ! q step
@@ -395,10 +430,11 @@ SUBROUTINE rdInfo(fichpol)
   
 END SUBROUTINE rdInfo
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION contPole(k) 
+FUNCTION contPole(k,fichpol) 
   ! Calculate the lower continuum edge for the 1->2 process
   USE recettes, ONLY : rtsafe
   REAL(QP), INTENT(IN) :: k
+  CHARACTER(len=90), INTENT(IN) :: fichpol
   REAL(QP) :: contPole
 
   REAL(QP) qMax, omqMax, mMax(1:3), dmMax(1:3)
@@ -420,7 +456,7 @@ FUNCTION contPole(k)
   endif
   
   ! Read info file
-  call rdInfo()
+  call rdInfo(fichpol)
 
   ! Open file for interpolation of omega_q
   open(32,file=trim(fichpol)//".dat",action="read",access="direct",form="unformatted",recl=nn)
