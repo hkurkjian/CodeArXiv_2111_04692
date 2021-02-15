@@ -1087,7 +1087,6 @@ MODULE modsim
         s(j+1,:)=s(j,:)
         h(j+1,:)=h(j,:)/9.0_qp
        end do
-       write(6,*) 'Nombre d itération dépassé dans qromovqfixed'
        err=.TRUE.
        END FUNCTION qromovqfixed
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1324,7 +1323,6 @@ MODULE modsim
         s(j+1,:)=s(j,:)
         h(j+1,:)=h(j,:)/9.0_qp
        end do
-       write(6,*) 'Nombre d itération dépassé dans qromovcqfixed'
        err=.TRUE.
        END FUNCTION qromovcqfixed
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

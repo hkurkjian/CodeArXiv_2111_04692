@@ -1,0 +1,16 @@
+4.0      ! read(10,*)mu
+2.0      ! read(10,*)kmin
+2.0      ! read(10,*)kmax
+0        ! read(10,*)nk
+0.3      ! read(10,*)zkmin
+"DONNEES/BCS_4_2"              ! read(10,*)fichldc(1)
+"DONNEES/BCS_4_sup_comb"       ! read(10,*)fichldc(2)
+"DONNEES/grille_x04"           ! read(10,*)fichlec
+"DONNEES/Tom1.dat"       ! read(10,*)fichom2(1)
+"DONNEES/Tom1p.dat"      ! read(10,*)fichom2(2)
+"DONNEES/BCS_4_pole"     ! read(10,*)fichierpole
+1.0e-3      ! read(10,*)EPS(1)!EPSq  pour intldc
+1.0e-5      ! read(10,*)EPS(2)!EPSom pour intldc
+1.0e-6      ! read(10,*)EPS(3)!EPSq  pour intpole
+test        ! read(10,*)suffixe
+F           ! read(10,*)nvofich

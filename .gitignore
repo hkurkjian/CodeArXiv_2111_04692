@@ -19,6 +19,7 @@ test
 pointsM
 spectre
 suppointsM
+selfcons
 libperso/libmalib.a
 DONNEES/
 mkInfoFile.inp

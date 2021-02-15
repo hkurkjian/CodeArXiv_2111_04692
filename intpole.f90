@@ -435,7 +435,6 @@ FUNCTION contPole(k,fichpol)
   USE recettes, ONLY : rtsafe
   CHARACTER(len=90), INTENT(IN) :: fichpol
   REAL(QP), INTENT(IN) :: k
-  CHARACTER(len=90), INTENT(IN) :: fichpol
   REAL(QP) :: contPole
 
   REAL(QP) qMax, omqMax, mMax(1:3), dmMax(1:3)

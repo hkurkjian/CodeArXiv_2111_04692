@@ -33,11 +33,10 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
 
  if(lecture)then
   open(101,file=trim(fichlec)//".info")
-   read(101,*) chainebidon
-   write(6,*)  chainebidon
+   read(101,FMT="(A90)") chainebidon
+   if(bla0) write(6,*)   chainebidon
    read(101,*) profondeur,bq(:) 
-   write(6,*) profondeur,bq(:) 
-!  stop
+   if(bla0) write(6,*) profondeur,bq(:) 
   close(101)
  endif
 
@@ -79,12 +78,12 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
  prefixe="pasres"
  argq(1)=bidon
  Iq1=qromovfixed(intq,bq(1) ,   bq(2),   6,argq,midpntvq,EPSq,profondeur,err)
- write(6,*)"Iq1=",Iq1
+ if(bla0) write(6,*)"Iq1=",Iq1
  if(err)  call erreur("q")
 
  argq(1)=bidon
  Iq2=qromovfixed(intq,bq(2),    bq(3),   6,argq,midpntvq,EPSq,profondeur,err)
- write(6,*)"Iq2=",Iq2
+ if(bla0) write(6,*)"Iq2=",Iq2
  if(err)  call erreur("q")
 
  Iqinf(:)=0.0_qp
@@ -319,7 +318,7 @@ END FUNCTION intpasres
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE erreur(var)
 CHARACTER(len=*), INTENT(IN) :: var
-write(6,*) "convergence non atteinte dans l’intégrale sur "//var
+if(bla0) write(6,*) "convergence non atteinte dans l’intégrale sur "//var
 END SUBROUTINE erreur
 
 ! @@
