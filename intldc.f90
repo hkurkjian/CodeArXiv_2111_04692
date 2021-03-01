@@ -621,10 +621,9 @@ bk(12)=3*k0
 
 END SUBROUTINE bornesk
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE lignesenergie(k,fichom2,le)
+SUBROUTINE lignesenergie(k,le)
 USE recettes
 REAL(QP), INTENT(IN) :: k
-CHARACTER(len=*), INTENT(IN) :: fichom2(1:2)
 REAL(QP), INTENT(OUT) :: le(1:8)
 
 le(:)=1.0e50_qp
@@ -642,7 +641,7 @@ elseif(k<3*k0)then
  le(2)=epsBCS(2*k-k0)
  le(3)=epsBCS(2*k+k0)+ec(k+k0)-2
  if(k<2*k0)then
-  le(4)=solom2(k,fichom2(1))
+  le(4)=solom2(k)
  endif
  le(6)=ec(k+k0)-1
 else
@@ -650,7 +649,7 @@ else
  le(3)=epsBCS(2*k+k0)+ec(k+k0)-2
  le(6)=ec(k+k0)-1
  le(7)=ec(k-k0)-1
- le(8)=solom2(k,fichom2(2))
+ le(8)=3*epsBCS(k/3.0_qp)-2
 endif
 END SUBROUTINE lignesenergie
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -983,60 +982,31 @@ REAL(QP) epsBCS
 epsBCS=sqrt((k**2-x0)**2+1)
 END FUNCTION epsBCS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION solom2(k,fichdep)
+FUNCTION solom2(k)
 USE recettes
 REAL(QP), INTENT(IN) :: k
-CHARACTER(len=*), INTENT(IN) :: fichdep
 REAL(QP) solom2
 
-REAL(QP) qdep,zdep,klu,vec(1:2)
-INTEGER ik
+REAL(QP) qt
 
-open(126,file=trim(fichdep))
- do ik=1,10000
-  read(126,*)klu,qdep,zdep
-  if(klu>k)exit
- enddo
-close(126)
-vec=(/qdep,zdep/)
-call mnewt_q(20,vec,1.e-11_qp,1.e-9_qp,solP)
-solom2=vec(2)-2
+qt=rtsafe(solP,(/bidon/),k0,2*k0,1.0e-19_qp)
+solom2=epsBCS(k-2.0_qp*qt)+2.0_qp*epsBCS(qt)-2.0_qp
+
 CONTAINS
- SUBROUTINE solP(v,P,JP)
- REAL(QP), DIMENSION(:), INTENT(IN)  :: v
- REAL(QP), DIMENSION(:), INTENT(OUT) :: P
- REAL(QP), DIMENSION(:,:), INTENT(OUT) :: JP
+ SUBROUTINE solP(qt,arg,P,dP)
+ REAL(QP), INTENT(IN) :: qt
+ REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+ REAL(QP), INTENT(OUT) :: P,dP
 
- REAL(QP) q,z
+ P=     (k**2 - k0**2)**2*(1 + k0**4) - 8*k*(k - k0)*(k + k0)*(1 + k0**4)*qt + &
+     -  (-2*k**4*k0**2 + k**2*(25 + 28*k0**4) - 10*(k0**2 + k0**6))*qt**2 + &
+     -  4*k*(-9 + 4*k**2*k0**2 - 12*k0**4)*qt**3 + (21 + k**4 - 50*k**2*k0**2 + 33*k0**4)*qt**4 - &
+     -  8*k*(k**2 - 9*k0**2)*qt**5 + 8*(3*k**2 - 5*k0**2)*qt**6 - 32*k*qt**7 + 16*qt**8
 
- q=v(1)
- z=v(2)
- P(1)=144 - 96*k**4 + 16*k**8 + 192*k**2*k0**2 - 64*k**6*k0**2 + 288*k0**4 - &
-         32*k**4*k0**4 + 192*k**2*k0**6 + 144*k0**8 - 160*z**2 - 32*k**4*z**2 + 64*k**2*k0**2*z**2 - &
-         160*k0**4*z**2 + 16*z**4 + (384*k**3 - 128*k**7 - 384*k*k0**2 + 384*k**5*k0**2 + 128*k**3*k0**4 - &
-         384*k*k0**6 + 128*k**3*z**2 - 128*k*k0**2*z**2)*q + &
-         (-576*k**2 + 448*k**6 - 896*k**4*k0**2 - 320*k**2*k0**4 - 192*k**2*z**2 + 128*k0**2*z**2)*q**2 + &
-         (384*k - 896*k**5 + 1024*k**3*k0**2 + 384*k*k0**4 + 128*k*z**2)*q**3 + &
-         (-72 + 1112*k**4 - 560*k**2*k0**2 - 72*k0**4 - 40*z**2)*q**4 + (-864*k**3 + 96*k*k0**2)*q**5 + &
-         400*k**2*q**6 - 96*k*q**7 + 9*q**8
-
- P(2)=384*k**3 - 128*k**7 - 384*k*k0**2 + 384*k**5*k0**2 + 128*k**3*k0**4 - 384*k*k0**6 + &
-        5*(-864*k**3 + 96*k*k0**2)*q**4 + 2400*k**2*q**5 - 672*k*q**6 + 72*q**7 + 128*k**3*z**2 - &
-        128*k*k0**2*z**2 + 4*q**3*(-72 + 1112*k**4 - 560*k**2*k0**2 - 72*k0**4 - 40*z**2) + &
-        3*q**2*(384*k - 896*k**5 + 1024*k**3*k0**2 + 384*k*k0**4 + 128*k*z**2) + &
-        2*q*(-576*k**2 + 448*k**6 - 896*k**4*k0**2 - 320*k**2*k0**4 - 192*k**2*z**2 + 128*k0**2*z**2)
-
- JP(1,1)=P(2)
-
- JP(1,2)=-320*z - 64*k**4*z + 128*k**2*k0**2*z - 320*k0**4*z + 256*k*q**3*z - 80*q**4*z + 64*z**3 + &
-        q**2*(-384*k**2*z + 256*k0**2*z) + q*(256*k**3*z - 256*k*k0**2*z)
-
- JP(2,1)=20*(-864*k**3 + 96*k*k0**2)*q**3 + 12000*k**2*q**4 - 4032*k*q**5 + 504*q**6 + &
-        12*q**2*(-72 + 1112*k**4 - 560*k**2*k0**2 - 72*k0**4 - 40*z**2) + &
-        6*q*(384*k - 896*k**5 + 1024*k**3*k0**2 + 384*k*k0**4 + 128*k*z**2) + &
-        2*(-576*k**2 + 448*k**6 - 896*k**4*k0**2 - 320*k**2*k0**4 - 192*k**2*z**2 + 128*k0**2*z**2)
-
- JP(2,2)=256*k**3*z - 256*k*k0**2*z + 768*k*q**2*z - 320*q**3*z + 2*q*(-384*k**2*z + 256*k0**2*z)
+ dP=          2*(-4*k*(k - k0)*(k + k0)*(1 + k0**4) + &
+     -    (-2*k**4*k0**2 + k**2*(25 + 28*k0**4) - 10*(k0**2 + k0**6))*qt + &
+     -    6*k*(-9 + 4*k**2*k0**2 - 12*k0**4)*qt**2 + 2*(21 + k**4 - 50*k**2*k0**2 + 33*k0**4)*qt**3 - &
+     -    20*k*(k**2 - 9*k0**2)*qt**4 + 24*(3*k**2 - 5*k0**2)*qt**5 - 112*k*qt**6 + 64*qt**7)
 
  END SUBROUTINE solP
 END FUNCTION solom2

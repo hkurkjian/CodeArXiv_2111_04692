@@ -29,11 +29,17 @@ elseif(nivobla==1)then
  blaPole=.TRUE.
 elseif(nivobla==2)then
  bla0 =.TRUE.
- bla00=.FALSE.
+ bla00=.TRUE.
+ blaM=.FALSE.
+ blaerr=.FALSE.
+ blaPole=.TRUE.
+elseif(nivobla==3)then
+ bla0 =.TRUE.
+ bla00=.TRUE.
  blaM=.FALSE.
  blaerr=.TRUE.
  blaPole=.TRUE.
-elseif(nivobla==3)then
+elseif(nivobla==4)then
  bla0 =.TRUE.
  bla00=.TRUE.
  blaM=.TRUE.
@@ -79,15 +85,17 @@ FUNCTION detG(k,zk,fichiers,EPS,sigcomb)
   bqbidon(:)=bidon
 
   sigcomb(1,:)=cmplx(intpasres(k,zk,.TRUE.,.FALSE.,profondeurbidon,EPS(1:2),bqbidon,fichiers(1),""),0.0_qp)
-  sigcomb(2,:)=selfEpole(k,zk,EPS(3),fichiers(2))
+  sigcomb(2,:)=0.0_qp
+!  sigcomb(2,:)=selfEpole(k,zk,EPS(3),fichiers(2))
+!  sigcomb(1,:)=0.0_qp
 
   sig=sigcomb(1,1:3)+sigcomb(1,4:6)+sigcomb(2,1:3)+sigcomb(2,4:6)
   detG=(-zk+xik-sig(1))*(-zk-xik-sig(2))-(1.0_qp-sig(3))**2
 END FUNCTION detG
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION detGres(k,zk,fichiers,EPS,sigcomb)
+FUNCTION detGres(k,zk,fichpol,EPS,sigcomb)
   REAL(QP), INTENT(IN) :: k,zk, EPS(1:3)
-  CHARACTER(len=90), INTENT(IN) :: fichiers(1:3)
+  CHARACTER(len=90), INTENT(IN) :: fichpol
   COMPLEX(QPC), INTENT(OUT) :: sigcomb(1:2,1:6)
   COMPLEX(QPC) detGres
 
@@ -98,28 +106,22 @@ FUNCTION detGres(k,zk,fichiers,EPS,sigcomb)
   xik=k**2-x0
 
   call bornesk(bk)
-  call lignesenergie(k,fichiers(1:2),le)
+  call lignesenergie(k,le)
 
-  sigcomb(2,:)=selfEpole(k,zk,EPS(3),fichiers(3))
+  sigcomb(2,:)=0.0_qp
+!  sigcomb(2,:)=selfEpole(k,zk,EPS(3),fichpol)
   sigcomb(1,:)=intres(k,zk,.TRUE.,EPS(1:2),bk,le,"")
 
   sig=sigcomb(1,1:3)+sigcomb(1,4:6)+sigcomb(2,1:3)+sigcomb(2,4:6)
   detGres=(-zk+xik-sig(1))*(-zk-xik-sig(2))-(1.0_qp-sig(3))**2
 END FUNCTION detGres
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION thresholds(mu,k,fichiers)
+FUNCTION thresholds(mu,k,fichpol)
   REAL(QP), INTENT(IN) :: mu,k
-  CHARACTER(len=90), INTENT(IN) :: fichiers(1:3)
+  CHARACTER(len=90), INTENT(IN) :: fichpol
   REAL(QP) :: thresholds(1:2)
-
-  REAL(QP) bk(0:12),le(1:8)
-
-  x0=mu
-  thresholds(1)=contPole(k,fichiers(3))
-
-  call bornesk(bk)
-  call lignesenergie(k,fichiers(1:2),le)
-  thresholds(2)=le(8)+2.0_qp
+  thresholds(1)=contPole(k,fichpol)
+  thresholds(2)=3*epsBCS(k/3.0_qp)
 
 END FUNCTION thresholds
 END MODULE selftot

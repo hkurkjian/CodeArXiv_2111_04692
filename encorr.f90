@@ -10,7 +10,7 @@ REAL(QP) dk,dzk
 REAL(QP) kmin,kmax,zkmin,zkmax,EPS(1:3)
 REAL(QP) bqbidon(1:3),th(1:2)
 INTEGER nk,nzk,ik,izk,nivobla,profondeurbidon
-CHARACTER(len=90) fichldc(1:2),fichiers(1:6),suffixe,suffintq
+CHARACTER(len=90) fichiers(1:4),suffixe,suffintq
 CHARACTER(len=5) cik,cizk
 LOGICAL nvofich
 
@@ -27,9 +27,7 @@ open(10,file='encorr.inp')
  read(10,*)fichiers(1) !pour charger bestM/donnees
  read(10,*)fichiers(2) !pour charger bestM/donnees_sup
  read(10,*)fichiers(3) !pour intldc/intpasres
- read(10,*)fichiers(4) !pour intldc/lignesenergie
- read(10,*)fichiers(5) !pour intldc/lignesenergie
- read(10,*)fichiers(6) !pour intpole
+ read(10,*)fichiers(4) !pour intpole
  read(10,*)EPS(1)      !intldc/EPSq
  read(10,*)EPS(2)      !intldc/EPSom
  read(10,*)EPS(3)      !intpole/EPSq
@@ -52,9 +50,8 @@ write(6,*)'zkmin=',zkmin
 write(6,*)'zkmax=',zkmax
 write(6,*)'nzk=',nzk
 write(6,*)'fichiers ldc:',trim(fichiers(1))," ",trim(fichiers(2))
-write(6,*)'fichiers om2:',trim(fichiers(4))," ",trim(fichiers(5))
 write(6,*)'fichier  lec:',trim(fichiers(3))
-write(6,*)'fichier pole:',trim(fichiers(6))
+write(6,*)'fichier pole:',trim(fichiers(4))
 write(6,*)'precisions:',EPS
 
 call initialisation(mu,nivobla,.TRUE.,fichiers(1:2))
@@ -99,12 +96,12 @@ do ik=0,nk
   suffintq=adjustl(suffintq)
   write(6,*)"suffintq:",trim(suffintq)
 
-  th=thresholds(mu,k,(/fichiers(4:6)/))
+  th=thresholds(mu,k,fichiers(4))
   if(zk<th(2))then
-   det=detG(k,zk,(/fichiers(3),fichiers(6)/),EPS,sigma)
+   det=detG(k,zk,fichiers(3:4),EPS,sigma)
 !   det=detGres(k,zk,(/fichiers(3),fichiers(6)/),EPS,sigcomb)
   else
-   det=detGres(k,zk,(/fichiers(4:6)/),EPS,sigma)
+   det=detGres(k,zk,fichiers(4),EPS,sigma)
   endif
   
   sigcomb(1:3)=sigma(1,1:3)+sigma(1,4:6)+sigma(2,1:3)+sigma(2,4:6)

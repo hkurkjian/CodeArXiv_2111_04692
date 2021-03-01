@@ -11,7 +11,7 @@ MODULE modpol
         MODULE PROCEDURE polin2s,polin2q
        END INTERFACE polin2
        INTERFACE locate
-        MODULE PROCEDURE locates,located,locateq
+        MODULE PROCEDURE locates,located,locateq,locatei
        END INTERFACE locate
  CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -175,6 +175,15 @@ MODULE modpol
        INCLUDE "polint.f90"
        END SUBROUTINE polintcq
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SUBROUTINE locatei(xx,x,pos)
+       USE nrtype
+       IMPLICIT NONE
+       INTEGER, DIMENSION(:), INTENT(IN) :: xx
+       INTEGER, INTENT(IN) :: x
+       INTEGER(I4B), INTENT(OUT) :: pos
+       INCLUDE "locate.f90"
+       END SUBROUTINE locatei
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !       SUBROUTINE phi1 (r,r0,v)
 !       

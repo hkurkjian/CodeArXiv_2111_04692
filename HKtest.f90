@@ -12,7 +12,7 @@ IMPLICIT NONE
 
 REAL(QP) om,dom,M(1:2,1:2),dM(1:2,1:2),A(1:6),dMm(1:3),q
 COMPLEX(QPC) Mm2(1:6)
-REAL(QP) Mmbid(1:6)
+REAL(QP) Mmbid(1:6,1:3)
 REAL(QP) bk(0:12),le(1:8)
 REAL(QP) EPSq,EPSom,EPS(1:2)
 REAL(QP) :: k,zk,bq(1:3)
@@ -28,18 +28,32 @@ blaM=.TRUE.
 fichgri(1)="DONNEES/BCS_4_sup2"
 fichgri(2)="DONNEES/BCS_4_sup3"
 
-call combineom2(fichgri(1),fichgri(2))
-stop
-
-Mmbid=(/1.0_qp,2.0_qp,3.0_qp,4.0_qp,5.0_qp,6.0_qp/)
-Mm2=cmplx(Mmbid,0.0_qp,kind=qpc)
-write(6,*)Mm2
-stop
+!!call combineom2(fichgri(1),fichgri(2))
+!!stop
+!
+!Mmbid(1,:)=(/5.0_qp, 1.0_qp,1.0_qp/)
+!Mmbid(2,:)=(/13.0_qp,2.0_qp,7.0_qp/)
+!Mmbid(3,:)=(/3.0_qp, 3.0_qp,3.0_qp/)
+!Mmbid(4,:)=(/6.0_qp, 9.0_qp,4.0_qp/)
+!Mmbid(5,:)=(/15.0_qp,5.0_qp,5.0_qp/)
+!Mmbid(6,:)=(/2.0_qp, 6.0_qp,6.0_qp/)
+!call tricol_q(Mmbid,4,2)
+!write(6,*)
+!write(6,*)
+!write(6,*) Mmbid(1,:)
+!write(6,*) Mmbid(2,:)
+!write(6,*) Mmbid(3,:)
+!write(6,*) Mmbid(4,:)
+!write(6,*) Mmbid(5,:)
+!write(6,*) Mmbid(6,:)
+!stop
+!Mm2=cmplx(Mmbid,0.0_qp,kind=qpc)
+!write(6,*)Mm2
 
 testpt=.TRUE.
 testpt=.FALSE.
-testdspec=.TRUE.
 testdspec=.FALSE.
+testdspec=.TRUE.
 
 !Paramètres physiques
 x0=4.0_qp
@@ -52,7 +66,7 @@ zk=3.4_qp
 
 !Paramètres de dspec
 temperaturenulle=.TRUE.
-EPSpp=1.0e-7_qp
+EPSpp=1.0e-8_qp
 x0crit=0.0_qp
 bla1=.TRUE.
 bla1=.FALSE.
@@ -159,6 +173,8 @@ if(testdspec)then
  bla2=.FALSE.
  
  call calcxqjoin
+ x0=100.0_qp
+ x0=4.0_qp
  xq=0.051_qp
  om=2.01035604672572088466101471645589475_qp
  om=2.01035604672572088466101471645589475
@@ -166,6 +182,18 @@ if(testdspec)then
  om=2.065740474
  xq=4.237037874         
  om=2.237778973
+ xq=19.5482495000000000000000000000000029_qp
+ om=4.10622797781861219408898480249810037_qp
+ xq=0.179349500000000000000000000000000003_qp
+ xq=1.53024950000000000000000000000000014_qp
+ om=opp(2)-0.001_qp
+ xq=0.179349500000000000000000000000000003_qp
+ om=4.10622797781861219408898480249810037
+ om=199.993945209530785244816996198898181_qp
+ xq=19.5422495000000000000000000000000015_qp
+ om=9.26859418992104729175832888330616865_qp
+ om=2.00007871329994328009327429090454400_qp
+ xq=3.77276214285714285714285714285714308
  call oangpp
  write(6,*)"opp=",opp(1:3)
  
@@ -188,7 +216,7 @@ call loadom2  (fichgri(2))
 
 call bornesk(bk)
 write(6,*)"bk=",bk
-call lignesenergie(k,fichom2,le)
+call lignesenergie(k,le)
 write(6,*)"le=",le
 Mm2=intres(k,zk,interpol,EPS,bk,le,suffintq)
 write(6,*)"Mm2=",Mm2

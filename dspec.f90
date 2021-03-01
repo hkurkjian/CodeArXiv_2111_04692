@@ -195,11 +195,11 @@ REAL(QP) intpp
 REAL(QP) r0 !spectral density in om0
 REAL(QP) bmax,db,omcrit!bmax: energy cutoff, omcrit: critical value of om after which racinfq should be used to integrate the tail
 REAL(QP) Icomp,Iinf!partial integrals
-REAL(QP) arg(1:1,1:10),bornes(1:10)
+REAL(QP) arg(1:1,1:20),bornes(1:20)
 REAL(QP), PARAMETER :: singu=1.0_qp,nonsingu=-1.0_qp !singu/nonsingu: call inter with or without the regularizing term r0/(om0-om)
 REAL(QP), PARAMETER :: su=1.0_qp,nsu=-1.0_qp !short for singu/nonsingu
-REAL(QP) ag(1:4),mil
-INTEGER choix(1:10)
+REAL(QP) ag(1:4),mil,mil1,mil2
+INTEGER choix(1:20)
 LOGICAL axer !calculation on or outside the real axis (currently not active)
 
 axer=.TRUE.
@@ -308,9 +308,11 @@ if(axer)then
 
       Icomp=-r0*log((ag(2)-om0)/(om0-ag(1)))
      else
-      arg(1,1:6)=         (/nsu,    nsu,   nsu,                 su,   su,  nsu/)
-      choix(1:6)=         (/msqu,   msql,  msqu,                msql, rinf,rinf/)
-      intpp=decoupe(inter,(/0.0_qp, ag(1), (ag(1)+ag(2))/2.0_qp,ag(2),om0, 2*om0-ag(2),bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
+      arg(1,1:5)=         (/nsu,    nsu,   nsu,                 su,   nsu/)
+      choix(1:5)=         (/msqu,   msql,  msqu,                msql, rinf/)
+      intpp=decoupe(inter,(/0.0_qp, ag(1), (ag(1)+ag(2))/2.0_qp,ag(2),om0+ag(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+
+      Icomp=-r0*log(ag(2)/(om0-ag(2)))
      endif
      call ecrit(bla1,'Icomp=',Icomp)
 
@@ -323,11 +325,20 @@ if(axer)then
       choix(1:6)=         (/mpnt,   msqu, msql, msqu,                msql, rinf/)
       intpp=decoupe(inter,(/0.0_qp, ag(1),ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),2*ag(3),bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
      elseif(om0<ag(2))then
+      if(((ag(2)-om0)<0.01_qp).AND.(ag(2)+0.01_qp<(ag(2)+ag(3))/2).AND.((ag(2)-om0)<(om0-ag(1))))then
+       mil1=ag(2)+0.01_qp
+       mil2=(ag(2)+ag(3))/2
+       arg(1,1:8)  =(/nsu,   su,   su,             nsu,  nsu,  nsu,  nsu,  nsu/)
+       choix(1:8)  =(/mpnt,  mpnt, msqu,           msql, msql, msqu, msql, rinf/)
+       bornes(1:9) =(/0.0_qp,ag(1),(ag(1)+ag(2))/2,ag(2),mil1, mil2, ag(3),2*ag(3),bmax/)
+       if(floor(num)==5) choix(3)=rinf
+       intpp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
+      else
        arg(1,1:7)=         (/nsu,   su,   su,  nsu,  nsu,                 nsu,  nsu/)
        choix(1:7)=         (/mpnt,  mpnt, msqu,msql, msqu,                msql, rinf/)
-       bornes(1:8)=        (/0.0_qp,ag(1),(ag(1)+ag(2))/2.1_qp,ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),2*ag(3),bmax/)
-       bornes(1:8)=        (/0.0_qp,ag(1),om0                 ,ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),2*ag(3),bmax/)
+       bornes(1:8)=        (/0.0_qp,ag(1),(1.1_qp*ag(1)+0.9_qp*ag(2))/2.0_qp,ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),2*ag(3),bmax/)
        intpp=decoupe(inter,bornes(1:8),arg(1:1,1:7),choix(1:7),EPSpp,bla1)
+      endif
 
        Icomp=-r0*log((ag(2)-om0)/(om0-ag(1)))
      elseif(om0<ag(3))then
@@ -356,25 +367,48 @@ if(axer)then
       bornes(1:10)= (/0.0_qp, ag(1),(ag(1)+ag(2))/2.0_qp,ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),(ag(3)+ag(4))/2.0_qp,ag(4),2*ag(4),bmax/)
       intpp=decoupe(inter,bornes(1:10),arg(1:1,1:9),choix(1:9),EPSpp,bla1)
      elseif(om0<ag(2))then
-      arg(1,1:9)  =       (/nsu,   su,   su,  nsu,  nsu,                 nsu,  nsu,                 nsu,  nsu/)
-      choix(1:9)  =       (/mpnt,  mpnt, msqu,msql, msqu,                msql, msqu,                msql, rinf/)
-      if(floor(num)==5) choix(3)=rinf
-      bornes(1:10)=       (/0.0_qp,ag(1),(ag(1)+ag(2))/2,ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),(ag(3)+ag(4))/2.0_qp,ag(4),2*ag(4),bmax/)
-      intpp=decoupe(inter,bornes(1:10),arg(1:1,1:9),choix(1:9),EPSpp,bla1)
+      if(((ag(2)-om0)<0.01_qp).AND.(ag(2)+0.01_qp<(ag(2)+ag(3))/2))then
+       mil1=ag(2)+0.01_qp
+       mil2=(ag(2)+ag(3))/2
+!      if(.FALSE.)then
+!      if(.TRUE.)then
+       arg(1,1:10)  =(/nsu,   su,   su,             nsu,  nsu,  nsu,  nsu,  nsu,                 nsu,  nsu/)
+       choix(1:10)  =(/mpnt,  mpnt, msqu,           msql, msql, msqu, msql, msqu,                msql, rinf/)
+       bornes(1:11) =(/0.0_qp,ag(1),(ag(1)+ag(2))/2,ag(2),mil1, mil2, ag(3),(ag(3)+ag(4))/2.0_qp,ag(4),2*ag(4),bmax/)
+       if(floor(num)==5) choix(3)=rinf
+       intpp=decoupe(inter,bornes(1:11),arg(1:1,1:10),choix(1:10),EPSpp,bla1)
+      else
+       arg(1,1:9)  =       (/nsu,   su,   su,  nsu,  nsu,                 nsu,  nsu,                 nsu,  nsu/)
+       choix(1:9)  =       (/mpnt,  mpnt, msqu,msql, msqu,                msql, msqu,                msql, rinf/)
+       if(floor(num)==5) choix(3)=rinf
+       bornes(1:10)=       (/0.0_qp,ag(1),(ag(1)+ag(2))/2,ag(2),(ag(2)+ag(3))/2.0_qp,ag(3),(ag(3)+ag(4))/2.0_qp,ag(4),2*ag(4),bmax/)
+       intpp=decoupe(inter,bornes(1:10),arg(1:1,1:9),choix(1:9),EPSpp,bla1)
+      endif
   
       Icomp=-r0*log((ag(2)-om0)/(om0-ag(1)))
      elseif(om0<ag(3))then
-      mil=max(om0,(ag(2)+ag(3))/2.0_qp)
-      arg(1,1:8)=         (/nsu,    nsu,     su,     su,   nsu,   nsu,                 nsu,   nsu/)
-      choix(1:8)=         (/mpnt,   msqu,    msql,   msqu, msql,  msqu,                msql,  rinf/)
-      bornes(1:9)=        (/0.0_qp, ag(1),   ag(2),  mil,  ag(3), (ag(3)+ag(4))/2.0_qp,ag(4), 2*ag(4),bmax/)
-      intpp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
+      if(((om0-ag(2))<0.01_qp).AND.(ag(2)+0.01_qp<(ag(2)+ag(3))/2))then
+!      if(.FALSE.)then
+!      if(.TRUE.)then
+       mil1=ag(2)+0.01_qp
+       mil2=(ag(2)+ag(3))/2
+       arg(1,1:9)=         (/nsu,    nsu,     su,    su,   su,   nsu,   nsu,                 nsu,   nsu/)
+       choix(1:9)=         (/mpnt,   msqu,    msql,  msql, msqu, msql,  msqu,                msql,  rinf/)
+       bornes(1:10)=       (/0.0_qp, ag(1),   ag(2), mil1, mil2, ag(3), (ag(3)+ag(4))/2.0_qp,ag(4), 2*ag(4),bmax/)
+       intpp=decoupe(inter,bornes(1:10),arg(1:1,1:9),choix(1:9),EPSpp,bla1)
+      else
+       mil=(ag(2)+ag(3))/2.0_qp
+       arg(1,1:8)=         (/nsu,    nsu,     su,     su,   nsu,   nsu,                 nsu,   nsu/)
+       choix(1:8)=         (/mpnt,   msqu,    msql,   msqu, msql,  msqu,                msql,  rinf/)
+       bornes(1:9)=        (/0.0_qp, ag(1),   ag(2),  mil,  ag(3), (ag(3)+ag(4))/2.0_qp,ag(4), 2*ag(4),bmax/)
+       intpp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
+      endif
 
       Icomp=-r0*log((ag(3)-om0)/(om0-ag(2)))
      elseif(om0<ag(4))then
-      arg(1,1:8)=         (/nsu,    nsu,    nsu,   nsu,                 su,   su,   nsu,   nsu/)
-      choix(1:8)=         (/mpnt,   msqu,   msql,  msqu,                msql, msqu, msql,  rinf/)
-      bornes(1:9)=        (/0.0_qp, ag(1),  ag(2), (ag(2)+ag(3))/2.0_qp,ag(3),om0,  ag(4), 2*ag(4),bmax/)
+      arg(1,1:8)=         (/nsu,    nsu,    nsu,   nsu,                 su,   su,                  nsu,   nsu/)
+      choix(1:8)=         (/mpnt,   msqu,   msql,  msqu,                msql, msqu,                msql,  rinf/)
+      bornes(1:9)=        (/0.0_qp, ag(1),  ag(2), (ag(2)+ag(3))/2.0_qp,ag(3),(ag(3)+ag(4))/2.0_qp,ag(4), 2*ag(4),bmax/)
       intpp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
 
       Icomp=-r0*log((ag(4)-om0)/(om0-ag(3)))

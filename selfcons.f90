@@ -2,19 +2,19 @@ PROGRAM selfcons
 USE modsim
 USE vars
 USE selftot
-USE recettes, ONLY : rtsafe,mnewt
+USE recettes, ONLY : rtsafe,mnewt,rtsafeq
 IMPLICIT NONE
 LOGICAL blaSC
 
-REAL(QP)  mu,k,kmin,kmax,dk,zkdep
+REAL(QP)  mu,k,kmin,kmax,dk,zkdep(1:1)
 REAL(QP)  zk
 REAL(QP)  EPS(1:3)
-CHARACTER(len=90) fichiers(1:6),suffixe !1:2 fichldc, 3 fichlec, 4:5 fichom2, 6 fichpol
+CHARACTER(len=90) fichiers(1:4),suffixe !1:2 fichldc, 3 fichlec, 4 fichpol
 INTEGER nk,ik
-LOGICAL nvofich
+LOGICAL nvofich,res,newton
 
 REAL(QP) contK(1:2), xik, e0, Uk, Vk, OS
-REAL(QP) detZero, detCont
+REAL(QP) detZero, detCont, cont, borneinf, bornesup
 COMPLEX(QPC) sigbidon(1:2,1:6)
 
 open(10,file='selfcons.inp')
@@ -22,18 +22,18 @@ open(10,file='selfcons.inp')
  read(10,*)kmin
  read(10,*)kmax
  read(10,*)nk
- read(10,*)zkdep
+ read(10,*)zkdep(1)
  read(10,*)fichiers(1) !pour charger bestM/donnees
  read(10,*)fichiers(2) !pour charger bestM/donnees_sup
  read(10,*)fichiers(3) !pour intldc/intpasres
- read(10,*)fichiers(4) !pour intldc/lignesenergie
- read(10,*)fichiers(5) !pour intldc/lignesenergie
- read(10,*)fichiers(6) !pour intpole
+ read(10,*)fichiers(4) !pour intpole
  read(10,*)EPS(1)      !intldc/EPSq
  read(10,*)EPS(2)      !intldc/EPSom
  read(10,*)EPS(3)      !intpole/EPSq
- read(10,*)suffixe !terminaison of output files
- read(10,*)nvofich !TRUE to overwrite output files
+ read(10,*)res         !TRUE to use detGres, FALSE for detG
+ read(10,*)newton      !TRUE to use mnewt,   FALSE for rtsafe
+ read(10,*)suffixe     !terminaison of output files
+ read(10,*)nvofich     !TRUE to overwrite output files
 close(10)
 
 if(nvofich)then
@@ -52,10 +52,13 @@ blaSC=.TRUE.
 
 do ik=0,nk
  k=kmin+dk*ik
+ if(blaSC) write(6,*)"-------------------------------------"
+ if(blaSC) write(6,*)
  if(blaSC) write(6,*)"k=",k
+ if(blaSC) write(6,*)
 
  ! Calculate continuum thresholds
- contK=thresholds(mu,k,(/fichiers(4:6)/)) 
+ contK=thresholds(mu,k,fichiers(4)) 
 
  ! Mean-field functions
  xik=k**2-mu
@@ -63,52 +66,128 @@ do ik=0,nk
  Uk=sqrt((1.0_qp+xik/e0)/2.0_qp)
  Vk=sqrt((1.0_qp-xik/e0)/2.0_qp)
     
- call initialisation(mu,0,.FALSE.,(/fichiers(1:2)/))
+ call initialisation(mu,0,res,(/fichiers(1:2)/))
  ! Look for a solution below the continuum
- OS=1.e-6_qp
- detZero=detG(k,         OS,(/fichiers(3),fichiers(6)/),EPS,sigbidon)
- if(blaSC) write(6,*)"zk,det=",OS         ,detZero
- detCont=detG(k,contK(1)-OS,(/fichiers(3),fichiers(6)/),EPS,sigbidon)
- if(blaSC) write(6,*)"zk,det=",contK(1)-OS,detCont
-
-
- if(detZero*detCont<0.0_qp)then
-   if(blaSC) write(6,*)"Looking for solution below continuum"
-   zk=rtsafe(rootFunSC,(/bidon/),OS,MINVAL(contK)-OS,1.e-5_qp)
+ if(newton)then
+  if(blaSC) write(6,*)"mnewt, initial guess: zkdep=",zkdep
+  call mnewt(20,zkdep,0.001_qp*EPS(1),0.1_qp*EPS(1),detGnewt)
  else
-   if(blaSC) write(6,*)"Solution is inside the continuum"
+  OS=1.e-7_qp
+  cont=contK(2)
+  if(blaSC) write(6,*)"rtsafe: trying to bracket the root"
+  if(res)then
+   detZero=detGres(k,     OS,fichiers(4),  EPS,sigbidon)
+  else
+   detZero=detG   (k,     OS,fichiers(3:4),EPS,sigbidon)
+  endif
+  if(blaSC) write(6,*)"zk,det=",OS         ,detZero
+ 
+  if(res)then
+   detCont=detGres(k,cont-OS,fichiers(4),  EPS,sigbidon)
+  else
+   detCont=detG   (k,cont-OS,fichiers(3:4),EPS,sigbidon)
+  endif
+  if(blaSC) write(6,*)"zk,det=",cont-OS,detCont
+ 
+ 
+  if(detZero*detCont<0.0_qp)then
+    if(blaSC) write(6,*)"Looking for solution below continuum"
+    borneinf=zkdep(1)
+    borneinf=OS
+    bornesup=cont-OS
+    zkdep(1)=rtsafeq(detGrtsafe,(/bidon/),borneinf,bornesup,1.e-6_qp)
+  else
+    if(blaSC) write(6,*)"Solution is inside the continuum"
+  endif
  endif
 
  open(20,file="DONNEES/solautocor"//trim(suffixe)//".dat",POSITION="APPEND")
-  write(20,*)k,zk,contK
+  write(20,*)k,zkdep,contK
  close(20)
 
 enddo
 
 CONTAINS
-  SUBROUTINE rootFunSC(zkIn,arg,det,ddet)
-    IMPLICIT NONE
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  SUBROUTINE detGrtsafe(zkIn,arg,det,ddet)
     REAL(QP), INTENT(IN) :: zkIn
     REAL(QP), DIMENSION(:), INTENT(IN) :: arg
     REAL(QP), INTENT(OUT) :: det,ddet
 
     REAL(QP) detP,detM,h
 
-    ! Self-energy
     h=zkIn*0.0001_qp
-    det =real(detG(k,zkIn  ,(/fichiers(3),fichiers(6)/),EPS,sigbidon))
+
+    if(res)then
+     det =real(detGres(k,zkIn  ,fichiers(4),  EPS,sigbidon))
+    else
+     det =real(detG   (k,zkIn  ,fichiers(3:4),EPS,sigbidon))
+    endif
     if(blaSC) write(6,*)"zk,det=",zkIn  ,det
-    detP=real(detG(k,zkIn+h,(/fichiers(3),fichiers(6)/),EPS,sigbidon))
-    if(blaSC) write(6,*)"zk,det=",zkIn+h,det
-    detM=real(detG(k,zkIn-h,(/fichiers(3),fichiers(6)/),EPS,sigbidon))
-    if(blaSC) write(6,*)"zk,det=",zkIn-h,det
+
+    if(res)then
+     detP=real(detGres(k,zkIn+h,fichiers(4),  EPS,sigbidon))
+    else
+     detP=real(detG   (k,zkIn+h,fichiers(3:4),EPS,sigbidon))
+    endif
+    if(blaSC) write(6,*)"zk,det=",zkIn+h,detP
+
+    if(res)then
+     detM=real(detGres(k,zkIn-h,fichiers(4),  EPS,sigbidon))
+    else
+     detM=real(detG   (k,zkIn-h,fichiers(3:4),EPS,sigbidon))
+    endif
+    if(blaSC) write(6,*)"zk,det=",zkIn-h,detM
 
     ddet=(detP-detM)/(2.0_qp*h)
 
     if(blaSC)then
-      write(6,*)"zk=",zkIn
-      write(6,*)"det,ddet=",det,ddet
+      write(6,*)"ddet=",ddet
+      write(6,*)
     endif
 
-  END SUBROUTINE rootFunSC
+  END SUBROUTINE detGrtsafe
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  SUBROUTINE detGnewt(zk,det,ddet)
+    REAL(QP), INTENT(IN),  DIMENSION(:) :: zk
+    REAL(QP), INTENT(OUT), DIMENSION(:)   :: det
+    REAL(QP), INTENT(OUT), DIMENSION(:,:)   :: ddet
+
+    REAL(QP) zkIn
+    REAL(QP) detP,detM,h
+
+    ! Self-energy
+    zkIn=zk(1)
+    h=zkIn*0.0001_qp
+
+    if(res)then
+     det(1)=real(detGres(k,zkIn  ,fichiers(4),  EPS,sigbidon))
+    else
+     det(1)=real(detG   (k,zkIn  ,fichiers(3:4),EPS,sigbidon))
+    endif
+    if(blaSC) write(6,*)"zk,det=",zkIn  ,det
+
+    if(res)then
+     detP  =real(detGres(k,zkIn+h,fichiers(4),  EPS,sigbidon))
+    else
+     detP  =real(detG   (k,zkIn+h,fichiers(3:4),EPS,sigbidon))
+    endif
+    if(blaSC) write(6,*)"zk,det=",zkIn+h,detP
+
+    if(res)then
+     detM  =real(detGres(k,zkIn-h,fichiers(4),  EPS,sigbidon))
+    else
+     detM  =real(detG   (k,zkIn-h,fichiers(3:4),EPS,sigbidon))
+    endif
+    if(blaSC) write(6,*)"zk,det=",zkIn-h,detM
+
+    ddet(1,1)=(detP-detM)/(2.0_qp*h)
+
+    if(blaSC)then
+      write(6,*)"ddet=",ddet
+      write(6,*)
+    endif
+
+  END SUBROUTINE detGnewt
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 END PROGRAM selfcons

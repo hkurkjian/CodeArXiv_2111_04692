@@ -41,15 +41,15 @@ beta=bidon
 temperaturenulle=.TRUE.
 
 call calcxqjoin
-xq1a  =xqjoin/8.0_qp
-xq1b  =7.0_qp*xqjoin/8.0_qp
-xq1c  =xqjoin
-xq2   =2*sqrt(x0)
-xqmax1 =4*xq2
-xqmax2 =100*xq2
-qsep=(/xqmin,xq1a,xq1b,xq1c,xq2,xqmax1,xqmax2/)
-nomfen=(/nom1a,nom1b,nom2a,nom2b,nom2c,nom3a,nom3b,nominf/)
-nqfen =(/nq1a,nq1b,nq1a,nq2,nq3a,nq3b/)
+xq1a   = xqjoin/8.0_qp
+xq1b   = 7.0_qp*xqjoin/8.0_qp
+xq1c   = xqjoin
+xq2    = 2*sqrt(x0)
+xqmax1 = 4*xq2
+xqmax2 = 100*xq2
+qsep   = (/xqmin,xq1a,xq1b,xq1c,xq2,xqmax1,xqmax2/)
+nomfen = (/nom1a,nom1b,nom2a,nom2b,nom2c,nom3a,nom3b,nominf/)
+nqfen  = (/nq1a,nq1b,nq1a,nq2,nq3a,nq3b/)
 
 write(6,*)'xqmin='  ,xqmin
 write(6,*)'xq1a='   ,xq1a
@@ -124,7 +124,7 @@ do ifenq=1,6
   dom3  =0.05_qp*opp(3)
   if(ifenq.LE.3)then
    dom3p =min((opp(3)-opp(2))/3,5.0e-2_qp)
-   omsep=(/opp(1),opp(2)-dom2p,opp(2),opp(2)+dom2,opp(3)-dom3p,opp(3),opp(3)+dom3,4*opp(3)/)
+   omsep=(/opp(1),opp(1)+dom1,opp(2)-dom2p,opp(2),opp(2)+dom2,opp(3)-dom3p,opp(3),opp(3)+dom3,4*opp(3)/)
   elseif(ifenq==4)then
    dom3p =min((opp(3)-opp(1))/4,5.0e-1_qp)
    omsep(1:5)=(/opp(1),opp(3)-dom3p,opp(3),opp(3)+dom3,4*opp(3)/)
@@ -176,7 +176,6 @@ do ifenq=1,6
 !$OMP PARALLEL DO PRIVATE(om,det,Mm,Gg,Mmv,y) SCHEDULE(DYNAMIC)
   do iom=1,nominf
    y=ymin+dy*(iom-0.5_qp)
-!   om=1.0_qp/y**(2.0_qp/3.0_qp)
    om=1.0_qp/y**(2.0_qp)
    call mat_pairfield(om,0.0_qp,det,Mm,Gg)
    Mmv=(/real(Mm(1,1)),real(Mm(2,2)),real(Mm(1,2)),imag(Mm(1,1)),imag(Mm(2,2)),imag(Mm(1,2))/)

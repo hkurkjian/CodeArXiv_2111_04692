@@ -1794,36 +1794,32 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE tri_s(arr)
         REAL(SP), DIMENSION(:), INTENT(INOUT) :: arr
-!        Sorts an array arr into ascending numerical order, by straight insertion. arr is replaced
-!        on output by its sorted rearrangement.
         INTEGER(I4B) :: i,j,n
         REAL(SP) :: a
         n=size(arr)
-        do j=2,n !Pick out each element in turn.
+        do j=2,n 
           a=arr(j)
-          do i=j-1,1,-1 !Look for the place to insert it.
+          do i=j-1,1,-1
             if (arr(i) <= a) exit
             arr(i+1)=arr(i)
           end do
-          arr(i+1)=a !Insert it.
+          arr(i+1)=a
         end do
         END SUBROUTINE tri_s
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE tri_d(arr)
         REAL(DP), DIMENSION(:), INTENT(INOUT) :: arr
-!        Sorts an array arr into ascending numerical order, by straight insertion. arr is replaced
-!        on output by its sorted rearrangement.
         INTEGER(I4B) :: i,j,n
         REAL(DP) :: a
         n=size(arr)
-        do j=2,n !Pick out each element in turn.
+        do j=2,n 
           a=arr(j)
-          do i=j-1,1,-1 !Look for the place to insert it.
+          do i=j-1,1,-1 
             if (arr(i) <= a) exit
             arr(i+1)=arr(i)
           end do
-          arr(i+1)=a !Insert it.
+          arr(i+1)=a
         end do
         END SUBROUTINE tri_d
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1844,6 +1840,40 @@ CONTAINS
           arr(i+1)=a !Insert it.
         end do
         END SUBROUTINE tri_q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        SUBROUTINE tricol_q(arr,col,dimm)
+        REAL(QP), DIMENSION(:,:), INTENT(INOUT) :: arr
+        INTEGER,  INTENT(IN) :: col,dimm
+        INTEGER(I4B) :: i,j,n
+        REAL(QP), ALLOCATABLE, DIMENSION(:) :: a
+        INTEGER m
+        m=size(arr,dim=dimm)
+        allocate(a(1:size(arr,dim=3-dimm)))
+        write(6,*)"m=",m
+        do j=2,m !Pick out each element in turn.
+         if(dimm==1)then
+            a=arr(j,:)
+            write(6,*)"a=",a
+            do i=j-1,1,-1 !Look for the place to insert it.
+              if (arr(i,col) <= a(col)) exit
+              arr(i+1,:)=arr(i,:)
+            end do
+            arr(i+1,:)=a!Insert it.
+            do i=1,m
+             write(6,*)arr(i,:)
+            enddo
+         else
+            a=arr(:,j)
+            do i=j-1,1,-1 
+              if (arr(col,i) <= a(col)) exit
+              arr(:,i+1)=arr(:,i)
+            end do
+            arr(:,i+1)=a
+         endif
+        end do
+        deallocate(a)
+        END SUBROUTINE tricol_q
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE tri_pos_q(arr,pos)
         REAL(QP), DIMENSION(:), INTENT(INOUT) :: arr
