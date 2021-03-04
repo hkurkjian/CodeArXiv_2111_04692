@@ -5,7 +5,7 @@
 MODULE vars
  USE nrtype
  IMPLICIT NONE
- !$OMP THREADPRIVATE(xq,opp)
+ !$OMP THREADPRIVATE(xq,opp,opt,ptbranchmtpp,ptbranchmtpt)
  !!$OMP THREADPRIVATE(x0,xq,beta,xqjoin,opp,opt,ptbranchmtpp,ptbranchmtpt)
 ! Global variables
 
@@ -387,8 +387,8 @@ if(axer)then
   
       Icomp=-r0*log((ag(2)-om0)/(om0-ag(1)))
      elseif(om0<ag(3))then
-      if(((om0-ag(2))<0.01_qp).AND.(ag(2)+0.01_qp<(ag(2)+ag(3))/2))then
-!      if(.FALSE.)then
+!      if(((om0-ag(2))<0.01_qp).AND.(ag(2)+0.01_qp<(ag(2)+ag(3))/2))then
+      if(.FALSE.)then
 !      if(.TRUE.)then
        mil1=ag(2)+0.01_qp
        mil2=(ag(2)+ag(3))/2

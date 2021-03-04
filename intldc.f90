@@ -1,35 +1,26 @@
 MODULE intldc !Contribution of the branch cuts ("ldc") to the fermionic self-energy
-USE vars ! For variables share by all subroutines here and in the dspec module (in particular x0=mu/Delta and xq=q/q_Delta, opp(1:4), location of the angular points of the qp-qp branch cut)
+USE vars      !Variables shared variables in the dspec module (in particular x0=mu/Delta and xq=q/q_Delta, opp(1:4), location of the angular points of the qp-qp branch cut)
 USE dspec
 USE modsim
 USE angularint
+USE OMP_LIB
 IMPLICIT NONE
+!$OMP THREADPRIVATE(xiP,xiM,epsP,epsM,xmin,xmax,ilec)
 LOGICAL bla0,bla00
-INTEGER ecrintq
+INTEGER ecrintq,ilec
 REAL(QP) xiP,xiM,epsP,epsM,xmin,xmax,k0
+REAL(QP),ALLOCATABLE, DIMENSION(:,:) :: donlec1,donlec2
+REAL(QP) :: bq(1:3)
+INTEGER  :: profondeur
 INTEGER, PARAMETER :: al=1,bet=2,gam=3,delt=4,epsi=5,alti=6,betti=7,deltti=8,epsiti=9
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
- REAL(QP), INTENT(IN) :: k,zk
- REAL(QP), INTENT(IN) :: EPS(1:2)
- REAL(QP), INTENT(INOUT) :: bq(1:3)
+SUBROUTINE ini_intpasres(lecture,ecriture,fichlec)
+ USE recettes
  LOGICAL, INTENT(IN)  :: lecture,ecriture
- CHARACTER(len=*), INTENT(IN) ::  fichlec,suffixe
- INTEGER, INTENT(INOUT) :: profondeur
- REAL(QP) intpasres(1:6)
+ CHARACTER(len=*), INTENT(IN) ::  fichlec
 
- CHARACTER(len=90) prefixe
- REAL(QP) Iq1(1:6),Iq2(1:6)
- REAL(QP) Iqinf(1:6)
- REAL(QP) argq(1:1),e,EPSq,EPSom
- LOGICAL err
-
- temperaturenulle=.TRUE.
-
- e=0.0_qp
- EPSq =EPS(1)
- EPSom=EPS(2)
+ INTEGER nl1,nl2
 
  if(lecture)then
   open(101,file=trim(fichlec)//".info")
@@ -38,14 +29,78 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
    read(101,*) profondeur,bq(:) 
    if(bla0) write(6,*) profondeur,bq(:) 
   close(101)
+
+  nl1=nlignes(trim(fichlec)//"_1.dat")
+  nl2=nlignes(trim(fichlec)//"_2.dat")
+  allocate(donlec1(1:10,1:nl1))
+  allocate(donlec2(1:10,1:nl2))
+
+  open(111,file=trim(fichlec)//"_1.dat")
+   do ilec=1,nl1
+    read(111,*)donlec1(1:10,ilec)
+   enddo
+  close(111)
+
+  open(112,file=trim(fichlec)//"_2.dat")
+   do ilec=1,nl2
+    read(112,*)donlec2(1:10,ilec)
+   enddo
+  close(112)
+
  endif
 
  if(ecriture)then
+
   open(101,file=trim(fichlec)//".info")
    write(101,*)"! grille de valeur de q,om et Mat de qmin. bq, profondeur="
    write(101,*) profondeur,bq
   close(101)
+
+  open(111,file=trim(fichlec)//"_1.dat")
+  open(112,file=trim(fichlec)//"_2.dat")
+
  endif
+ if(bla0)then
+   write(6,*)"+++++++++++++++++++++++++++ ini_intpasres +++++++++++++++++++++++++"
+   write(6,*)
+   write(6,*)"lecture,ecriture=",lecture,ecriture
+   write(6,*)"q1,q2,q3=",bq
+   write(6,*)"fichlec: ",trim(fichlec)
+   write(6,*)"profondeur=",profondeur
+   write(6,*)
+   write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+ endif
+END SUBROUTINE ini_intpasres
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE desini(lecture,ecriture)
+ LOGICAL, INTENT(IN)  :: lecture,ecriture
+ if(lecture)then
+  deallocate(donlec1,donlec2)
+ endif
+ if(ecriture)then
+  close(111)
+  close(112)
+ endif
+END SUBROUTINE desini
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+FUNCTION intpasres(k,zk,lecture,ecriture,EPS,suffixe)
+ REAL(QP), INTENT(IN) :: k,zk
+ REAL(QP), INTENT(IN) :: EPS(1:2)
+ LOGICAL, INTENT(IN)  :: lecture,ecriture
+ CHARACTER(len=*), INTENT(IN) ::  suffixe
+ REAL(QP) intpasres(1:6)
+
+ CHARACTER(len=90) prefixe
+ REAL(QP) Iq1(1:6),Iq2(1:6)
+ REAL(QP) Iqinf(1:6)
+ REAL(QP) argq(1:1),e,EPSq,EPSom
+ LOGICAL err
+
+ e=0.0_qp
+ EPSq =EPS(1)
+ EPSom=EPS(2)
+
+ ilec=0
 
  if(bla0)then
    write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -56,16 +111,12 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
    write(6,*)
    write(6,*)"k,zk=",k,zk
    write(6,*)"lecture,ecriture=",lecture,ecriture
-   write(6,*)"fichlec: ",trim(fichlec)
    write(6,*)"q1,q2,q3=",bq
    write(6,*)
    write(6,*)"EPSq,EPSom,profondeur=",EPSq,EPSom,profondeur
    write(6,*)
    write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
  endif
-
- open(111,file=trim(fichlec)//"_1.dat")
- open(112,file=trim(fichlec)//"_2.dat")
 
  if(ecrintq.GE.2)then
   open(120,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
@@ -93,9 +144,6 @@ FUNCTION intpasres(k,zk,lecture,ecriture,profondeur,EPS,bq,fichlec,suffixe)
 
  intpasres=2.0_qp*PI*(Iq1+Iq2+Iqinf) !Integration sur phi
 
-
- close(111)
- close(112)
 
 CONTAINS
 
@@ -155,55 +203,39 @@ CONTAINS
      write(6,FMT="(A6,6G20.10)")"Iinf=",Iinf
    endif
   
-   if(ptbranchmtpp==1)then !BEC-like behavior: integrated from branch cut lower-edge opp(1) to infinity
+   if(ptbranchmtpp==1)then !BEC-like behavior: integrate from branch cut lower-edge opp(1) to infinity
      Ib=qromovfixed(intom,opp(1)         ,bmax                ,6,(/qs/),racinfvq,EPSom,profondeur,err) !deals with the 1/om^(3/2) decay at large om
-     if(bla0)then
-       write(6,FMT="(A10,6G20.10)")'Ib=',Ib
-     endif
+     if(bla0) write(6,FMT="(A10,6G20.10)")'Ib=',Ib
      if(err)  call erreur("omega")
 
    elseif(ptbranchmtpp==2)then !One angular point opp(2) besides the lower-edge
     Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs/),midpntvq,EPSom,profondeur,err) !Integrate from the edge to the angular point
-    if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'Ib=',Ib
-    endif
+    if(bla0) write(6,FMT="(A10,6G20.10)")'Ib=',Ib
     if(err)  call erreur("omega")
 
     Ic=qromovfixed(intom,opp(2)         ,2.0_qp*opp(2)       ,6,(/qs/),midpntvq,EPSom,profondeur,err) !then from opp(2) to 2*opp(2), this circumscribes the numerical difficulty around opp(2)
-    if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'Ic=',Ic
-    endif
+    if(bla0) write(6,FMT="(A10,6G20.10)")'Ic=',Ic
     if(err)  call erreur("omega")
 
     Id=qromovfixed(intom,2.0_qp*opp(2)  ,bmax                ,6,(/qs/),racinfvq,EPSom,profondeur,err) !then from 2*opp(2) to infinity
-    if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'Id=',Id
-    endif
+    if(bla0) write(6,FMT="(A10,6G20.10)")'Id=',Id
     if(err)  call erreur("omega")
 
    elseif(ptbranchmtpp==3)then !Two angular points opp(2) and opp(3) besides the lower-edge
     Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs/),midpntvq,EPSom,profondeur,err)
-    if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'Ib=',Ib
-    endif
+    if(bla0) write(6,FMT="(A10,6G20.10)")'Ib=',Ib
     if(err)  call erreur("omega")
 
     Ic=qromovfixed(intom,opp(2)         ,opp(3)              ,6,(/qs/),midpntvq,EPSom,profondeur,err)
-    if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'Ic=',Ic
-    endif
+    if(bla0) write(6,FMT="(A10,6G20.10)")'Ic=',Ic
     if(err)  call erreur("omega")
 
     Id=qromovfixed(intom,opp(3)         ,2.0_qp*opp(3)       ,6,(/qs/),midpntvq,EPSom,profondeur,err)
-    if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'Id=',Id
-    endif
+    if(bla0) write(6,FMT="(A10,6G20.10)")'Id=',Id
     if(err)  call erreur("omega")
 
     Ie=qromovfixed(intom,2.0_qp*opp(3)  ,bmax                ,6,(/qs/),racinfvq,EPSom,profondeur,err)
-    if(bla0)then
-      write(6,FMT="(A10,6G20.10)")'Ie=',Ie
-    endif
+    if(bla0) write(6,FMT="(A10,6G20.10)")'Ie=',Ie
     if(err)  call erreur("omega")
    endif
   
@@ -265,10 +297,22 @@ CONTAINS
    IuP=      Iuanaly(enP,k,q,xmin,xmax)
 
    if(lecture)then
-    read(110+fich,*)xqfi,omfi,reM11,reM12,reM21,reM22,imM11,imM12,imM21,imM22
-    Mat(1,1)=cmplx(reM11,imM11,kind=qpc)
-    Mat(2,2)=cmplx(reM22,imM22,kind=qpc)
-    Mat(1,2)=cmplx(reM12,imM12,kind=qpc)
+    if(fich==1)then
+     xqfi=donlec1(1,ilec);omfi=donlec1(2,ilec)
+     Mat(1,1)=cmplx(donlec1(3,ilec),donlec1(7 ,ilec),kind=qpc)
+     Mat(2,2)=cmplx(donlec1(6,ilec),donlec1(10,ilec),kind=qpc)
+     Mat(1,2)=cmplx(donlec1(4,ilec),donlec1(8 ,ilec),kind=qpc)
+    elseif(fich==2)then
+     xqfi=donlec2(1,ilec);omfi=donlec2(2,ilec)
+     Mat(1,1)=cmplx(donlec2(3,ilec),donlec2(7 ,ilec),kind=qpc)
+     Mat(2,2)=cmplx(donlec2(6,ilec),donlec2(10,ilec),kind=qpc)
+     Mat(1,2)=cmplx(donlec2(4,ilec),donlec2(8 ,ilec),kind=qpc)
+    endif
+    ilec=ilec+1
+!    read(110+fich,*)xqfi,omfi,reM11,reM12,reM21,reM22,imM11,imM12,imM21,imM22
+!    Mat(1,1)=cmplx(reM11,imM11,kind=qpc)
+!    Mat(2,2)=cmplx(reM22,imM22,kind=qpc)
+!    Mat(1,2)=cmplx(reM12,imM12,kind=qpc)
     Mat(2,1)=Mat(1,2)
     det=Mat(1,1)*Mat(2,2)-Mat(1,2)**2
     if(abs(xq -xqfi)>1.e-13_qp)then
@@ -341,6 +385,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
  REAL(QP) :: bk2(0:12),le2(1:8)
  REAL(QP) e,qmax,bqbis(1:8)
  REAL(QP) EPSq,EPSom
+ COMPLEX(QPC) ires(1:6)
 
  INTEGER grecque,igr
 
@@ -405,9 +450,12 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     write(6,*)"bq(igr),bq(igr+1)=",bq(igr),bq(igr+1)
     write(6,*)
    endif
-   intres=intres+qromovcq(intresq,bq(igr),bq(igr+1),6,(/bidon/),midpntvcq,EPSq)
+   ires=qromovcq(intresq,bq(igr),bq(igr+1),6,(/bidon/),midpntvcq,EPSq)
+   intres=intres+ires
    if(bla0)then
     write(6,*)
+    write(6,FMT="(A9,6G20.10)")"re(ires)=",real(ires)
+    write(6,FMT="(A9,6G20.10)")"im(ires)=",imag(ires)
     write(6,*)"---------------------------------"
    endif
   enddo
@@ -450,14 +498,16 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    xmax=epsM-xiM
 
    if(bla0)then
+!   if(bla0.AND.(omp_get_thread_num()==0))then
     write(6,*)"---------------------------------"
     write(6,*)
     write(6,*)"qs=",qs
-    write(6,*)"grecque=",ecritc(grecque)
+    write(6,*)"grecque,igr=",ecritc(grecque),igr
     write(6,*)"ptbranchmtpp=",ptbranchmtpp
     write(6,*)"opp=",opp
     if(grecque.NE.0) write(6,*)"res=",res(1:tres)
     write(6,FMT="(A5,3G20.10)")"bom=",bom
+    write(6,*)"fil,k,zk:",omp_get_thread_num(),k,zk
    endif
 
 !Combine les points anguleux de opp avec ceux de bom
@@ -509,6 +559,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    arg(2,:)=vres(:)+0.5_qp
 
    if(bla00)then
+!   if(bla00.OR.(omp_get_thread_num()==0))then
     write(6,FMT="(A6,9G20.10)")"bomf=",bomf(1:trout+1)
     write(6,*)"routint=",ecritrout(trout,routint(1:trout))
     write(6,*)"vres="   ,vres(1:trout)
@@ -525,6 +576,11 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     open(125,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
      write(125,*)qs,real(intresq(is,:)),imag(intresq(is,1:3))
     close(125)
+   endif
+!   if(bla0.AND.(omp_get_thread_num()==0))then
+   if(bla0)then
+     write(6,FMT="(A7,6G20.10)")"intresq=",real(intresq(is,1:3)),imag(intresq(is,1:3))
+     write(6,*)
    endif
 
    deallocate(bomf)
@@ -550,6 +606,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    intresom(:,:)=0.0_qp
 
    if(bla00.AND.(size(om)==1))then
+!   if(bla00.AND.(size(om)==1).AND.(omp_get_thread_num()==0))then
     write(6,*)"************************"
    endif
 
@@ -589,11 +646,13 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     intresom(is,5)= rho(1,1)*IuP(1)
     intresom(is,6)=-rho(1,2)*IuP(3)
 
+!    if(bla00.OR.(omp_get_thread_num()==0))then
     if(bla00)then
-     write(6,FMT="(A21,8G20.10)")"q,ome,real(intresom)=",q,ome,real(intresom(is,1)),imag(intresom(is,1))
+     write(6,FMT="(A21,8G20.10)")"k,zk,q,ome,real(intresom)=",k,zk,q,ome,real(intresom(is,1)),imag(intresom(is,1))
     endif
 
   enddo
+!  if(bla00.OR.(omp_get_thread_num()==0))then
   if(bla00)then
    write(6,*)
   endif

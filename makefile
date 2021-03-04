@@ -6,19 +6,19 @@ LIB_PERSO=-L./libperso -lmalib
 	gnuplot $<
 
 %.o : %.f90
-	$(COMP) -I$(MOD) -fopenmp -fcheck=all -fbacktrace -fstack-arrays -fmax-array-constructor=300000000 -O3 -c $< -o $@
+	$(COMP) -I$(MOD) -fopenmp -fcheck=all -fbacktrace -O3 -c $< -o $@
 
 selfcons: dspec.o bestM.o angularint.o intldc.o intpole.o selftot.o selfcons.o
 	$(COMP) -fcheck=all -fbacktrace -O3 $^ $(LIB_PERSO) -o selfcons
 
 encorr: dspec.o bestM.o angularint.o intldc.o intpole.o selftot.o encorr.o
-	$(COMP) -fcheck=all -fbacktrace -O3 $^ $(LIB_PERSO) -o encorr
+	$(COMP) -fopenmp -fcheck=all -fbacktrace -O3 $^ $(LIB_PERSO) -o encorr
 
 hktest: eqdetat.o dspec.o Zerom.o bestM.o angularint.o intldc.o intpole.o hktest.o
-	$(COMP) -O3 -fcheck=all -fbacktrace -fstack-arrays -fmax-array-constructor=300000000 $^ $(LIB_PERSO) -o hktest
+	$(COMP) -O3 -fcheck=all -fbacktrace $^ $(LIB_PERSO) -o hktest
 
 hktest2: eqdetat.o dspec.o Zerom.o bestM.o angularint.o intldc.o intpole.o hktest2.o
-	$(COMP) -O3 -fcheck=all -fbacktrace -fstack-arrays -fmax-array-constructor=300000000 $^ $(LIB_PERSO) -o hktest2
+	$(COMP) -O3 -fcheck=all -fbacktrace $^ $(LIB_PERSO) -o hktest2
 
 SVLtest: eqdetat.o dspec.o Zerom.o angularint.o intpole.o SVLtest.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o SVLtest

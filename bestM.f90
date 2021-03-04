@@ -164,6 +164,8 @@ do iposq=posq-1,posq+2
   if(fenom==3) decalageom=nomred(1)
   if(fenom==4) decalageom=nomred(1)+nomred(3)
   if(fenom==2) err(2)=.TRUE.
+  if(fenom==2.AND.(iposq==posq)) err(0)=.TRUE.
+  if(fenom==2.AND.(iposq==posq+1)) err(1)=.TRUE.
   if(fenom==2) cycle
  else
   if(fenom==4) decalageom=nomred(3)
@@ -194,6 +196,7 @@ do iposq=posq-1,posq+2
  endif
  call locate(sousgrilley(1,1:nom),y,posy)
 
+ if(blaM) write(6,*) "iposq,posom=",iposq,posom
  if((posy<1).OR.(posy.GE.nom))then
   if(blaerr) write(6,*)"*********************************************"
   if(blaerr) write(6,*)
@@ -353,10 +356,10 @@ endif
 
 
 do iposq=posq-1,posq+2
+ if((iposq<1).OR.(iposq>nqsup)) cycle
  opp1=vecq_sup(iposq,2)
  opp2=vecq_sup(iposq,3)
  opp3=vecq_sup(iposq,4)
- if((iposq<1).OR.(iposq>nqsup)) cycle
  if(om<(opp(1)+opp(2))/2)then 
   oppref(iposq-posq+2)=opp1
   sousgrille=donnees_sup(1:4,0*nomsup+1:1*nomsup,iposq)
@@ -389,6 +392,7 @@ do iposq=posq-1,posq+2
  endif
  call locate(sousgrille(1,:),y,posom)
 
+ if(blaM) write(6,*) "iposq,posom=",iposq,posom
  if((posom<1).OR.(posom.GE.nomsup))then
   if(blaerr) write(6,*)"*********************************************"
   if(blaerr) write(6,*)
@@ -549,10 +553,10 @@ endif
 
 
 do iposq=posq-1,posq+2
+ if((iposq<1).OR.(iposq>nqsup2)) cycle
  opp1=vecq_sup2(iposq,2)
  opp2=vecq_sup2(iposq,3)
  opp3=vecq_sup2(iposq,4)
- if((iposq<1).OR.(iposq>nqsup2)) cycle
  if(om<(opp(1)+opp(2))/2)then 
   oppref(iposq-posq+2)=opp1
   sousgrille=donnees_sup2(1:4,0*nomsup2+1:1*nomsup2,iposq)
@@ -590,6 +594,8 @@ do iposq=posq-1,posq+2
   sousgrille(1,:)=sousgrille(1,:)-opp3
  endif
  call locate(sousgrille(1,:),y,posom)
+
+ if(blaM.OR.blaerr) write(6,*)"iposq,posom=",iposq,posom
 
  if((posom<1).OR.(posom.GE.nomsup2))then
   if(blaerr) write(6,*)"*********************************************"

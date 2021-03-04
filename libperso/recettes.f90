@@ -2165,4 +2165,20 @@ CONTAINS
         
          END FUNCTION
         END FUNCTION
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        FUNCTION nlignes(fich)
+        CHARACTER(len=*), INTENT(IN) :: fich
+        INTEGER nlignes
+
+        INTEGER io,ilignes
+
+        nlignes=0
+        open(1001,file=trim(fich),iostat=io)
+          do ilignes=1,100000000
+           read(101,*,iostat=io)
+           if(io.NE.0) exit
+           nlignes=nlignes+1
+          enddo
+        close(1001)
+        END FUNCTION nlignes
 END MODULE recettes

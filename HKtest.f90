@@ -16,7 +16,7 @@ REAL(QP) Mmbid(1:6,1:3)
 REAL(QP) bk(0:12),le(1:8)
 REAL(QP) EPSq,EPSom,EPS(1:2)
 REAL(QP) :: k,zk,bq(1:3)
-CHARACTER(len=90) fichom2(1:2),fichlec,fichgri(1:2),suffintq,suffsE
+CHARACTER(len=90) fichom2(1:2),fichlec,fichgri(1:3),suffintq,suffsE
 COMPLEX(QPC) Gamm(1:2,1:2),Matt(1:2,1:2),MatCat(1:2,1:2),det
 
 REAL(QP) ptq,ptom,ptM(1:3),ptdM(1:3)
@@ -50,10 +50,10 @@ fichgri(2)="DONNEES/BCS_4_sup3"
 !Mm2=cmplx(Mmbid,0.0_qp,kind=qpc)
 !write(6,*)Mm2
 
-testpt=.TRUE.
 testpt=.FALSE.
-testdspec=.FALSE.
+testpt=.TRUE.
 testdspec=.TRUE.
+testdspec=.FALSE.
 
 !Paramètres physiques
 x0=4.0_qp
@@ -81,8 +81,9 @@ blaerr=.FALSE.
 qpetit=0.1_qp/x0
 qpetit=0.03_qp
 !Fichiers de données
-fichgri(1)="BCS_4_2"
-fichgri(2)="BCS_4_sup_comb"
+fichgri(1)="DONNEES/BCS_4_2"
+fichgri(2)="DONNEES/BCS_4_sup_comb"
+fichgri(3)="DONNEES/BCS_4_sup4"
 
 
 !Paramètres de intldc
@@ -112,6 +113,7 @@ if(testpt)then
  blaerr=.TRUE.
  call load_data(fichgri(1))
  call loadom2(fichgri(2))
+ call loadom3(fichgri(3))
  
  call calcxqjoin
  om= 3.0_qp
@@ -122,10 +124,6 @@ if(testpt)then
  om=2.015
  om=2.01000836809456590498816858862099477
  xq=0.0500_qp
- xq=3.044030018         
- om=3.910104303
- xq=4.008148148148148148148148148148148230
- om=4.135004813211050015212474015981164369636
  xq=3.998061894         
  om=2.000000251
  xq=3.99806189438834344822296565562925469         
@@ -138,6 +136,12 @@ if(testpt)then
  om=2.000005701
  xq=3.83949150788132214545869000883031738         
  om=2.00003640756404596983471624895772570
+ xq=4.008148148148148148148148148148148230
+ om=4.135004813211050015212474015981164369636
+ xq=3.044030018         
+ om=2.00160104303
+ xq=3.15272772819766968785607370128208324         
+ om=3.63067740313109363374981737289142466
  call oangpp
  write(6,*)"opp=",opp(1:3)
  
@@ -190,10 +194,12 @@ if(testdspec)then
  xq=0.179349500000000000000000000000000003_qp
  om=4.10622797781861219408898480249810037
  om=199.993945209530785244816996198898181_qp
- xq=19.5422495000000000000000000000000015_qp
- om=9.26859418992104729175832888330616865_qp
  om=2.00007871329994328009327429090454400_qp
  xq=3.77276214285714285714285714285714308
+ xq=19.5422495000000000000000000000000015_qp
+ om=9.26859418992104729175832888330616865_qp
+ xq=3.15277857142857142857142857142857182_qp
+ om=3.63054415685928261130364771224973059_qp
  call oangpp
  write(6,*)"opp=",opp(1:3)
  

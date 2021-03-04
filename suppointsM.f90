@@ -15,7 +15,7 @@ REAL(QP), ALLOCATABLE, DIMENSION(:) :: xqfen,bornes
 INTEGER, ALLOCATABLE, DIMENSION(:)   :: tfen,fenom,passe,fini
 INTEGER  ixq,ixqdep,ixqfin,nq
 INTEGER  iom,nom1,nom2,icb,nmax
-INTEGER  ifen,nfen,nn,npoints
+INTEGER  ifen,nfen,nfen1,nfen2,nn,npoints
 LOGICAL  nvofich
 
 open(10,file='suppointsM.inp')
@@ -25,7 +25,8 @@ open(10,file='suppointsM.inp')
  read(10,*)ixqdep
  read(10,*)ixqfin
  read(10,*)nq
- read(10,*)nfen
+ read(10,*)nfen1
+ read(10,*)nfen2
  read(10,*)nom1
  read(10,*)nom2
  read(10,*)bmax
@@ -45,9 +46,10 @@ call calcxqjoin
 xq1 = xqjoin
 xq2   =2*sqrt(x0)
 
-npoints=5*nom1+4*nom2
+npoints=nfen1*nom1+nfen2*nom2
+nfen=nfen1+nfen2
 
-write(6,*)'nom1,nom2,nfen,npoints='    ,nom1,nom2,nfen,npoints
+write(6,*)'nom1,nom2,nfen1,nfen2,npoints='    ,nom1,nom2,nfen1,nfen2,npoints
 write(6,*)'ixqdep,ixqfin;nq=' ,ixqdep,ixqfin,"; ",nq
 write(6,*)'xq1,xq2 ='   ,xq1,xq2
 write(6,*)'bmax='   ,bmax
@@ -71,8 +73,8 @@ write(6,*)"Taille de l’enregistrement en octets:",nn
 
 if(nvofich)then
    open(12,file=trim(fichier)//".info")
-    write(12,*)"!x0,xq2,nq,nom1,nom2,nn"
-    write(12,*)  x0,xq2,nq,nom1,nom2,nn
+    write(12,*)"!x0,xq2,nq,nfen,nom1,nom2,nn"
+    write(12,*)  x0,xq2,nq,nfen,nom1,nom2,nn
    close(12)
    
    open(13,file=trim(fichier)//"grilleq.dat")

@@ -1,6 +1,7 @@
 MODULE modsim
  USE nrtype; USE nrutil, ONLY :arth
  USE modpol
+ USE OMP_LIB
  IMPLICIT NONE
  INTEGER, PARAMETER :: mpnt=1,minf=2,msql=3,msqu=4,mexp=5,rinf=6
        INTERFACE midpnt
@@ -214,7 +215,7 @@ MODULE modsim
         call choose(func,a,b,arg,s(j),j)
         if (j >= K) then
          call polint(h(j-KM:j),s(j-KM:j),0.0_sp,qromos,dqromo)
-         if (abs(dqromo) <= EPS*abs(qromos)) RETURN
+         if ((abs(dqromo) <= EPS*abs(qromos)).AND.(abs(s(j)-s(j-1))<0.01_sp*abs(s(j)))) RETURN
         end if
         s(j+1)=s(j)
         h(j+1)=h(j)/9.0_sp !This is where the assumption of step tripling and an even error series is used.
@@ -375,7 +376,7 @@ MODULE modsim
         call choose(func,a,b,arg,s(j),j)
         if (j >= K) then
          call polint(h(j-KM:j),s(j-KM:j),0.0_dp,qromod,dqromo)
-         if (abs(dqromo) <= EPS*abs(qromod)) RETURN
+         if ((abs(dqromo) <= EPS*abs(qromod)).AND.(abs(s(j)-s(j-1))<0.01_dp*abs(s(j)))) RETURN
         end if
         s(j+1)=s(j)
         h(j+1)=h(j)/9.0_dp
@@ -534,13 +535,13 @@ MODULE modsim
        h(1)=1.0
        do j=1,JMAX
         call choose(func,a,b,arg,s(j),j)
+!        write(6,*)"s(j)=",s(j)
         if (j >= K) then
          call polint(h(j-KM:j),s(j-KM:j),0.0_qp,qromoq,dqromo)
 !         write(6,*)"dqromo=",dqromo
-         if (abs(dqromo) <= EPS*abs(qromoq)) RETURN
-         if (abs(qromoq) <= EPS*10e-10_qp) RETURN
+         if ((abs(dqromo) <= EPS*abs(qromoq)).AND.(abs(s(j)-s(j-1))<0.01_qp*abs(s(j)))) RETURN
+         if ((abs(qromoq) <= EPS*10e-10_qp)) RETURN
         end if
-!       write(6,*)"s(j)=",s(j)
         s(j+1)=s(j)
         h(j+1)=h(j)/9.0_qp
        end do
@@ -700,7 +701,7 @@ MODULE modsim
         call choose(func,a,b,arg,s(j),j)
         if (j >= K) then
          call polint(h(j-KM:j),s(j-KM:j),0.0_dp,qromoc,dqromo)
-         if (abs(dqromo) <= EPS*abs(qromoc)) RETURN
+         if ((abs(dqromo) <= EPS*abs(qromoc)).AND.(abs(s(j)-s(j-1))<0.01_qp*abs(s(j)))) RETURN
         end if
         s(j+1)=s(j)
         h(j+1)=h(j)/9.0_dp
@@ -860,7 +861,7 @@ MODULE modsim
         call choose(func,a,b,arg,s(j),j)
         if (j >= K) then
          call polint(h(j-KM:j),s(j-KM:j),0.0_qp,qromocq,dqromo)
-         if (abs(dqromo) <= EPS*abs(qromocq)) RETURN
+         if ((abs(dqromo) <= EPS*abs(qromocq)).AND.(abs(s(j)-s(j-1))<0.01_qp*abs(s(j)))) RETURN
         end if
         s(j+1)=s(j)
         h(j+1)=h(j)/9.0_qp
@@ -1036,7 +1037,7 @@ MODULE modsim
         if (j >= K) then
          do im=1,m
           call polint(h(j-KM:j,im),s(j-KM:j,im),0.0_qp,qromovq(im),dqromo(im))
-          conv(im)=abs(dqromo(im)) <= EPS*abs(qromovq(im))
+          conv(im)=(abs(dqromo(im)) <= EPS*abs(qromovq(im))).AND.(abs(s(j,im)-s(j-1,im))<0.01_qp*abs(s(j,im)))
          enddo
          if (all(conv)) RETURN
         end if
@@ -1080,7 +1081,7 @@ MODULE modsim
         if (j >= JMAX) then
          do im=1,m
           call polint(h(j-(JMAX-1):j,im),s(j-(JMAX-1):j,im),0.0_qp,qromovqfixed(im),dqromo(im))
-          conv(im)=abs(dqromo(im)) <= EPS*abs(qromovqfixed(im))
+          conv(im)=(abs(dqromo(im)) <= EPS*abs(qromovqfixed(im))).AND.(abs(s(j,im)-s(j-1,im))<0.01_qp*abs(s(j,im)))
          enddo
          if (all(conv)) RETURN
         end if
@@ -1275,6 +1276,10 @@ MODULE modsim
           call polint(h(j-KM:j,im),s(j-KM:j,im),0.0_qp,qromovcq(im),dqromo(im))
           conv(im)=abs(dqromo(im)) <= EPS*abs(qromovcq(im))
          enddo
+!         if(omp_get_thread_num()==4) write(6,*)"j=",j
+!         if(omp_get_thread_num()==4) write(6,*)"abs(dqromo)=",abs(dqromo)
+!         if(omp_get_thread_num()==4) write(6,*)"qromo=",real(qromovcq(1:3))
+!         if(omp_get_thread_num()==4) write(6,*)"conv=",conv
          if (all(conv)) RETURN
         end if
         s(j+1,:)=s(j,:)
@@ -1316,7 +1321,7 @@ MODULE modsim
         if (j >= JMAX) then
          do im=1,m
           call polint(h(j-(JMAX-1):j,im),s(j-(JMAX-1):j,im),0.0_qp,qromovcqfixed(im),dqromo(im))
-          conv(im)=abs(dqromo(im)) <= EPS*abs(qromovcqfixed(im))
+          conv(im)=(abs(dqromo(im)) <= EPS*abs(qromovcqfixed(im))).AND.(abs(s(j,im)-s(j-1,im))<0.01_qp*abs(s(j,im)))
          enddo
          if (all(conv)) RETURN
         end if
