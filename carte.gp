@@ -6,7 +6,7 @@ system  "rm carte.eps"
 set output 'carte.eps'
 
 carte  ="DONNEES/cartebove3.dat"
-carte2 ="DONNEES/detbelow6.dat"
+carte2 ="DONNEES/detbelow3.dat"
 
 x0=4
 

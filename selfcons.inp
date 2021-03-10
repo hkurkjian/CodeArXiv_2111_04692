@@ -5,6 +5,7 @@
 2.999 ! read(10,*)zkdep
 "DONNEES/BCS_4_2"              ! read(10,*)fichldc(1)
 "DONNEES/BCS_4_sup_comb"       ! read(10,*)fichldc(2)
+"DONNEES/BCS_4_sup4"       ! read(10,*)fichldc(3)
 "DONNEES/grillebis_x04"           ! read(10,*)fichlec
 "DONNEES/BCS_4_pole"     ! read(10,*)fichierpole
 1.0e-3      ! read(10,*)EPS(1)!EPSq  pour intldc

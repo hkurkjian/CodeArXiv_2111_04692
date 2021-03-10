@@ -9,7 +9,7 @@ LOGICAL blaSC
 REAL(QP)  mu,k,kmin,kmax,dk,zkdep(1:1)
 REAL(QP)  zk
 REAL(QP)  EPS(1:3)
-CHARACTER(len=90) fichiers(1:4),suffixe !1:2 fichldc, 3 fichlec, 4 fichpol
+CHARACTER(len=90) fichiers(1:5),suffixe,suffeintq !1:3 fichldc, 3 fichlec, 4 fichpol
 INTEGER nk,ik
 LOGICAL nvofich,res,newton
 
@@ -25,8 +25,9 @@ open(10,file='selfcons.inp')
  read(10,*)zkdep(1)
  read(10,*)fichiers(1) !pour charger bestM/donnees
  read(10,*)fichiers(2) !pour charger bestM/donnees_sup
- read(10,*)fichiers(3) !pour intldc/intpasres
- read(10,*)fichiers(4) !pour intpole
+ read(10,*)fichiers(3) !pour charger bestM/donnees_sup2
+ read(10,*)fichiers(4) !pour intldc/intpasres
+ read(10,*)fichiers(5) !pour intpole
  read(10,*)EPS(1)      !intldc/EPSq
  read(10,*)EPS(2)      !intldc/EPSom
  read(10,*)EPS(3)      !intpole/EPSq
@@ -37,7 +38,7 @@ open(10,file='selfcons.inp')
 close(10)
 
 if(nvofich)then
- open(20,file="DONNEES/solautocor"//trim(suffixe)//".dat")
+ open(20,file="DONNEES/autocor"//trim(suffixe)//".dat")
   write(20,*)"!Valeurs de k,z_s(k) et bornes des continua pour x0=",x0
  close(20)
 endif
@@ -49,6 +50,7 @@ else
 endif
 
 blaSC=.TRUE.
+suffeintq="bidon"
 
 do ik=0,nk
  k=kmin+dk*ik
@@ -57,8 +59,10 @@ do ik=0,nk
  if(blaSC) write(6,*)"k=",k
  if(blaSC) write(6,*)
 
+ call initialisation(mu,0,fichiers,0)
+
  ! Calculate continuum thresholds
- contK=thresholds(mu,k,fichiers(4)) 
+ contK=thresholds(mu,k) 
 
  ! Mean-field functions
  xik=k**2-mu
@@ -66,7 +70,6 @@ do ik=0,nk
  Uk=sqrt((1.0_qp+xik/e0)/2.0_qp)
  Vk=sqrt((1.0_qp-xik/e0)/2.0_qp)
     
- call initialisation(mu,0,res,(/fichiers(1:2)/))
  ! Look for a solution below the continuum
  if(newton)then
   if(blaSC) write(6,*)"mnewt, initial guess: zkdep=",zkdep
@@ -76,16 +79,16 @@ do ik=0,nk
   cont=contK(2)
   if(blaSC) write(6,*)"rtsafe: trying to bracket the root"
   if(res)then
-   detZero=detGres(k,     OS,fichiers(4),  EPS,sigbidon)
+   detZero=detGres(k,     OS,EPS,sigbidon,suffeintq)
   else
-   detZero=detG   (k,     OS,fichiers(3:4),EPS,sigbidon)
+   detZero=detG   (k,     OS,EPS,sigbidon,suffeintq)
   endif
   if(blaSC) write(6,*)"zk,det=",OS         ,detZero
  
   if(res)then
-   detCont=detGres(k,cont-OS,fichiers(4),  EPS,sigbidon)
+   detCont=detGres(k,cont-OS,EPS,sigbidon,suffeintq)
   else
-   detCont=detG   (k,cont-OS,fichiers(3:4),EPS,sigbidon)
+   detCont=detG   (k,cont-OS,EPS,sigbidon,suffeintq)
   endif
   if(blaSC) write(6,*)"zk,det=",cont-OS,detCont
  
@@ -119,23 +122,23 @@ CONTAINS
     h=zkIn*0.0001_qp
 
     if(res)then
-     det =real(detGres(k,zkIn  ,fichiers(4),  EPS,sigbidon))
+     det =real(detGres(k,zkIn  ,EPS,sigbidon,suffeintq))
     else
-     det =real(detG   (k,zkIn  ,fichiers(3:4),EPS,sigbidon))
+     det =real(detG   (k,zkIn  ,EPS,sigbidon,suffeintq))
     endif
     if(blaSC) write(6,*)"zk,det=",zkIn  ,det
 
     if(res)then
-     detP=real(detGres(k,zkIn+h,fichiers(4),  EPS,sigbidon))
+     detP=real(detGres(k,zkIn+h,EPS,sigbidon,suffeintq))
     else
-     detP=real(detG   (k,zkIn+h,fichiers(3:4),EPS,sigbidon))
+     detP=real(detG   (k,zkIn+h,EPS,sigbidon,suffeintq))
     endif
     if(blaSC) write(6,*)"zk,det=",zkIn+h,detP
 
     if(res)then
-     detM=real(detGres(k,zkIn-h,fichiers(4),  EPS,sigbidon))
+     detM=real(detGres(k,zkIn-h,EPS,sigbidon,suffeintq))
     else
-     detM=real(detG   (k,zkIn-h,fichiers(3:4),EPS,sigbidon))
+     detM=real(detG   (k,zkIn-h,EPS,sigbidon,suffeintq))
     endif
     if(blaSC) write(6,*)"zk,det=",zkIn-h,detM
 
@@ -161,23 +164,23 @@ CONTAINS
     h=zkIn*0.0001_qp
 
     if(res)then
-     det(1)=real(detGres(k,zkIn  ,fichiers(4),  EPS,sigbidon))
+     det(1)=real(detGres(k,zkIn  ,EPS,sigbidon,suffeintq))
     else
-     det(1)=real(detG   (k,zkIn  ,fichiers(3:4),EPS,sigbidon))
+     det(1)=real(detG   (k,zkIn  ,EPS,sigbidon,suffeintq))
     endif
     if(blaSC) write(6,*)"zk,det=",zkIn  ,det
 
     if(res)then
-     detP  =real(detGres(k,zkIn+h,fichiers(4),  EPS,sigbidon))
+     detP  =real(detGres(k,zkIn+h,EPS,sigbidon,suffeintq))
     else
-     detP  =real(detG   (k,zkIn+h,fichiers(3:4),EPS,sigbidon))
+     detP  =real(detG   (k,zkIn+h,EPS,sigbidon,suffeintq))
     endif
     if(blaSC) write(6,*)"zk,det=",zkIn+h,detP
 
     if(res)then
-     detM  =real(detGres(k,zkIn-h,fichiers(4),  EPS,sigbidon))
+     detM  =real(detGres(k,zkIn-h,EPS,sigbidon,suffeintq))
     else
-     detM  =real(detG   (k,zkIn-h,fichiers(3:4),EPS,sigbidon))
+     detM  =real(detG   (k,zkIn-h,EPS,sigbidon,suffeintq))
     endif
     if(blaSC) write(6,*)"zk,det=",zkIn-h,detM
 
