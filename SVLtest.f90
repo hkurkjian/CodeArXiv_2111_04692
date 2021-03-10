@@ -31,12 +31,25 @@ IMPLICIT NONE
 ! COMPLEX(QPC) SigPole(1:6)
 ! INTEGER ik
 
-REAL(QP) k,contK
+REAL(QP) k,zk, EPSpole
+COMPLEX(QPC) SE(1:6)
+CHARACTER(len=90) fichpol
 INTEGER ik
 
 ! x0=0.860436686125678599999999999999999961_qp
-fichpol="./DONNEES/BCS_4_pole"
-! blaPole=.TRUE.
+! fichpol="./DONNEES/BCS_4_pole"
+! fichpol="./datSpectre/specx0_4.0"
+fichpol="./datSpectre/BCS_4_pole"
+blaPole=.TRUE.
+
+k=3.80799999999999999999999999999999970
+zk=3.73733636363636363636363636363636377
+EPSpole=1.0e-6_qp
+
+call rdInfo(fichpol)
+
+SE=selfEpole(k,zk,EPSpole)
+write(6,*)"k,zk,SE=",k,zk,SE(:)
 
 ! blaSC=.TRUE.
 
@@ -53,11 +66,11 @@ fichpol="./DONNEES/BCS_4_pole"
 ! close(14)
 
 ! open(14,file="tstCONT.dat")
-do ik=1,50
-    k=ik/10.0_qp
-    contK=contPole(k) 
-    write(6,*)"k,cont=",k,contK
-enddo
+! do ik=1,50
+!     k=ik/10.0_qp
+!     contK=contPole(k) 
+!     write(6,*)"k,cont=",k,contK
+! enddo
 ! close(14)
 ! k=1.18_qp
 ! contK=contPole(k) 

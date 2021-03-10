@@ -21,7 +21,7 @@ hktest2: eqdetat.o dspec.o Zerom.o bestM.o angularint.o intldc.o intpole.o hktes
 	$(COMP) -O3 -fcheck=all -fbacktrace $^ $(LIB_PERSO) -o hktest2
 
 SVLtest: eqdetat.o dspec.o Zerom.o angularint.o intpole.o SVLtest.o
-	$(COMP) -O3 $^ $(LIB_PERSO) -o SVLtest
+	$(COMP) -fopenmp -fcheck=all -fbacktrace -O3 $^ $(LIB_PERSO) -o SVLtest
 
 pointsM: dspec.o pointsM.o
 	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o pointsM
