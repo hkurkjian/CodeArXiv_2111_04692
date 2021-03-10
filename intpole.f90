@@ -73,10 +73,10 @@ endif
 bounds(1)=0.0_qp
 if(nbq>0)then
  bounds(2:1+nbq)=bq(1:nbq)
- bounds(2+nbq)=nqeff*dq
+ bounds(2+nbq)=qmin+nqeff*dq
  nbounds=2+nbq
 else
- bounds(2)=nqeff*dq
+ bounds(2)=qmin+nqeff*dq
  nbounds=2
 endif
 
@@ -446,7 +446,7 @@ SUBROUTINE rdInfo(fichpol)
 
   ! Effective q length
   inquire(file=trim(fichpol)//".dat", size=taille)
-  nqeff=taille/nn-2
+  nqeff=taille/nn
 
   ! Select threshhold q below which omq is approximated by c q
   qThr=0.0205_qp
@@ -459,6 +459,8 @@ SUBROUTINE rdInfo(fichpol)
       if(blaPole) write(6,*)"iq,q=",iq,donpol(1,iq)
     enddo
   close(32)
+
+  nqeff=nqeff-2
 END SUBROUTINE rdInfo
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION contPole(k) 
