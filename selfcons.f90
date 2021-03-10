@@ -52,6 +52,7 @@ endif
 blaSC=.TRUE.
 suffeintq="bidon"
 
+call initialisation(mu,0,fichiers,0)
 do ik=0,nk
  k=kmin+dk*ik
  if(blaSC) write(6,*)"-------------------------------------"
@@ -59,7 +60,6 @@ do ik=0,nk
  if(blaSC) write(6,*)"k=",k
  if(blaSC) write(6,*)
 
- call initialisation(mu,0,fichiers,0)
 
  ! Calculate continuum thresholds
  contK=thresholds(mu,k) 
@@ -75,7 +75,7 @@ do ik=0,nk
   if(blaSC) write(6,*)"mnewt, initial guess: zkdep=",zkdep
   call mnewt(20,zkdep,0.001_qp*EPS(1),0.1_qp*EPS(1),detGnewt)
  else
-  OS=1.e-7_qp
+  OS=1.e-6_qp
   cont=contK(2)
   if(blaSC) write(6,*)"rtsafe: trying to bracket the root"
   if(res)then
@@ -110,6 +110,7 @@ do ik=0,nk
 
 enddo
 
+call desinit
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   SUBROUTINE detGrtsafe(zkIn,arg,det,ddet)
@@ -119,7 +120,7 @@ CONTAINS
 
     REAL(QP) detP,detM,h
 
-    h=zkIn*0.0001_qp
+    h=zkIn*0.1_qp*OS
 
     if(res)then
      det =real(detGres(k,zkIn  ,EPS,sigbidon,suffeintq))

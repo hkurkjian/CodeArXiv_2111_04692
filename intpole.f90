@@ -401,7 +401,6 @@ SUBROUTINE intOmQ(qVal,omq)
 
    ! Read 5 points around qVal
    iq=floor((qVal-qmin)/dq)+1
-   write(6,*)"qVal,iq=",qVal,iq
 
    if(iq.GE.nqeff)then 
      write(6,*) "Attention qVal=",qVal," dépasse la valeur maximale de q=",donpol(1,nqeff)," du fichier"
