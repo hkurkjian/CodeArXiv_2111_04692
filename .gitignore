@@ -1,5 +1,7 @@
 *.out
 *.pdf
+*.eps
+*.png
 *.aux
 *.synctex.gz
 *.log
@@ -20,6 +22,7 @@ pointsM
 spectre
 suppointsM
 selfcons
+traitement
 libperso/libmalib.a
 DONNEES/
 mkInfoFile.inp

@@ -2173,12 +2173,12 @@ CONTAINS
         INTEGER io,ilignes
 
         nlignes=0
-        open(1001,file=trim(fich),iostat=io)
+        open(1001,file=trim(fich),ACTION="READ")
           do ilignes=1,100000000
-           read(101,*,iostat=io)
-           if(io.NE.0) exit
+           read(1001,*,end=11)
            nlignes=nlignes+1
           enddo
+        11 CONTINUE
         close(1001)
         END FUNCTION nlignes
 END MODULE recettes

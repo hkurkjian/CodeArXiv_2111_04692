@@ -47,7 +47,7 @@ endif
 !Initialisation de dspec
 x0=mu
 temperaturenulle=.TRUE.
-EPSpp=1.0e-7_qp
+EPSpp=1.0e-6_qp
 x0crit=0.0_qp
 !Initialisation de intpole
 if(trim(fichiers(5)).NE."bidon")then

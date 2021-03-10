@@ -1,5 +1,6 @@
 MODULE modpol
  USE nrtype
+ USE OMP_LIB
  IMPLICIT NONE
        INTERFACE iminloc
         MODULE PROCEDURE iminloc_s,iminloc_d,iminloc_q

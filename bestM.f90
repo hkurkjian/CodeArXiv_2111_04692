@@ -3,6 +3,7 @@ USE nrtype
 USE vars
 USE dspec
 USE modpol
+USE OMP_LIB
 IMPLICIT NONE
 REAL(QP), DIMENSION(:,:,:), ALLOCATABLE :: donnees,donnees_sup,donnees_sup2
 REAL(QP), DIMENSION(:,:),   ALLOCATABLE :: vecq,vecq_sup,vecq_sup2
@@ -416,10 +417,12 @@ do iposq=posq-1,posq+2
   err(2)=.TRUE.
   ptsM(1:3,2:3,iposq-posq+2)=sousgrille(2:4,posom:posom+1)
   ptsom   (2:3,iposq-posq+2)=sousgrille(1,  posom:posom+1)
+  if(blaM) write(6,*)"iposq,ptsy=",iposq,ptsom(2:3,iposq-posq+2)
 
  else
   ptsM(1:3,1:4,iposq-posq+2)=sousgrille(2:4,posom-1:posom+2)
   ptsom   (1:4,iposq-posq+2)=sousgrille(1,  posom-1:posom+2)
+  if(blaM) write(6,*)"iposq,ptsy=",iposq,ptsom(:,iposq-posq+2)
  endif
 enddo
 
@@ -454,7 +457,7 @@ if(blaM.OR.blablaerr)then
   write(6,*)"ptsom(3,:)=",opp2-ptsom(3,:)**2
   write(6,*)"ptsom(4,:)=",opp2-ptsom(4,:)**2
  else
-  if((opp(2)-opp(1))<0.01_qp)then
+  if(((opp(2)-opp(1))<0.01_qp).AND.(om<(opp(1)+opp(2))/2.0_qp))then
    write(6,*)"ptsom(1,:)=",ptsom(1,:)*(vecq_sup(posq-1:posq+2,3)-vecq_sup(posq-1:posq+2,2))+vecq_sup(posq-1:posq+2,2)
    write(6,*)"ptsom(2,:)=",ptsom(2,:)*(vecq_sup(posq-1:posq+2,3)-vecq_sup(posq-1:posq+2,2))+vecq_sup(posq-1:posq+2,2)
    write(6,*)"ptsom(3,:)=",ptsom(3,:)*(vecq_sup(posq-1:posq+2,3)-vecq_sup(posq-1:posq+2,2))+vecq_sup(posq-1:posq+2,2)
@@ -511,8 +514,8 @@ REAL(QP), DIMENSION(1:6), INTENT(OUT) :: dinterpolom3
 REAL(QP), DIMENSION(1:6) :: interpolom3
 
 INTEGER posq,posom
-INTEGER iposq,iMm
-REAL(QP) ptsq(1:4),ptsom(1:4,1:4),ptsM(1:3,1:4,1:4)
+INTEGER iposq,iMm,i,j,i2,j2
+REAL(QP) ptsq(1:4),ptsom(1:4,1:4),vectest(1:4,1:4),ptsM(1:3,1:4,1:4)
 REAL(QP) y,opp1,opp2,opp3,oppref(1:4)
 REAL(QP), DIMENSION(:,:), ALLOCATABLE :: sousgrille
 
@@ -683,8 +686,36 @@ if(err(0).OR.err(1)) return
 
 do iMm=1,3
   if(err(2))then
+   do i=2,3
+   do j=2,3
+    vectest=ptsom
+    vectest(i,j)=1.0e50_qp
+    do i2=2,3
+    if(vectest(i2,j)==ptsom(i,j))then
+     write(6,*)"Erreur, entrées de polint dégénerées, om,q,fil=",om,q,OMP_GET_THREAD_NUM()
+     write(6,*)"ptsq=",ptsq
+     write(6,*)"ptsom=",ptsom
+     stop
+    endif
+    enddo
+   enddo
+   enddo
    call polin2(ptsq(2:3),ptsom(2:3,2:3),ptsM(iMm,2:3,2:3),q,y,interpolom3(iMm),dinterpolom3(iMm))
   else
+   do i=1,4
+   do j=1,4
+    vectest=ptsom
+    vectest(i,j)=1.0e50_qp
+    do i2=1,4
+    if(vectest(i2,j)==ptsom(i,j))then
+     write(6,*)"Erreur, entrées de polint dégénerées, om,q,fil=",om,q,OMP_GET_THREAD_NUM()
+     write(6,*)"ptsq=",ptsq
+     write(6,*)"ptsom=",ptsom
+     stop
+    endif
+    enddo
+   enddo
+   enddo
    call polin2(ptsq,ptsom,ptsM(iMm,:,:),q,y,interpolom3(iMm),dinterpolom3(iMm))
   endif
   if(abs(dinterpolom3(iMm)/interpolom3(iMm))>0.01_qp)then
@@ -796,7 +827,8 @@ do ixq=1,nqsup
   open(211,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
    read(211,REC=ixq)donnees_sup(1:7,1:4*nomsup,ixq)
    if(blaM)then 
-    write(6,*)"ixq,donnees_sup(1:3,75,ixq)=",ixq,xqlec,opp(2),donnees_sup(1:3,75,ixq)
+    write(6,*)"ixq,donnees_sup2(1:3,75,ixq)=",ixq,xqlec,opp(2),donnees_sup(1:3,75,ixq)
+!    write(6,*)"ixq,donnees_sup(1:3,75,ixq)=",ixq,xqlec,donnees_sup(1,3*nomsup+1:3*nomsup+7,ixq)
    endif
   close(211)
 enddo

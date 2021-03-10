@@ -25,13 +25,14 @@ SUBROUTINE ini_intpasres(lecture,ecriture,fichlec)
  if(lecture)then
   open(101,file=trim(fichlec)//".info")
    read(101,FMT="(A90)") chainebidon
-   if(bla0) write(6,*)   chainebidon
    read(101,*) profondeur,bq(:) 
-   if(bla0) write(6,*) profondeur,bq(:) 
   close(101)
 
   nl1=nlignes(trim(fichlec)//"_1.dat")
   nl2=nlignes(trim(fichlec)//"_2.dat")
+  if(bla0) write(6,*)"ini_intpasres"
+  if(bla0) write(6,*)
+  if(bla0) write(6,*)"fichlec,nl1,nl2=",trim(fichlec),nl1,nl2
   allocate(donlec1(1:10,1:nl1))
   allocate(donlec2(1:10,1:nl2))
 
@@ -61,6 +62,7 @@ SUBROUTINE ini_intpasres(lecture,ecriture,fichlec)
 
  endif
  if(bla0)then
+   write(6,*)
    write(6,*)"+++++++++++++++++++++++++++ ini_intpasres +++++++++++++++++++++++++"
    write(6,*)
    write(6,*)"lecture,ecriture=",lecture,ecriture
@@ -100,7 +102,6 @@ FUNCTION intpasres(k,zk,lecture,ecriture,EPS,suffixe)
  EPSq =EPS(1)
  EPSom=EPS(2)
 
- ilec=0
 
  if(bla0)then
    write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -127,11 +128,14 @@ FUNCTION intpasres(k,zk,lecture,ecriture,EPS,suffixe)
  Iq2(:)=0.0_qp
 
  prefixe="pasres"
+
+ ilec=1
  argq(1)=bidon
  Iq1=qromovfixed(intq,bq(1) ,   bq(2),   6,argq,midpntvq,EPSq,profondeur,err)
  if(bla0) write(6,*)"Iq1=",Iq1
  if(err)  call erreur("q")
 
+ ilec=1
  argq(1)=bidon
  Iq2=qromovfixed(intq,bq(2),    bq(3),   6,argq,midpntvq,EPSq,profondeur,err)
  if(bla0) write(6,*)"Iq2=",Iq2
@@ -450,6 +454,8 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     write(6,*)"bq(igr),bq(igr+1)=",bq(igr),bq(igr+1)
     write(6,*)
    endif
+   if(abs(bq(igr+1)-bq(igr)).LE.1.0e-10) write(6,*) "On saute ce petit intervalle en q de taille :",abs(bq(igr+1)-bq(igr))
+   if(abs(bq(igr+1)-bq(igr)).LE.1.0e-10) cycle
    ires=qromovcq(intresq,bq(igr),bq(igr+1),6,(/bidon/),midpntvcq,EPSq)
    intres=intres+ires
    if(bla0)then
@@ -527,7 +533,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    call tri_pos(bom2,pos_bom)
  
 !Découpe les intervalles par le milieu, assigne routint (pour le changement de variable) et vres (pour le nombre d’angles de résonnance)
-   trout=2*ttot-1 !trout=nombre d’intervalle d’integration. Nombre de bornes (avec les milieux et bmax: 2*ttot)
+   trout=2*ttot !trout=nombre d’intervalle d’integration. Nombre de bornes (avec les milieux et bmax: 2*ttot)
    allocate(bomf(1:trout+1))
    allocate(routint(1:trout))
    allocate(vres(1:trout))
@@ -549,8 +555,10 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
      endif
     endif
    enddo
-   bomf(trout)  =bom2(ttot)
+   bomf(trout-1)  =bom2(ttot)
+   bomf(trout)=2*bomf(trout-1)
    bomf(trout+1)=bmax
+   routint(trout-1)=msql
    routint(trout)=rinf
    vres(trout)=0
 
@@ -560,7 +568,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
 
    if(bla00)then
 !   if(bla00.OR.(omp_get_thread_num()==0))then
-    write(6,FMT="(A6,9G20.10)")"bomf=",bomf(1:trout+1)
+    write(6,FMT="(A6,10G20.10)")"bomf=",bomf(1:trout+1)
     write(6,*)"routint=",ecritrout(trout,routint(1:trout))
     write(6,*)"vres="   ,vres(1:trout)
     write(6,*)
@@ -710,6 +718,7 @@ else
  le(7)=ec(k-k0)-1
  le(8)=3*epsBCS(k/3.0_qp)-2
 endif
+if(bla0) write(6,*)"lignes d’energie non triées:",le
 END SUBROUTINE lignesenergie
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE bornesq(k,zkt,bk,le,reg,tconf,config,bq)
@@ -907,6 +916,9 @@ else
   endif
  endif
 endif
+if(bla0) write(6,*)"km,q1m,q2m,q3m,q4m=",km,q1m,q2m,q3m,q4m
+if(bla0) write(6,*)"q1mbis,q3mbis=",q1mbis,q3mbis
+if(bla0) write(6,*)"kp,q1p,q2p,qc,qm=",kp,q1p,q2p,qc
 
 
 vecq=(/0.0_qp,q1m,q2m,q3m,q4m,q1p,q2p,kp,km,qm,qc,q1mbis,q3mbis/)
@@ -1057,15 +1069,15 @@ CONTAINS
  REAL(QP), DIMENSION(:), INTENT(IN) :: arg
  REAL(QP), INTENT(OUT) :: P,dP
 
- P=     (k**2 - k0**2)**2*(1 + k0**4) - 8*k*(k - k0)*(k + k0)*(1 + k0**4)*qt + &
-     -  (-2*k**4*k0**2 + k**2*(25 + 28*k0**4) - 10*(k0**2 + k0**6))*qt**2 + &
-     -  4*k*(-9 + 4*k**2*k0**2 - 12*k0**4)*qt**3 + (21 + k**4 - 50*k**2*k0**2 + 33*k0**4)*qt**4 - &
-     -  8*k*(k**2 - 9*k0**2)*qt**5 + 8*(3*k**2 - 5*k0**2)*qt**6 - 32*k*qt**7 + 16*qt**8
+ P=    (k**2 - k0**2)**2*(1 + k0**4) - 8*k*(k - k0)*(k + k0)*(1 + k0**4)*qt + &
+       (-2*k**4*k0**2 + k**2*(25 + 28*k0**4) - 10*(k0**2 + k0**6))*qt**2 + &
+       4*k*(-9 + 4*k**2*k0**2 - 12*k0**4)*qt**3 + (21 + k**4 - 50*k**2*k0**2 + 33*k0**4)*qt**4 - &
+       8*k*(k**2 - 9*k0**2)*qt**5 + 8*(3*k**2 - 5*k0**2)*qt**6 - 32*k*qt**7 + 16*qt**8
 
- dP=          2*(-4*k*(k - k0)*(k + k0)*(1 + k0**4) + &
-     -    (-2*k**4*k0**2 + k**2*(25 + 28*k0**4) - 10*(k0**2 + k0**6))*qt + &
-     -    6*k*(-9 + 4*k**2*k0**2 - 12*k0**4)*qt**2 + 2*(21 + k**4 - 50*k**2*k0**2 + 33*k0**4)*qt**3 - &
-     -    20*k*(k**2 - 9*k0**2)*qt**4 + 24*(3*k**2 - 5*k0**2)*qt**5 - 112*k*qt**6 + 64*qt**7)
+ dP=     2*(-4*k*(k - k0)*(k + k0)*(1 + k0**4) + &
+         (-2*k**4*k0**2 + k**2*(25 + 28*k0**4) - 10*(k0**2 + k0**6))*qt + &
+         6*k*(-9 + 4*k**2*k0**2 - 12*k0**4)*qt**2 + 2*(21 + k**4 - 50*k**2*k0**2 + 33*k0**4)*qt**3 - &
+         20*k*(k**2 - 9*k0**2)*qt**4 + 24*(3*k**2 - 5*k0**2)*qt**5 - 112*k*qt**6 + 64*qt**7)
 
  END SUBROUTINE solP
 END FUNCTION solom2

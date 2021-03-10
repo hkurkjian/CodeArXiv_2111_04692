@@ -14,8 +14,8 @@ selfcons: dspec.o bestM.o angularint.o intldc.o intpole.o selftot.o selfcons.o
 encorr: dspec.o bestM.o angularint.o intldc.o intpole.o selftot.o encorr.o
 	$(COMP) -fopenmp -fcheck=all -fbacktrace -O3 $^ $(LIB_PERSO) -o encorr
 
-hktest: eqdetat.o dspec.o Zerom.o bestM.o angularint.o intldc.o intpole.o hktest.o
-	$(COMP) -O3 -fcheck=all -fbacktrace $^ $(LIB_PERSO) -o hktest
+hktest: eqdetat.o dspec.o Zerom.o bestM.o angularint.o intldc.o intpole.o selftot.o hktest.o
+	$(COMP) -O3 -fopenmp -fcheck=all -fbacktrace $^ $(LIB_PERSO) -o hktest
 
 hktest2: eqdetat.o dspec.o Zerom.o bestM.o angularint.o intldc.o intpole.o hktest2.o
 	$(COMP) -O3 -fcheck=all -fbacktrace $^ $(LIB_PERSO) -o hktest2
@@ -34,6 +34,9 @@ spectre: eqdetat.o dspec.o Zerom.o spectre.o
 
 mkInfoFile: eqdetat.o mkInfoFile.o
 	$(COMP) -O3 $^ $(LIB_PERSO) -o mkInfoFile
+
+traitement: traitement.o
+	$(COMP) -O3 $^ $(LIB_PERSO) -o traitement
 
 propre : 
 	rm -f *.o 

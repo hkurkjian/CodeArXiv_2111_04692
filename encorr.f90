@@ -10,7 +10,7 @@ COMPLEX(QPC) sigma(1:2,1:6),sigcomb(1:3),det
 REAL(QP) dk,dzk
 REAL(QP) kmin,kmax,zkmin,zkmax,EPS(1:3)
 REAL(QP) bqbidon(1:3),th(1:2)
-INTEGER nk,nzk,ik,izk,ic,nivobla,eintq,profondeurbidon
+INTEGER nk,nzk,nkdeb,ik,izk,nzkdeb,ic,nivobla,eintq,profondeurbidon
 CHARACTER(len=90) fichiers(1:5),suffixe,suffintq
 CHARACTER(len=5) cik,cizk
 LOGICAL nvofich
@@ -21,10 +21,10 @@ open(10,file='encorr.inp')
  read(10,*)mu
  read(10,*)kmin
  read(10,*)kmax
- read(10,*)nk
+ read(10,*)nk,nkdeb
  read(10,*)zkmin
  read(10,*)zkmax
- read(10,*)nzk
+ read(10,*)nzk,nzkdeb
  read(10,*)fichiers(1) !pour charger bestM/donnees
  read(10,*)fichiers(2) !pour charger bestM/donnees_sup
  read(10,*)fichiers(3) !pour charger bestM/donnees_sup2
@@ -47,10 +47,10 @@ write(6,*)
 write(6,*)'suffixe=',suffixe
 write(6,*)'kmin=',kmin
 write(6,*)'kmax=',kmax
-write(6,*)'nk=',nk
+write(6,*)'nk,nkdeb=',nk,nkdeb
 write(6,*)'zkmin=',zkmin
 write(6,*)'zkmax=',zkmax
-write(6,*)'nzk=',nzk
+write(6,*)'nzk,nzkdeb=',nzk,nzkdeb
 write(6,*)'fichiers ldc:',trim(fichiers(1))," ",trim(fichiers(2))," ",trim(fichiers(3))
 write(6,*)'fichier  lec:',trim(fichiers(4))
 write(6,*)'fichier pole:',trim(fichiers(5))
@@ -80,20 +80,27 @@ if(nvofich)then
  open(22,file="DONNEES/selfEtot"//trim(suffixe)//".dat")
   write(22,*)"!Valeurs de k,zk et selfEtot pour x0=",x0
  close(22)
+ open(23,file="DONNEES/det"//trim(suffixe)//".dat")
+  write(23,*)"!Valeurs de k,zk et detG pour x0=",x0
+ close(23)
+ open(24,file="DONNEES/continuum"//trim(suffixe)//".dat")
+  write(24,*)"!Valeurs de k et des bords de continuum pour x0=",x0
+ close(24)
 endif
 
-izk=5
-ik=0
+izk=-1+nzkdeb
+ik=nkdeb
 !$OMP  PARALLEL DO &
 !$OMP& PRIVATE(k,zk,cik,cizk,th,suffintq,det,sigcomb,sigma) &
 !$OMP& SHARED(ik,izk,fichiers,EPS,mu,kmin,zkmin,dk,dzk) SCHEDULE(DYNAMIC)
-do ic=1,(nk+1)*(nzk+1)
+do ic=1,(nk-nkdeb+1)*(nzk-nzkdeb+1)
 !$OMP CRITICAL
  izk=izk+1
  if(izk==nzk+1)then
   izk=0
   ik=ik+1
  endif
+ write(6,*)"ik,izk,fil=",ik,izk,OMP_GET_THREAD_NUM()
  k=kmin+dk*ik
  zk=zkmin+dzk*izk
  write(6,*)"k,zk=",k,zk
@@ -120,7 +127,7 @@ do ic=1,(nk+1)*(nzk+1)
  open(20,file="DONNEES/selfEldc"//trim(suffixe)//".dat",POSITION="APPEND")
  open(21,file="DONNEES/selfEpol"//trim(suffixe)//".dat",POSITION="APPEND")
  open(22,file="DONNEES/selfEtot"//trim(suffixe)//".dat",POSITION="APPEND")
- open(23,file="DONNEES/continuum"//trim(suffixe)//".dat",POSITION="APPEND")
+ open(23,file="DONNEES/det"     //trim(suffixe)//".dat",POSITION="APPEND")
   write(6,*)"k,zk,bords des continua=",k,zk,th
   write(6,*)"re(selfEldc)=",real(sigma(1,1:6))
   write(6,*)"im(selfEldc)=",imag(sigma(1,1:6))
@@ -128,15 +135,21 @@ do ic=1,(nk+1)*(nzk+1)
   write(6,*)"im(selfEpol)=",imag(sigma(2,1:6))
   write(6,*)"re(selfEtot)=",real(sigcomb(1:3))
   write(6,*)"im(selfEtot)=",imag(sigcomb(1:3))
+  write(6,*)"det=",real(det),imag(det)
+  write(6,*)
   write(20,*)k,zk,real(sigma(1,1:6)),imag(sigma(1,1:6))
   write(21,*)k,zk,real(sigma(2,1:6)),imag(sigma(2,1:6))
   write(22,*)k,zk,real(sigcomb(1:3)),imag(sigcomb(1:3))
-  write(23,*)k,th
+  write(23,*)k,zk,real(det),         imag(det)
+  if(izk==nzk)then
+   open(24,file="DONNEES/continuum"//trim(suffixe)//".dat",POSITION="APPEND")
+    write(24,*)k,th
+   close(24)
+  endif
  close(20)
  close(21)
  close(22)
  close(23)
-
 enddo
 !$OMP END PARALLEL DO
 

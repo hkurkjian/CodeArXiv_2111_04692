@@ -8,7 +8,10 @@
        ns=ns-1
        do m=1,n-1 !For each column of the tableau,
         den(1:n-m)=ho(1:n-m)-ho(1+m:n) !we loop over the current c’s and d’s and upidate them.
-        if(any(den(1:n-m) == 0.0)) STOP 'polint: entrées dégénérées'
+        if(any(den(1:n-m) == 0.0))then
+          write(6,*)"erreur ds polint, fil:",OMP_GET_THREAD_NUM()
+          STOP 'polint: entrées dégénérées'
+        endif
 !       This error can occur only if two input xa’s are (to within roundoff) identical.
         den(1:n-m)=(c(2:n-m+1)-d(1:n-m))/den(1:n-m)
         d(1:n-m)=ho(1+m:n)*den(1:n-m) !Here the c’s and d’s are updated.

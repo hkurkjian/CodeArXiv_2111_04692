@@ -401,8 +401,17 @@ SUBROUTINE intOmQ(qVal,omq)
 
    ! Read 5 points around qVal
    iq=floor((qVal-qmin)/dq)+1
+   write(6,*)"qVal,iq=",qVal,iq
 
-   sdonpol=donpol(:,iq-2:iq+2)
+   if(iq.GE.nqeff)then 
+     write(6,*) "Attention qVal=",qVal," dépasse la valeur maximale de q=",donpol(1,nqeff)," du fichier"
+     write(6,*) "valeur de omq obtenue par extrapolation polynomiale"
+     sdonpol=donpol(:,nqeff-4:nqeff)
+   elseif(iq.GE.nqeff-1)then
+    sdonpol=donpol(:,iq-3:iq+1)
+   else
+    sdonpol=donpol(:,iq-2:iq+2)
+   endif
    ptq =sdonpol(1  ,:)
    ptom=sdonpol(2  ,:)
    ptM =sdonpol(3:5,:)
@@ -447,6 +456,7 @@ SUBROUTINE rdInfo(fichpol)
   open(32,file=trim(fichpol)//".dat",action="read",access="direct",form="unformatted",recl=nn)
     do iq=1,nqeff
       read(32,rec=iq)donpol(1:8,iq)!q,om,M(1:3),dM(1:3)
+      if(blaPole) write(6,*)"iq,q=",iq,donpol(1,iq)
     enddo
   close(32)
 END SUBROUTINE rdInfo

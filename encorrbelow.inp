@@ -1,10 +1,10 @@
 4.0      ! read(10,*)mu
-3.80799999999999999999999999999999970         ! read(10,*)kmin
-3.80799999999999999999999999999999970         ! read(10,*)kmin
-0 0       ! read(10,*)nk
-3.73733636363636363636363636363636377 ! read(10,*)zkmin
-3.73733636363636363636363636363636377 ! read(10,*)zkmin
-0 0       ! read(10,*)nzk
+1.8      ! read(10,*)kmin
+5.8      ! read(10,*)kmax
+550 0       ! read(10,*)nk
+1.001      ! read(10,*)zkmin
+2.99      ! read(10,*)zkmin
+200 0       ! read(10,*)nzk
 "DONNEES/BCS_4_2"              ! read(10,*)fichldc(1)
 "DONNEES/BCS_4_sup_comb"       ! read(10,*)fichldc(2)
 "DONNEES/BCS_4_sup4"           ! read(10,*)fichldc(3)
@@ -14,6 +14,6 @@
 1.0e-5      ! read(10,*)EPS(2)!EPSom pour intldc
 1.0e-6      ! read(10,*)EPS(3)!EPSq  pour intpole
 1           ! read(10,*)nivobla
-test        ! read(10,*)suffixe
+below3        ! read(10,*)suffixe
 T           ! read(10,*)nvofich
 0           ! read(10,*)ecrintq
