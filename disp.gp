@@ -9,6 +9,8 @@ disp  ="DONNEES/solautocortest.dat"
 disp2 ="DONNEES/selfEtotabove4.dat"
 disp2 ="DONNEES/detabove3.dat"
 disp2 ="DONNEES/coupe.dat"
+disp2 ="DONNEES/detgk2.dat"
+disp3 ="DONNEES/dettgk2.dat"
 
 x0=4
 eBCS(x)=sqrt((x**2-x0)**2+1)
@@ -27,7 +29,10 @@ eBCS(x)=sqrt((x**2-x0)**2+1)
 #     disp u 1:3 with line,\
 #     disp u 1:4 with line
 
-plot disp2 u 2:(1/($3**2+$4**2)) with linespoints,\
+plot disp2 index 24 u 2:(1/($3**2+$4**2)) with linespoints,\
+     disp2 index 20 u 2:(1/($3**2+$4**2)) with linespoints,\
+     disp2 index 16 u 2:(1/($3**2+$4**2)) with linespoints,\
+     disp3          u 2:(1/($3**2+$4**2)) with linespoints,\
 
 #plot disp2 index 00 u 2:(1/($3**2+$4**2)) with linespoints,\
 #     disp2 index 10 u 2:(1/($3**2+$4**2)) with linespoints,\

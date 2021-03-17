@@ -124,6 +124,7 @@ do ic=1,(nk-nkdeb+1)*(nzk-nzkdeb+1)
  
  sigcomb(1:3)=sigma(1,1:3)+sigma(1,4:6)+sigma(2,1:3)+sigma(2,4:6)
 
+!$OMP CRITICAL
  open(20,file="DONNEES/selfEldc"//trim(suffixe)//".dat",POSITION="APPEND")
  open(21,file="DONNEES/selfEpol"//trim(suffixe)//".dat",POSITION="APPEND")
  open(22,file="DONNEES/selfEtot"//trim(suffixe)//".dat",POSITION="APPEND")
@@ -150,6 +151,7 @@ do ic=1,(nk-nkdeb+1)*(nzk-nzkdeb+1)
  close(21)
  close(22)
  close(23)
+ !$OMP END CRITICAL
 enddo
 !$OMP END PARALLEL DO
 
