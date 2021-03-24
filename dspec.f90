@@ -220,7 +220,11 @@ if(axer)then
 
   if(floor(num)<4)then !energy cutoff in the integrals
    db=100.0_qp
-   bmax=max(2.0e6_qp,2*om0-opp(3)+db,2*opp(3)+db,4*x0+db,2*om0-2*x0+db,2*om0+db) !In case 2*om0-opp or 2*opp overflows bmax. This formula works whatever the value of ptbranchmtpp
+   if(om0<50000.0_qp)then
+    bmax=max(2.0e7_qp,2*om0-opp(3)+db,2*opp(3)+db,4*x0+db,2*om0-2*x0+db,2*om0+db) !In case 2*om0-opp or 2*opp overflows bmax. This formula works whatever the value of ptbranchmtpp
+   else
+    bmax=max(2.0e9_qp,2*om0-opp(3)+db,2*opp(3)+db,4*x0+db,2*om0-2*x0+db,2*om0+db) !Large values of om0 are more sensitive to the value of bmax
+   endif
   else
    bmax=1.0e55_qp
   endif
@@ -302,17 +306,41 @@ if(axer)then
       choix(1:5)=         (/msqu,   msql,  msqu,                 msql, rinf/)
       intpp=decoupe(inter,(/0.0_qp, ag(1), (ag(1)+ag(2))/2.0_qp, ag(2),2*ag(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
      elseif(om0<ag(2))then
-      arg(1,1:5)=         (/nsu,    su,    su,    nsu,  nsu/)
-      choix(1:5)=         (/msqu,   msql,  msqu,  msql, rinf/)
-      intpp=decoupe(inter,(/0.0_qp, ag(1), (ag(1)+ag(2))/2.0_qp,   ag(2),2*ag(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+      if(((om0-ag(1))<0.01_qp).AND.(ag(1)+0.01_qp<(ag(1)+ag(2))/2))then
+       mil1=ag(1)+0.01_qp
+       mil2=(ag(1)+ag(2))/2
 
-      Icomp=-r0*log((ag(2)-om0)/(om0-ag(1)))
+       arg(1,1:6)  =(/nsu,   su,   su,  nsu,  nsu,  nsu/)
+       choix(1:6)  =(/mpnt,  msql, mpnt, mpnt, msql, rinf/)
+       bornes(1:7) =(/0.0_qp,ag(1),mil1, mil2, ag(2),2*ag(2),bmax/)
+       intpp=decoupe(inter,bornes(1:7),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
+
+       Icomp=-r0*log((mil2-om0)/(om0-ag(1)))
+      else
+       arg(1,1:5)=         (/nsu,    su,    su,    nsu,  nsu/)
+       choix(1:5)=         (/msqu,   msql,  msqu,  msql, rinf/)
+       intpp=decoupe(inter,(/0.0_qp, ag(1), (ag(1)+ag(2))/2.0_qp,   ag(2),2*ag(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+
+       Icomp=-r0*log((ag(2)-om0)/(om0-ag(1)))
+      endif
      else
-      arg(1,1:5)=         (/nsu,    nsu,   nsu,                 su,   nsu/)
-      choix(1:5)=         (/msqu,   msql,  msqu,                msql, rinf/)
-      intpp=decoupe(inter,(/0.0_qp, ag(1), (ag(1)+ag(2))/2.0_qp,ag(2),om0+ag(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+      if((om0-ag(2))<0.5_qp)then
+       arg(1,1:5)=         (/nsu,    nsu,   nsu,                 su,   nsu/)
+       choix(1:5)=         (/msqu,   msql,  msqu,                msql, rinf/)
+       intpp=decoupe(inter,(/0.0_qp, ag(1), (ag(1)+ag(2))/2.0_qp,ag(2),2*ag(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
 
-      Icomp=-r0*log(ag(2)/(om0-ag(2)))
+       Icomp=-r0*log((2*ag(2)-om0)/(om0-ag(2)))
+      else
+       arg(1,1:6)=         (/nsu,    nsu,   nsu,                 su,   su,  nsu/)
+       choix(1:6)=         (/msqu,   msql,  msqu,                msql, rinf,rinf/)
+       intpp=decoupe(inter,(/0.0_qp, ag(1), (ag(1)+ag(2))/2.0_qp,ag(2),om0, 2*om0-ag(2),bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
+
+       Icomp=0.0_qp
+      endif
+!      intpp=decoupe(inter,(/0.0_qp, ag(1), (ag(1)+ag(2))/2.0_qp,ag(2),om0+ag(2),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
+
+!      Icomp=-r0*log((bmax-om0)/2.0_qp/(om0-ag(2)))
+!      Icomp=-r0*log(ag(2)/(om0-ag(2)))
      endif
      call ecrit(bla1,'Icomp=',Icomp)
 
@@ -517,6 +545,7 @@ CONTAINS
 
   do is=1,size(om)
    ome=om(is)
+   if(ome==om0) ome=om0+1.0e-20
 
    r =rhopp(num,ome,T)
 
@@ -1318,7 +1347,6 @@ ll=asinh(x0)
 mm =-exp(2.0_qp*ll)
 
 ss=acosh(om0/opp(1))
-!write(6,*)"ss=",ss
 
 nn1= exp(ll+ss)
 nn2=-exp(ll-ss)
@@ -1327,14 +1355,11 @@ re_ellpi2=ellpi_q(PI/2.0_qp,nn2,mm)
 
 t0=asin(1.0_qp/sqrt(nn1))
 im_ellpi1=-PI/((1.0_qp-mm*sin(t0)**2)**(0.5_qp)*(-nn1*sin(2.0_qp*t0)))
-!write(6,*)"im_ellpi1=",im_ellpi1
 
 fp=(sinh(ss)+sinh(ll))*(re_ellpi1+iiq*im_ellpi1-re_ellpi2)+cosh(ss)*ellf(PI/2.0_qp,iiq*exp(ll))
-!write(6,*)"fp=",fp
 
 ss=-ss
 
-!write(6,*)"ss=",ss
 nn1= exp(ll+ss)
 nn2=-exp(ll-ss)
 re_ellpi1=ellpi_q(PI/2.0_qp,nn1,mm)
@@ -1343,11 +1368,9 @@ re_ellpi2=ellpi_q(PI/2.0_qp,nn2,mm)
 if(om0<opp(3))then
  t0=asin(1.0_qp/sqrt(nn1))
  im_ellpi1=PI/((1.0_qp-mm*sin(t0)**2)**(0.5_qp)*(-nn1*sin(2.0_qp*t0)))
-! write(6,*)"im_ellpi1=",im_ellpi1
 endif
 
 fm=(sinh(ss)+sinh(ll))*(re_ellpi1+iiq*im_ellpi1-re_ellpi2)+cosh(ss)*ellf(PI/2.0_qp,iiq*exp(ll))
-!write(6,*)"fm=",fm
 
 ss=-ss
 
@@ -1377,124 +1400,116 @@ fr(1,2)=-M(1,2)/det
 fr(2,1)=fr(1,2)
 
 END SUBROUTINE mat_pairfield_pttq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE mat_pairfield_gom0(om0,e,det,M,fr)
+USE recettes
+USE eqdetat
+!mat_pairfield computes the 2*2 fluctuation matrix in the phase-modulus basis in the limit xq**2,om0>>1,x0 (in the BCS regime)
+!input: same for mat
+
+!output: 
+!M(1:2,1:2) a 2*2 symmetric matrix in the basis 1:phase, 2:modulus
+!det=M(1,1)*M(2,2)-M(1,2)**2, the determinant of the matrix
+!fr=1/M the pair propagator
+
+IMPLICIT NONE
+COMPLEX(QPC), DIMENSION(1:2,1:2), INTENT(OUT) :: M,fr
+COMPLEX(QPC), INTENT(OUT) :: det
+REAL(QP), INTENT(IN)  :: om0,e
+
+REAL(QP) rem11,rem22,imm11,imm22,rem12,imm12,fim22,fim12,unsat,al
+COMPLEX(QPC) m11,m22,m12
+
+call oangpp
+call oangpt
+
+if(2*om0<xq**2)then
+ write(6,*)"om0,xq",om0,xq 
+ stop "al est négatif dans mat_pairfield_gom0, om0,xq"
+endif
+
+unsat=unsurkfa0(x0)*sqrt(eF(x0))
+
+al=2*om0/xq**2
+!fim22=-sqrt(al-1.0_qp)*(8*al/(al-2)**2+2*log((sqrt(al-1)+1)**2/(sqrt(al-1)-1)**2)/sqrt(al-1))/(2*al**3)
+fim22=-4*sqrt(al-1)/(al-2)**2/al**2-log((sqrt(al-1)+1)**2/(sqrt(al-1)-1)**2)/al**3
+fim12=atanh(2*sqrt(al-1)/al)/al
+
+rem11=-PI**2*unsat
+imm11=-PI**2*sqrt(2*om0-xq**2)/2
+rem22= PI**2*(sqrt(2*om0+xq**2)/2-unsat)
+imm22= PI**2*fim22/xq**7
+rem12= PI**2*fn12(al)/xq**3
+imm12= PI**2*fim12/xq**3
+
+
+m11=cmplx(rem11,imm11,kind=qpc)
+m22=cmplx(rem22,imm22,kind=qpc)
+m12=cmplx(rem12,imm12,kind=qpc)
+!write(6,*)"m11=",m11
+!write(6,*)"m22=",m22
+!write(6,*)"m12=",m12
+
+M(1,1)=(m11+m22)/2.0-m12
+M(2,2)=(m11+m22)/2.0+m12
+M(1,2)=(m11-m22)/2.0
+M(2,1)=M(1,2)
+
+det=M(1,1)*M(2,2)-M(1,2)**2.0_qp
+!write(6,*)"om0,xq,det=",om0,xq,det
+
+fr(1,1)=M(2,2)/det
+fr(2,2)=M(1,1)/det
+fr(1,2)=-M(1,2)/det
+fr(2,1)=fr(1,2)
+
+END SUBROUTINE mat_pairfield_gom0
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+FUNCTION fn12(alp)
+REAL(QP), INTENT(IN) :: alp
+REAL(QP) fn12
+REAL(QP) bbmax
+ 
+bbmax=1.0e20_qp
+!write(6,*)"alp,sqrt(alp-1.0_qp),2*sqrt(alp-1.0_qp)=",alp,sqrt(alp-1.0_qp),2*sqrt(alp-1.0_qp)
+if(2*sqrt(alp-1.0_qp)>1.0_qp)then
+ fn12=     qromo(intn12r ,0.0_qp,1.0_qp               ,(/bidon/),midsquq,1.0e-11_qp)
+ fn12=fn12+qromo(intn12r ,1.0_qp,2*sqrt(alp-1.0_qp)   ,(/bidon/),midsqlq,1.0e-11_qp)
+ fn12=fn12+qromo(intn12pr,2*sqrt(alp-1.0_qp),bbmax    ,(/bidon/),midinfq,1.0e-11_qp)
+else
+ fn12=     qromo(intn12r ,0.0_qp,sqrt(alp-1.0_qp)     ,(/bidon/),midpntq,1.0e-11_qp)
+ fn12=     qromo(intn12r ,sqrt(alp-1.0_qp),2*sqrt(alp-1.0_qp),(/bidon/),midpntq,1.0e-11_qp)
+ fn12=fn12+qromo(intn12pr,2*sqrt(alp-1.0_qp),1.0_qp   ,(/bidon/),midsquq,1.0e-11_qp)
+ fn12=fn12+qromo(intn12pr,1.0_qp,            2.0_qp   ,(/bidon/),midsqlq,1.0e-11_qp)
+ fn12=fn12+qromo(intn12pr,2.0_qp,bbmax                ,(/bidon/),midinfq,1.0e-11_qp)
+endif
+fn12=fn12+2/3.0_qp/bbmax**3
+fn12=fn12*4.0_qp/PI
+!write(6,*)"fn12=",fn12
+
+CONTAINS 
+ FUNCTION intn12r(t,arg)
+ REAL(QP), INTENT(IN), DIMENSION(:) :: t,arg
+ REAL(QP), DIMENSION(size(t)) :: intn12r
+
+ REAL(QP), DIMENSION(size(t)) :: cterme
+
+ cterme=atanh(2*sqrt(alp-1)/alp)/(4.0_qp*alp*(t-sqrt(alp-1.0_qp)))
+ intn12r=t*atanh(2*t/(t**2+1))/((t**2+1+alp)*(t**2-(alp-1)))-cterme
+! write(6,*)"t,cterme=",t(1),cterme(1),intn12r(1)
+ END FUNCTION intn12r
+ FUNCTION intn12pr(t,arg)
+ REAL(QP), INTENT(IN), DIMENSION(:) :: t,arg
+ REAL(QP), DIMENSION(size(t)) :: intn12pr
+
+ INTEGER is
+
+ intn12pr=t*atanh(2*t/(t**2+1))/((t**2+1+alp)*(t**2-(alp-1)))
+! do is=1,size(t)
+! write(6,*)"t,cterme=",t(is),intn12pr(is)
+! enddo
+ END FUNCTION intn12pr
+END FUNCTION fn12
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 END MODULE dspec
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!    if(opp(1)>2*x0)then
-!     arg(1,1:5)=         (/nsu,    nsu,   nsu,             nsu,     nsu/)
-!     choix(1:5)=         (/msqu,   msql,  msqu,            msql,    rinf/)
-!     intpp=decoupe(inter,(/0.0_qp, 2*x0,  x0+opp(1)/2.0_qp,opp(1),  2*opp(1),bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
-!    else
-!     if(om0<opp(1))then 
-!      arg(1,1:5)=         (/nsu,    nsu,   nsu,             nsu, nsu/)
-!      choix(1:5)=         (/msqu,   msql,  msqu,            msql,rinf/)
-!      intpp=decoupe(inter,(/0.0_qp, opp(1),x0+opp(1)/2.0_qp,2*x0,4*x0,bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
-!     elseif(om0<2*x0)then
-!      arg(1,1:5)=         (/nsu,    su,     su,    nsu,  nsu/)
-!      choix(1:5)=         (/msqu,   msql,   msqu,  msql, rinf/)
-!      intpp=decoupe(inter,(/0.0_qp, opp(1), om0,   2*x0, 4*x0,bmax/),arg(1:1,1:5),choix(1:5),EPSpp,bla1)
-!
-!      Icomp=-r0*log((2*x0-om0)/(om0-opp(1)))
-!      call ecrit(bla1,'Icomp=',Icomp)
-!     else
-!      arg(1,1:6)=         (/nsu,    nsu,    nsu,                 su,  su,  nsu/)
-!      choix(1:6)=         (/msqu,   msql,   msqu,                msql,rinf,rinf/)
-!      intpp=decoupe(inter,(/0.0_qp, opp(1), (2*x0+opp(1))/2.0_qp,2*x0,om0, 2*om0-2*x0,bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
-!     endif
-!    endif
-!    if(opp(2)<2*x0)then
-!     if(om0<opp(1))then
-!      arg(1,1:6)=         (/nsu,    nsu,    nsu,    nsu,              nsu,   nsu/)
-!      choix(1:6)=         (/mpnt,   msqu,   msql,   msqu,             msql,  rinf/)
-!      intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2), x0+opp(2)/2.0_qp, 2*x0,  4*x0,bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
-!     elseif(om0<opp(2))then
-!      arg(1,1:7)=         (/nsu,    su,     su,    nsu,    nsu,              nsu,   nsu/)
-!      choix(1:7)=         (/mpnt,   mpnt,   msqu,  msql,   msqu,             msql,  rinf/)
-!      intpp=decoupe(inter,(/0.0_qp, opp(1), om0,   opp(2), x0+opp(2)/2.0_qp, 2*x0,  4*x0,bmax/),arg(1:1,1:7),choix(1:7),EPSpp,bla1)
-!  
-!      Icomp=-r0*log((opp(2)-om0)/(om0-opp(1)))
-!      call ecrit(bla1,'Icomp=',Icomp)
-!     elseif(om0<2*x0)then
-!      arg(1,1:6)=         (/nsu,    nsu,     su,     su,   nsu,   nsu/)
-!      choix(1:6)=         (/mpnt,   msqu,    msql,   msqu, msql,  rinf/)
-!      intpp=decoupe(inter,(/0.0_qp, opp(1),  opp(2), om0,  2*x0,  4*x0,bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
-!
-!      Icomp=-r0*log((2*x0-om0)/(om0-opp(2)))
-!      call ecrit(bla1,'Icomp=',Icomp)
-!     else
-!      arg(1,1:7)=         (/nsu,    nsu,     nsu,    nsu,             su,    su,  nsu/)
-!      choix(1:7)=         (/mpnt,   msqu,    msql,   msqu,            msql,  rinf,rinf/)
-!      intpp=decoupe(inter,(/0.0_qp, opp(1),  opp(2), x0+opp(2)/2.0_qp,2*x0,  om0, 2*om0,bmax/),arg(1:1,1:7),choix(1:7),EPSpp,bla1)
-!
-!      Icomp=-r0*log((2*om0-om0)/(2*x0-om0))
-!      call ecrit(bla1,'Icomp=',Icomp)
-!     endif
-!    else
-!     if(om0<opp(1))then
-!      arg(1,1:6)=         (/nsu,    nsu,    nsu,    nsu,              nsu,   nsu/)
-!      choix(1:6)=         (/mpnt,   msqu,   msql,   msqu,             msql,  rinf/)
-!      intpp=decoupe(inter,(/0.0_qp, opp(1), opp(2), x0+opp(2)/2.0_qp, 2*x0,  4*x0,bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
-!     elseif(om0<2*x0)then
-!      arg(1,1:7)=         (/nsu,    su,     su,    nsu,    nsu,              nsu,   nsu/)
-!      choix(1:7)=         (/mpnt,   mpnt,   msqu,  msql,   msqu,             msql,  rinf/)
-!      intpp=decoupe(inter,(/0.0_qp, opp(1), om0,   opp(2), x0+opp(2)/2.0_qp, 2*x0,  4*x0,bmax/),arg(1:1,1:7),choix(1:7),EPSpp,bla1)
-!  
-!      Icomp=-r0*log((opp(2)-om0)/(om0-opp(1)))
-!      call ecrit(bla1,'Icomp=',Icomp)
-!     elseif(om0<opp(2))then
-!      arg(1,1:6)=         (/nsu,    nsu,     su,     su,   nsu,   nsu/)
-!      choix(1:6)=         (/mpnt,   msqu,    msql,   msqu, msql,  rinf/)
-!      intpp=decoupe(inter,(/0.0_qp, opp(1),  opp(2), om0,  2*x0,  4*x0,bmax/),arg(1:1,1:6),choix(1:6),EPSpp,bla1)
-!
-!      Icomp=-r0*log((2*x0-om0)/(om0-opp(2)))
-!      call ecrit(bla1,'Icomp=',Icomp)
-!     else
-!      arg(1,1:7)=         (/nsu,    nsu,     nsu,    nsu,             su,    su,  nsu/)
-!      choix(1:7)=         (/mpnt,   msqu,    msql,   msqu,            msql,  rinf,rinf/)
-!      intpp=decoupe(inter,(/0.0_qp, opp(1),  opp(2), x0+opp(2)/2.0_qp,2*x0,  om0, 2*om0,bmax/),arg(1:1,1:7),choix(1:7),EPSpp,bla1)
-!
-!      Icomp=-r0*log((2*om0-om0)/(2*x0-om0))
-!      call ecrit(bla1,'Icomp=',Icomp)
-!     endif
-!    endif
-!   elseif(ptbranchmtpp==3)then
-!    if(om0<opp(1))then
-!     arg(1,1:8)=         (/nsu,    nsu,    nsu,    nsu,                   nsu,   nsu,              nsu,   nsu/)
-!     choix(1:8)=         (/mpnt,   mpnt,   msql,   msqu,                  msql,  msqu,             msql,  rinf/)
-!     if(floor(num)==5) choix(2)=msql
-!     bornes(1:9)=        (/0.0_qp, opp(1), opp(2), (opp(2)+opp(3))/2.0_qp,opp(3),x0+opp(3)/2.0_qp, 2*x0,  4*x0,bmax/)
-!     intpp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
-!    elseif(om0<opp(2))then
-!     arg(1,1:9)  =       (/nsu,    su,     su,    nsu,    nsu,                   nsu,   nsu,             nsu,   nsu/)
-!     choix(1:9)  =       (/mpnt,   mpnt,   msqu,  msql,   msqu,                  msql,  msqu,            msql,  rinf/)
-!     if(floor(num)==5) choix(3)=rinf
-!     bornes(1:10)=       (/0.0_qp, opp(1), om0,   opp(2), (opp(3)+opp(2))/2.0_qp,opp(3),x0+opp(3)/2.0_qp,2*x0,  4*x0,bmax/)
-!     intpp=decoupe(inter,bornes(1:10),arg(1:1,1:9),choix(1:9),EPSpp,bla1)
-! 
-!     Icomp=-r0*log((opp(2)-om0)/(om0-opp(1)))
-!     call ecrit(bla1,'Icomp=',Icomp)
-!    elseif(om0<opp(3))then
-!     arg(1,1:8)=         (/nsu,    nsu,     su,     su,   nsu,   nsu,             nsu,   nsu/)
-!     choix(1:8)=         (/mpnt,   msqu,    msql,   msqu, msql,  msqu,            msql,  rinf/)
-!     bornes(1:9)=        (/0.0_qp, opp(1),  opp(2), om0,  opp(3),x0+opp(3)/2.0_qp,2*x0,  4*x0,bmax/)
-!     intpp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
-
-!     Icomp=-r0*log((opp(3)-om0)/(om0-opp(2)))
-!     call ecrit(bla1,'Icomp=',Icomp)
-!    elseif(om0<2*x0)then
-!     arg(1,1:8)=         (/nsu,    nsu,     nsu,    nsu,                   su,    su,   nsu,   nsu/)
-!     choix(1:8)=         (/mpnt,   msqu,    msql,   msqu,                  msql,  msqu, msql,  rinf/)
-!     bornes(1:9)=        (/0.0_qp, opp(1),  opp(2), (opp(3)+opp(2))/2.0_qp,opp(3),om0,  2*x0,  4*x0,bmax/)
-!     intpp=decoupe(inter,bornes(1:9),arg(1:1,1:8),choix(1:8),EPSpp,bla1)
-
-!     Icomp=-r0*log((2*x0-om0)/(om0-opp(3)))
-!     call ecrit(bla1,'Icomp=',Icomp)
-!    else
-!     arg(1,1:9)=         (/nsu,    nsu,     su,     su,                    nsu,   nsu,             su,  su,  nsu/)
-!     choix(1:9)=         (/mpnt,   msqu,    msql,   msqu,                  msql,  msqu,            msql,rinf,rinf/)
-!     bornes(1:10)=       (/0.0_qp, opp(1),  opp(2), (opp(3)+opp(2))/2.0_qp,opp(3),x0+opp(3)/2.0_qp,2*x0,om0, 2*om0,bmax/)
-!     intpp=decoupe(inter,bornes(1:10),arg(1:1,1:9),choix(1:9),EPSpp,bla1)
-!     
-!     Icomp=-r0*log((2*om0-om0)/(om0-2*x0))
-!     call ecrit(bla1,'Icomp=',Icomp)
-!    endif
-!   endif

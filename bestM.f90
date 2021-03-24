@@ -40,7 +40,7 @@ USE modsim
 REAL(QP), INTENT(IN) :: om,q
 REAL(QP), DIMENSION(1:6) :: interpolM_recerr
 
-LOGICAL :: err(0:2),recom2
+LOGICAL :: err(0:2)
 REAL(QP),  DIMENSION(1:6) :: dinterpolM
 INTEGER iMm
 COMPLEX(QPC) Gg(1:2,1:2),Mm(1:2,1:2),det
@@ -57,7 +57,6 @@ endif
 
 if(err(0).OR.err(1))then
  if(blaerr) write(6,*)"Tentative de récupération par interpolom2"
- recom2=.FALSE.
 
  interpolM_recerr=interpolom2(q,om,dinterpolM,err)
  if(.NOT.(err(0).OR.err(1)))then 

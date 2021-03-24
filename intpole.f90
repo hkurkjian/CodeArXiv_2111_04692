@@ -455,7 +455,7 @@ SUBROUTINE rdInfo(fichpol)
   open(32,file=trim(fichpol)//".dat",action="read",access="direct",form="unformatted",recl=nn)
     do iq=1,nqeff
       read(32,rec=iq)donpol(1:8,iq)!q,om,M(1:3),dM(1:3)
-      if(blaPole) write(6,*)"iq,q=",iq,donpol(1,iq)
+!      if(blaPole) write(6,*)"iq,q=",iq,donpol(1,iq)
     enddo
   close(32)
 

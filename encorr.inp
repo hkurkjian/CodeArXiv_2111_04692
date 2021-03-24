@@ -2,7 +2,7 @@
 7.0      ! read(10,*)kmin
 40.0      ! read(10,*)kmax
 80 0      ! read(10,*)nk
-3.001     ! read(10,*)zkmin
+300.001     ! read(10,*)zkmin
 1600.0      ! read(10,*)zkmin
 350 0     ! read(10,*)nzk
 "DONNEES/BCS_4_2"              ! read(10,*)fichldc(1)
@@ -13,7 +13,7 @@
 1.0e-3      ! read(10,*)EPS(1)!EPSq  pour intldc
 1.0e-5      ! read(10,*)EPS(2)!EPSom pour intldc
 1.0e-6      ! read(10,*)EPS(3)!EPSq  pour intpole
-1           ! read(10,*)nivobla
+2           ! read(10,*)nivobla
 queue        ! read(10,*)suffixe
 T           ! read(10,*)nvofich
 0           ! read(10,*)ecrintq

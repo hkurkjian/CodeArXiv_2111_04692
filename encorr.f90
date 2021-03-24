@@ -32,7 +32,7 @@ open(10,file='encorr.inp')
  read(10,*)fichiers(5) !pour intpole
  read(10,*)EPS(1)      !intldc/EPSq
  read(10,*)EPS(2)      !intldc/EPSom
- read(10,*)EPS(3)      !intpole/EPSq
+ read(10,*)EPS(3)      !intpole/EPSqpole
  read(10,*)nivobla !Verbose level, from 0 to 3
  read(10,*)suffixe !terminaison of output files
  read(10,*)nvofich !TRUE to overwrite output files

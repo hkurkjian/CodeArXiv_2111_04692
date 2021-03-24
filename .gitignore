@@ -23,6 +23,7 @@ spectre
 suppointsM
 selfcons
 traitement
+hktest
 libperso/libmalib.a
 DONNEES/
 mkInfoFile.inp

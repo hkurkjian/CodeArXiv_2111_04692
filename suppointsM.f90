@@ -145,7 +145,11 @@ do icb=(ixqdep-1)*npoints+1,ixqfin*npoints
  if(tfen(ifen)==3) om=bornes(ifen)  +dom*(iom-passe(ifen)+1-0.5_qp)
  if(tfen(ifen)==4) om=1.0_qp/y**2
  
- call mat_pairfield(om,0.0_qp,det,Mm,Gg)
+ if(om>200000.0_qp)then
+  call mat_pairfield_gom0(om,0.0_qp,det,Mm,Gg)
+ else
+  call mat_pairfield     (om,0.0_qp,det,Mm,Gg)
+ endif
  Mmv=(/real(Mm(1,1)),real(Mm(2,2)),real(Mm(1,2)),imag(Mm(1,1)),imag(Mm(2,2)),imag(Mm(1,2))/)
  donnees(1  ,iom,ixq)=om
  donnees(2:7,iom,ixq)=Mmv

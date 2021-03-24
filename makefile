@@ -8,10 +8,10 @@ LIB_PERSO=-L./libperso -lmalib
 %.o : %.f90
 	$(COMP) -I$(MOD) -fopenmp -fcheck=all -fbacktrace -O3 -c $< -o $@
 
-selfcons: dspec.o bestM.o angularint.o intldc.o intpole.o selftot.o selfcons.o
+selfcons: eqdetat.o dspec.o bestM.o angularint.o intldc.o intpole.o selftot.o selfcons.o
 	$(COMP) -fopenmp -fcheck=all -fbacktrace -O3 $^ $(LIB_PERSO) -o selfcons
 
-encorr: dspec.o bestM.o angularint.o intldc.o intpole.o selftot.o encorr.o
+encorr: eqdetat.o dspec.o bestM.o angularint.o intldc.o intpole.o selftot.o encorr.o
 	$(COMP) -fopenmp -fcheck=all -fbacktrace -O3 $^ $(LIB_PERSO) -o encorr
 
 hktest: eqdetat.o dspec.o Zerom.o bestM.o angularint.o intldc.o intpole.o selftot.o hktest.o
@@ -26,7 +26,7 @@ SVLtest: eqdetat.o dspec.o Zerom.o angularint.o intpole.o SVLtest.o
 pointsM: dspec.o pointsM.o
 	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o pointsM
 
-suppointsM: dspec.o suppointsM.o
+suppointsM: eqdetat.o dspec.o suppointsM.o
 	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o suppointsM
 
 spectre: eqdetat.o dspec.o Zerom.o spectre.o

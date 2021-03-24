@@ -656,7 +656,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
 
 !    if(bla00.OR.(omp_get_thread_num()==0))then
     if(bla00)then
-     write(6,FMT="(A21,8G20.10)")"k,zk,q,ome,real(intresom)=",k,zk,q,ome,real(intresom(is,1)),imag(intresom(is,1))
+     write(6,FMT="(A21,8G20.10)")"k,zk,q,ome,real(intresom)=",k,zk,q,ome,real(intresom(is,2)),imag(intresom(is,2))
     endif
 
   enddo
