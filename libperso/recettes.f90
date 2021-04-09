@@ -2173,7 +2173,11 @@ CONTAINS
         INTEGER io,ilignes
 
         nlignes=0
-        open(1001,file=trim(fich),ACTION="READ")
+        open(1001,file=trim(fich),ACTION="READ",iostat=io)
+          if(io==29)then
+           nlignes=0
+           return
+          endif
           do ilignes=1,100000000
            read(1001,*,end=11)
            nlignes=nlignes+1

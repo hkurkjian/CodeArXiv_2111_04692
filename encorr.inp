@@ -1,19 +1,17 @@
-4.0      ! read(10,*)mu
-7.0      ! read(10,*)kmin
-40.0      ! read(10,*)kmax
+0.8604366861256786      ! read(10,*)mu
+0.1      ! read(10,*)kmin
+5.0      ! read(10,*)kmax
 80 0      ! read(10,*)nk
-300.001     ! read(10,*)zkmin
-1600.0      ! read(10,*)zkmin
-350 0     ! read(10,*)nzk
-"DONNEES/BCS_4_2"              ! read(10,*)fichldc(1)
-"DONNEES/BCS_4_sup_comb"       ! read(10,*)fichldc(2)
-"DONNEES/BCS_4_sup4"           ! read(10,*)fichldc(3)
-"DONNEES/grillebis_x04"        ! read(10,*)fichlec
-"DONNEES/BCS_4_pole"           ! read(10,*)fichierpole
+1.001     ! read(10,*)zkmin
+7.0      ! read(10,*)zkmin
+150 0     ! read(10,*)nzk
+"DONNEES/LU/BCS_LU"              ! read(10,*)fichldc(1)
+"DONNEES/LU/grille_LU"        ! read(10,*)fichlec
+"DONNEES/LU/BCS_LU_pole"           ! read(10,*)fichierpole
 1.0e-3      ! read(10,*)EPS(1)!EPSq  pour intldc
 1.0e-5      ! read(10,*)EPS(2)!EPSom pour intldc
 1.0e-6      ! read(10,*)EPS(3)!EPSq  pour intpole
-2           ! read(10,*)nivobla
-queue        ! read(10,*)suffixe
+1           ! read(10,*)nivobla
+LU        ! read(10,*)suffixe
 T           ! read(10,*)nvofich
 0           ! read(10,*)ecrintq

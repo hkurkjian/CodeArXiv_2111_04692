@@ -8,7 +8,7 @@ IMPLICIT NONE
 COMPLEX(QPC) Gg(1:2,1:2),Mm(1:2,1:2),det
 CHARACTER(len=90) fichier
 REAL(QP) xqmin,xqmax,xq1,xq2,dxq
-REAL(QP) om,dom,dom1,dom2,dom3,dom2p,y,dymax,dy,bmax
+REAL(QP) om,dom,dom1,dom2,dom3,dom2p,dom3p,y,dymax,dy,bmax
 REAL(QP) Mmv(1:6)
 REAL(QP),ALLOCATABLE, DIMENSION(:,:,:) :: donnees
 REAL(QP), ALLOCATABLE, DIMENSION(:) :: xqfen,bornes 
@@ -38,7 +38,7 @@ bla1=.TRUE.
 bla1=.FALSE.
 
 EPSpp=1.0e-8_qp
-x0crit=0.0_qp
+x0crit=1.0_qp
 beta=bidon
 temperaturenulle=.TRUE.
 
@@ -73,8 +73,8 @@ write(6,*)"Taille de l’enregistrement en octets:",nn
 
 if(nvofich)then
    open(12,file=trim(fichier)//".info")
-    write(12,*)"!x0,xq2,nq,nfen,nom1,nom2,nn"
-    write(12,*)  x0,xq2,nq,nfen,nom1,nom2,nn
+    write(12,*)"!x0,nq,nom1,nom2,nn"
+    write(12,*)  x0,nq,nom1,nom2,nn
    close(12)
    
    open(13,file=trim(fichier)//"grilleq.dat")
@@ -94,7 +94,7 @@ fini(:)=0
 !$OMP& PRIVATE(om,det,Mm,Gg,Mmv,icb,ixq,iom,ifen,dom,dom1,dom2,dom3,bornes,nmax,y,dy,dymax) &
 !$OMP& SHARED(fini,donnees) SCHEDULE(DYNAMIC)
 do icb=(ixqdep-1)*npoints+1,ixqfin*npoints
- ixq=icb/(npoints)+1
+ ixq=icb/npoints+1
  iom=MODULO(icb,npoints)
  if(iom==0)then 
   iom=npoints
@@ -112,12 +112,13 @@ do icb=(ixqdep-1)*npoints+1,ixqfin*npoints
  endif
 
 
- dom1 =min((opp(2)-opp(1))/10,0.1_qp)
+ dom1  =min((opp(2)-opp(1))/10,0.1_qp)
  if((opp(3)-opp(1)).LE.0.1_qp) dom1=(opp(2)-opp(1))/4
- dom2 =min(0.1_qp,(opp(3)-opp(2))/4)
- dom3 =0.05_qp*opp(3)
+ dom2  =min(0.1_qp,(opp(3)-opp(2))/4)
+ dom3  =min(0.05_qp*opp(3),(opp(3)-opp(2))/4)
+ dom3p =0.05_qp*opp(3)
 
- bornes=(/opp(1),opp(1)+dom1,opp(2)-dom1,opp(2),opp(2)+dom2,opp(3)-dom3,opp(3),opp(3)+dom3,4*opp(3),bmax/)
+ bornes=(/opp(1),opp(1)+dom1,opp(2)-dom1,opp(2),opp(2)+dom2,opp(3)-dom3,opp(3),opp(3)+dom3p,4*opp(3),bmax/)
 
  if(iom==1)then
   write(6,*)'--------------------'
@@ -168,7 +169,7 @@ do icb=(ixqdep-1)*npoints+1,ixqfin*npoints
  endif
  !$OMP END CRITICAL
  if(iom==passe(ifen)) write(6,*)"bornes:",bornes(ifen),bornes(ifen+1)
- write(6,*)"ixq,ifen,iom,om,Mmv(1),pt=",ixq,ifen,iom,om,Mmv(1),"  ",fini(ixq)," sur ",nmax
+ write(6,*)"ixq,xq,ifen,iom,om,Mmv(1),pt=",ixq,xq,ifen,iom,om,Mmv(1),"  ",fini(ixq)," sur ",nmax
 enddo
 !$OMP END PARALLEL DO
 

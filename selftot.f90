@@ -3,12 +3,12 @@ USE vars
 USE dspec
 USE intpole
 USE intldc
-USE bestM
+USE estM
 IMPLICIT NONE
 CONTAINS
 SUBROUTINE initialisation(mu,nivobla,fichiers,eintq)
 INTEGER, INTENT(IN) :: nivobla,eintq
-CHARACTER(len=90), INTENT(IN) :: fichiers(1:5)
+CHARACTER(len=90), INTENT(IN) :: fichiers(1:3)
 REAL(QP), INTENT(IN) :: mu
 
 !Niveaux de blabla (blaPole: intpole, bla0 et bla00: intldc, blaM et blaerr: estM)
@@ -50,22 +50,21 @@ temperaturenulle=.TRUE.
 EPSpp=1.0e-6_qp
 x0crit=0.0_qp
 !Initialisation de intpole
-if(trim(fichiers(5)).NE."bidon")then
-  call rdInfo(fichiers(5))
+if(trim(fichiers(3)).NE."bidon")then
+  call rdInfo(fichiers(3))
 endif
 !Initialisation de intldc
 ecrintq=eintq
-if(trim(fichiers(4)).NE."bidon")then
- call ini_intpasres(.TRUE.,.FALSE.,fichiers(4))
+if(trim(fichiers(2)).NE."bidon")then
+ call ini_intpasres(.TRUE.,.FALSE.,fichiers(2))
 endif
 !Initialisation de bestM
 qpetit=0.03_qp
+omgrand=50000.0_qp
 
 !chargement de donnees et donnees_sup ?
 if(fichiers(1).NE."bidon")then
      call load_data(fichiers(1))
-     call loadom2  (fichiers(2))
-     call loadom3  (fichiers(3))
 endif
 END SUBROUTINE initialisation
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

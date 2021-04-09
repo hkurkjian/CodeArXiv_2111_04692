@@ -35,7 +35,7 @@ if(bla3)then
 endif
 
 omdep=(/om/)
-call mnewt(20,omdep,tolx,1.e-9_qp,derivee)
+call mnewt(20,omdep,tolx,1.e-12_qp,derivee)
 
 om=omdep(1)
 

@@ -9,8 +9,8 @@ IMPLICIT NONE
 LOGICAL bla0,bla00
 INTEGER ecrintq,ilec
 REAL(QP) xiP,xiM,epsP,epsM,xmin,xmax,k0
-REAL(QP),ALLOCATABLE, DIMENSION(:,:) :: donlec1,donlec2
-REAL(QP) :: bq(1:3)
+REAL(QP),ALLOCATABLE, DIMENSION(:,:) :: donlec1,donlec2,donlec3
+REAL(QP) :: bq(1:4)
 INTEGER  :: profondeur
 INTEGER, PARAMETER :: al=1,bet=2,gam=3,delt=4,epsi=5,alti=6,betti=7,deltti=8,epsiti=9
 CONTAINS
@@ -20,7 +20,7 @@ SUBROUTINE ini_intpasres(lecture,ecriture,fichlec)
  LOGICAL, INTENT(IN)  :: lecture,ecriture
  CHARACTER(len=*), INTENT(IN) ::  fichlec
 
- INTEGER nl1,nl2
+ INTEGER nl1,nl2,nl3
 
  if(lecture)then
   open(101,file=trim(fichlec)//".info")
@@ -30,11 +30,13 @@ SUBROUTINE ini_intpasres(lecture,ecriture,fichlec)
 
   nl1=nlignes(trim(fichlec)//"_1.dat")
   nl2=nlignes(trim(fichlec)//"_2.dat")
+  nl3=nlignes(trim(fichlec)//"_3.dat")
   if(bla0) write(6,*)"ini_intpasres"
   if(bla0) write(6,*)
-  if(bla0) write(6,*)"fichlec,nl1,nl2=",trim(fichlec),nl1,nl2
+  if(bla0) write(6,*)"fichlec,nl1,nl2,nl3=",trim(fichlec),nl1,nl2,nl3
   allocate(donlec1(1:10,1:nl1))
   allocate(donlec2(1:10,1:nl2))
+  allocate(donlec3(1:10,1:nl3))
 
   open(111,file=trim(fichlec)//"_1.dat")
    do ilec=1,nl1
@@ -48,6 +50,14 @@ SUBROUTINE ini_intpasres(lecture,ecriture,fichlec)
    enddo
   close(112)
 
+  if(nl3>0)then
+   open(112,file=trim(fichlec)//"_3.dat")
+    do ilec=1,nl3
+     read(112,*)donlec3(1:10,ilec)
+    enddo
+   close(112)
+  endif
+
  endif
 
  if(ecriture)then
@@ -59,6 +69,7 @@ SUBROUTINE ini_intpasres(lecture,ecriture,fichlec)
 
   open(111,file=trim(fichlec)//"_1.dat")
   open(112,file=trim(fichlec)//"_2.dat")
+  open(113,file=trim(fichlec)//"_3.dat")
 
  endif
  if(bla0)then
@@ -66,7 +77,7 @@ SUBROUTINE ini_intpasres(lecture,ecriture,fichlec)
    write(6,*)"+++++++++++++++++++++++++++ ini_intpasres +++++++++++++++++++++++++"
    write(6,*)
    write(6,*)"lecture,ecriture=",lecture,ecriture
-   write(6,*)"q1,q2,q3=",bq
+   write(6,*)"q1,q2,q3,q4=",bq
    write(6,*)"fichlec: ",trim(fichlec)
    write(6,*)"profondeur=",profondeur
    write(6,*)
@@ -77,11 +88,12 @@ END SUBROUTINE ini_intpasres
 SUBROUTINE desini(lecture,ecriture)
  LOGICAL, INTENT(IN)  :: lecture,ecriture
  if(lecture)then
-  deallocate(donlec1,donlec2)
+  deallocate(donlec1,donlec2,donlec3)
  endif
  if(ecriture)then
   close(111)
   close(112)
+  close(113)
  endif
 END SUBROUTINE desini
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -93,8 +105,7 @@ FUNCTION intpasres(k,zk,lecture,ecriture,EPS,suffixe)
  REAL(QP) intpasres(1:6)
 
  CHARACTER(len=90) prefixe
- REAL(QP) Iq1(1:6),Iq2(1:6)
- REAL(QP) Iqinf(1:6)
+ REAL(QP) Iq1(1:6),Iq2(1:6),Iq3(1:6),Iqinf(1:6)
  REAL(QP) argq(1:1),e,EPSq,EPSom
  LOGICAL err
 
@@ -112,7 +123,7 @@ FUNCTION intpasres(k,zk,lecture,ecriture,EPS,suffixe)
    write(6,*)
    write(6,*)"k,zk=",k,zk
    write(6,*)"lecture,ecriture=",lecture,ecriture
-   write(6,*)"q1,q2,q3=",bq
+   write(6,*)"q1,q2,q3,q4=",bq
    write(6,*)
    write(6,*)"EPSq,EPSom,profondeur=",EPSq,EPSom,profondeur
    write(6,*)
@@ -126,6 +137,7 @@ FUNCTION intpasres(k,zk,lecture,ecriture,EPS,suffixe)
 
  Iq1(:)=0.0_qp
  Iq2(:)=0.0_qp
+ Iq3(:)=0.0_qp
 
  prefixe="pasres"
 
@@ -141,12 +153,18 @@ FUNCTION intpasres(k,zk,lecture,ecriture,EPS,suffixe)
  if(bla0) write(6,*)"Iq2=",Iq2
  if(err)  call erreur("q")
 
+ ilec=1
+ argq(1)=bidon
+ Iq3=qromovfixed(intq,bq(3),    bq(4),   6,argq,midpntvq,EPSq,profondeur,err)
+ if(bla0) write(6,*)"Iq3=",Iq3
+ if(err)  call erreur("q")
+
  Iqinf(:)=0.0_qp
  Iqinf(1)=1.0_qp/(2.0_qp*sqrt(3.0_qp)*PI**3*bq(3)**4)
  Iqinf(5)=-Iqinf(1)
 ! For the other integrals, the large q contribution (vanishing at least as 1/bq3**6) is neglected
 
- intpasres=2.0_qp*PI*(Iq1+Iq2+Iqinf) !Integration sur phi
+ intpasres=2.0_qp*PI*(Iq1+Iq2+Iq3+Iqinf) !Integration sur phi
 
 
 CONTAINS
@@ -276,7 +294,9 @@ CONTAINS
   INTEGER is,fich
 
   q=arg(1) !value of q passed on to the intu function
-  if(q>bq(2))then
+  if    (q>bq(3))then
+   fich=3
+  elseif(q>bq(2))then
    fich=2
   else
    fich=1
@@ -311,6 +331,11 @@ CONTAINS
      Mat(1,1)=cmplx(donlec2(3,ilec),donlec2(7 ,ilec),kind=qpc)
      Mat(2,2)=cmplx(donlec2(6,ilec),donlec2(10,ilec),kind=qpc)
      Mat(1,2)=cmplx(donlec2(4,ilec),donlec2(8 ,ilec),kind=qpc)
+    elseif(fich==3)then
+     xqfi=donlec3(1,ilec);omfi=donlec3(2,ilec)
+     Mat(1,1)=cmplx(donlec3(3,ilec),donlec3(7 ,ilec),kind=qpc)
+     Mat(2,2)=cmplx(donlec3(6,ilec),donlec3(10,ilec),kind=qpc)
+     Mat(1,2)=cmplx(donlec3(4,ilec),donlec3(8 ,ilec),kind=qpc)
     endif
     ilec=ilec+1
 !    read(110+fich,*)xqfi,omfi,reM11,reM12,reM21,reM22,imM11,imM12,imM21,imM22
@@ -372,7 +397,7 @@ END SUBROUTINE erreur
 ! @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
- USE bestM
+ USE estM
  USE recettes
  REAL(QP), INTENT(IN) :: k,zk
  LOGICAL,  INTENT(IN) :: interpolation

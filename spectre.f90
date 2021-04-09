@@ -18,9 +18,11 @@ PROGRAM spectre
   read(10,*)x0
   read(10,*)xqmin
   read(10,*)xqmax
+  read(10,*)ixqdep
   read(10,*)nxq
   read(10,*)om
   read(10,*)fichier
+  read(10,*)nouveauf
  close(10)
 
  bla1=.TRUE.
@@ -50,8 +52,6 @@ PROGRAM spectre
  inquire(iolength=nn)xq,om,M,dM
  write(6,*)"Taille d un enregistrement en octets:",nn
 
- nouveauf=.FALSE.
- nouveauf=.TRUE.
  if(nouveauf)then
   call system("rm "//trim(fichier)//".dat")
   call system("rm "//trim(fichier)//".info")
@@ -61,7 +61,6 @@ PROGRAM spectre
   close(10)
  endif
 
- ixqdep=0
  do ixq=ixqdep,nxq
   xq=xqmin+dxq*ixq
   tolx=4.0_qp*xq**2.0_qp*1.e-11_qp

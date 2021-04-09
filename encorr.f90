@@ -26,10 +26,8 @@ open(10,file='encorr.inp')
  read(10,*)zkmax
  read(10,*)nzk,nzkdeb
  read(10,*)fichiers(1) !pour charger bestM/donnees
- read(10,*)fichiers(2) !pour charger bestM/donnees_sup
- read(10,*)fichiers(3) !pour charger bestM/donnees_sup2
- read(10,*)fichiers(4) !pour intldc/intpasres
- read(10,*)fichiers(5) !pour intpole
+ read(10,*)fichiers(2) !pour intldc/intpasres
+ read(10,*)fichiers(3) !pour intpole
  read(10,*)EPS(1)      !intldc/EPSq
  read(10,*)EPS(2)      !intldc/EPSom
  read(10,*)EPS(3)      !intpole/EPSqpole
@@ -51,12 +49,12 @@ write(6,*)'nk,nkdeb=',nk,nkdeb
 write(6,*)'zkmin=',zkmin
 write(6,*)'zkmax=',zkmax
 write(6,*)'nzk,nzkdeb=',nzk,nzkdeb
-write(6,*)'fichiers ldc:',trim(fichiers(1))," ",trim(fichiers(2))," ",trim(fichiers(3))
-write(6,*)'fichier  lec:',trim(fichiers(4))
-write(6,*)'fichier pole:',trim(fichiers(5))
+write(6,*)'fichiers ldc:',trim(fichiers(1))
+write(6,*)'fichier  lec:',trim(fichiers(2))
+write(6,*)'fichier pole:',trim(fichiers(3))
 write(6,*)'precisions:',EPS
 
-call initialisation(mu,nivobla,fichiers(1:5),eintq)
+call initialisation(mu,nivobla,fichiers(1:3),eintq)
 
 if(nk==0)then
  dk=0.0

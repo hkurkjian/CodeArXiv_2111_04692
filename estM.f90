@@ -4,10 +4,11 @@ USE vars
 USE dspec
 USE modpol
 IMPLICIT NONE
-REAL(QP), DIMENSION(:,:,:), ALLOCATABLE :: donnees
-REAL(QP), DIMENSION(:,:),   ALLOCATABLE :: vecq
-REAL(QP) bmax,qpetit
-INTEGER nom1,nom2,nq
+REAL(QP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: donnees,donneesgq
+REAL(QP), DIMENSION(:,:),   ALLOCATABLE, TARGET :: vecq,vecqgq
+REAL(QP) bmax,qpetit,omgrand,gq
+INTEGER, TARGET :: nom1,nom2,nq
+INTEGER, TARGET :: nom1gq,nom2gq,nqgq
 LOGICAL blaM,blaerr,blablaerr
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -44,7 +45,7 @@ REAL(QP),  DIMENSION(1:6) :: dinterpolM
 COMPLEX(QPC) Gg(1:2,1:2),Mm(1:2,1:2),det
 INTEGER iMm
 
-interpolM_recerr=interpolM(q,om,dinterpolM,err)
+interpolM_recerr=interpoloM(q,om,dinterpolM,err)
 
 if(blaM.OR.blablaerr)then
  do iMm=1,6
@@ -54,91 +55,105 @@ if(blaM.OR.blablaerr)then
 endif
 
 if(err)then
+!if(.TRUE.)then
    if(blaerr) write(6,*)"Erreur sèche,q,om=",q,om
    if(q<qpetit)then
+    if(blaerr) write(6,*)"Appel de mat_pairfield_pttq"
     call mat_pairfield_pttq(om,0.0_qp,det,Mm,Gg)
+   elseif(om>omgrand)then
+    if(blaerr) write(6,*)"Appel de mat_pairfield_gom0"
+    call mat_pairfield_gom0(om,0.0_qp,det,Mm,Gg)
    else
+    if(blaerr) write(6,*)"Appel de mat_pairfield"
     call mat_pairfield(om,0.0_qp,det,Mm,Gg)
    endif
    interpolM_recerr(1:6)=(/real(Mm(1,1)),real(Mm(2,2)),real(Mm(1,2)),imag(Mm(1,1)),imag(Mm(2,2)),imag(Mm(1,2))/)
-  endif
- endif
 
- if(blaerr)then
-  do iMm=1,6
-   write(6,*)"om,q,interpol,dinterpol(récupéré)=",om,xq,interpolM_recerr(iMm),dinterpolM(iMm)
-  enddo
-  write(6,*)
- endif
+   if(blaerr)then
+    do iMm=1,6
+     write(6,*)"om,q,interpol,dinterpol(récupéré)=",om,xq,interpolM_recerr(iMm),dinterpolM(iMm)
+    enddo
+    write(6,*)
+   endif
 endif
 
 END FUNCTION interpolM_recerr
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION interpolom(q,om,dinterpolom,err)
+FUNCTION interpoloM(q,om,dinterpolom,err)
 USE modsim
 REAL(QP), INTENT(IN) :: om,q
 LOGICAL,  INTENT(INOUT) :: err
 REAL(QP), DIMENSION(1:6), INTENT(OUT) :: dinterpolom
 REAL(QP), DIMENSION(1:6) :: interpolom
 
-INTEGER posq,posom
-INTEGER iposq,iMm
-REAL(QP) ptsq(1:4),ptsom(1:4,1:4),ptsM(1:3,1:4,1:4)
-REAL(QP) y,opp1,opp2,opp3,oppref(1:4)
+INTEGER posq,posom,fen,nom,npasse,posc
+INTEGER iposq,iMm,no1,no2,nqq
+REAL(QP) ptsq(1:4),ptsom(1:4,1:4),ptsy(1:4,1:4),ptsM(1:3,1:4,1:4)
+REAL(QP) y,oppref(1:4,1:3),oppr(1:3)
 REAL(QP), DIMENSION(:,:), ALLOCATABLE :: sgrille,sgrilley
+REAL(QP), DIMENSION(:,:,:), POINTER :: don
+REAL(QP), DIMENSION(:,:), POINTER   :: vq
+LOGICAL :: err2
 
-err(:)   =.FALSE.
+err   =.FALSE.
 blablaerr=.FALSE.
 
 ptsM (:,:,:)=0.0_qp
 ptsom(:,:)  =0.0_qp
 ptsq (:)    =0.0_qp
 
+if(q<gq)then
+ don => donnees
+ vq  => vecq
+ no1=nom1
+ no2=nom2
+ nqq=nq
+else
+ don => donneesgq
+ vq  => vecqgq
+ no1=nom1gq
+ no2=nom2gq
+ nqq=nqgq
+endif
 
 xq=q
 call oangpp
-call locate(vecq(:,1),q,posq)
-call locate(om,opp(1:3),fen)
+call locate(vq(:,1),q,posq)
+call locate(opp(1:3),om,fen)
 
-if(om<(opp(1)+opp(2))/2)then
- ref=1
-if(om<(opp(2)+opp(3))/2)then
- ref=2
-else
- ref=3
+if(fen==1)then
+  nom=2*no1+1*no2
+  npasse=0
+elseif(fen==2)then 
+  nom=2*no1+1*no2
+  npasse=2*no1+1*no2
+elseif(fen==3)then
+  nom=1*no1+2*no2
+  npasse=4*no1+2*no2
 endif
+allocate(sgrille (1:4,1:nom),sgrilley(1:4,1:nom))
 
-if(((posq)<1).OR.((posq).GE.nq))then
+if((posq<1).OR.(posq.GE.nqq))then
   err=.TRUE.
   return
 endif
 
-if(((posq)<2).OR.((posq).GE.nq-1))then
-  err(2)=.TRUE.
+if((posq<2).OR.(posq.GE.nqq-1))then
+  err2=.TRUE.
   if(blaerr) blablaerr=.TRUE.
-  ptsq  (2:3)    =vecq(posq:posq+1,1)
-  oppref(2:3,1:3)=vecq(posq:posq+1,ref+1)
+  ptsq  (2:3)    =vq(posq:posq+1,1)
+  oppref(2:3,1:3)=vq(posq:posq+1,2:4)
 else
-  ptsq  (1:4)    =vecq(posq-1:posq+2,1)
-  oppref(1:4,1:3)=vecq(posq-1:posq+2,ref+1)
+  ptsq  (1:4)    =vq(posq-1:posq+2,1)
+  oppref(1:4,1:3)=vq(posq-1:posq+2,2:4)
 endif
 
 do iposq=posq-1,posq+2
  posc=iposq-posq+2
  oppr=oppref(posc,:)
- if((iposq<1).OR.(iposq>nq)) cycle
+ if((iposq<1).OR.(iposq>nqq)) cycle
 
- if(fen==1)then
-  allocate(sgrille (1:4,1:2*nom1+1*nom2))
-  sgrille=donnees(1:4,0              :2*nom1+1*nom2,iposq)
- elseif(fen==2)then 
-  allocate(sgrille (1:4,1:2*nom1+1*nom2))
-  sgrille=donnees(1:4,2*nom1+1*nom2+1:4*nom1+2*nom2,iposq)
- elseif(fen==3)then
-  allocate(sgrille (1:4,1:1*nom1+2*nom2))
-  sgrille=donnees(1:4,4*nom1+2*nom2+1:5*nom1+4*nom2,iposq)
- endif
- allocate(sgrilley(shape(sgrille)))
+ sgrille=don(1:4,npasse+1:npasse+nom,iposq)
 
  if(om<(opp(1)+opp(2))/2)then 
   if((opp(2)-opp(1))<0.01_qp)then
@@ -154,13 +169,17 @@ do iposq=posq-1,posq+2
  elseif(om<opp(3))then
   y=om-opp(2)
   sgrilley(1,:)=sgrille(1,:)-oppr(2)
- else
+ elseif(om<4*opp(3))then
   y=om-opp(3)
   sgrilley(1,:)=sgrille(1,:)-oppr(3)
+ else
+  y=1.0_qp/om**(0.5_qp)
+  sgrilley(1,:)  =1.0_qp/sgrille(1,:)**(0.5_qp)
  endif
  call locate(sgrilley(1,:),y,posom)
 
  if((posom<1).OR.(posom.GE.nom))then
+  err2=.TRUE.
   if(blaerr) write(6,*)"*********************************************"
   if(blaerr) write(6,*)
   if(blaerr) write(6,*)"om hors grille à posq,iposq=",posq,iposq
@@ -168,20 +187,19 @@ do iposq=posq-1,posq+2
   if(blaerr) write(6,*)
   if(blaerr) write(6,*)"*********************************************"
   if(blaerr) blablaerr=.TRUE.
-  if((iposq==posq).OR.(iposq==posq+1))then
-   err=.TRUE.
-  endif
+  if((iposq==posq).OR.(iposq==posq+1)) err=.TRUE.
   cycle
  endif
 
  if((posom<2).OR.(posom.GE.nom-1))then
-  ptsM(1:3,2:3,iposq-posq+2)=sgrille (2:4,posom:posom+1)
-  ptsom   (2:3,iposq-posq+2)=sgrille (1,  posom:posom+1)
-  ptsy    (2:3,iposq-posq+2)=sgrilley(1,  posom:posom+1)
+  err2=.TRUE.
+  ptsM(1:3,2:3,posc)=sgrille (2:4,posom:posom+1)
+  ptsom   (2:3,posc)=sgrille (1,  posom:posom+1)
+  ptsy    (2:3,posc)=sgrilley(1,  posom:posom+1)
  else
-  ptsM(1:3,1:4,iposq-posq+2)=sgrille (2:4,posom-1:posom+2)
-  ptsom   (1:4,iposq-posq+2)=sgrille (1,  posom-1:posom+2)
-  ptsy    (1:4,iposq-posq+2)=sgrilley(1,  posom-1:posom+2)
+  ptsM(1:3,1:4,posc)=sgrille (2:4,posom-1:posom+2)
+  ptsom   (1:4,posc)=sgrille (1,  posom-1:posom+2)
+  ptsy    (1:4,posc)=sgrilley(1,  posom-1:posom+2)
  endif
 enddo
 
@@ -200,8 +218,8 @@ if(blaM.OR.blablaerr)then
  write(6,*)"q,om,y=",q,om,y
  write(6,*)"opp=",opp(1:3)
  write(6,*)
- write(6,*)"posq,  vecq(posq)  =",posq,  vecq(posq,1)
- write(6,*)"posq+1,vecq(posq+1)=",posq+1,vecq(posq+1,1)
+ write(6,*)"posq,  vecq(posq)  =",posq,  vq(posq,1)
+ write(6,*)"posq+1,vecq(posq+1)=",posq+1,vq(posq+1,1)
  write(6,*)
  write(6,*)"--------------- Points retenus ---------------"
  write(6,*)
@@ -222,7 +240,7 @@ endif
 if(err) return
 
 do iMm=1,3
-  if(err(2))then
+  if(err2)then
    call polin2(ptsq(2:3),ptsy(2:3,2:3),ptsM(iMm,2:3,2:3),q,y,interpolom(iMm),dinterpolom(iMm))
   else
    call polin2(ptsq,ptsy,ptsM(iMm,:,:),q,y,interpolom(iMm),dinterpolom(iMm))
@@ -246,29 +264,28 @@ dinterpolom(4:6)=EPSpp
 deallocate(sgrille)
 deallocate(sgrilley)
 
-END FUNCTION interpolom
+END FUNCTION interpoloM
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE load_data(fich)
-INTEGER ixq,ixqbis,nn
+INTEGER ixq,ixqbis,nn,nngq,npoints
 CHARACTER(len=90), INTENT(IN) :: fich
-REAL(QP) xqlec
+REAL(QP) xqlec,qbidon
 open(212,file=trim(fich)//".info")
  read(212,*)
- read(212,*) x0,nq,nfen1,nfen2,nom1,nom2,nn
+ read(212,*) x0,nq,qbidon,qbidon,nom1,nom2,nn
  if(blaM)then
   write(6,*)"----------------------------------------"
   write(6,*)
-  write(6,*)"Chargement du tableau de données"
+  write(6,*)"Chargement du tableau de données primaire"
   write(6,*)
   write(6,*)"x0=",x0
-  write(6,*)"nq,nfen1,nfen2 =",nq,nfen1,nfen2
-  write(6,*)"nom1,nom2=",nom1,nom2
+  write(6,*)"nq=",nq
   write(6,*)"nn=",nn
   write(6,*)
  endif
 close(212)
 
-npoints=nom1*nfen1+nom2*nfen2
+npoints=5*nom1+4*nom2
 allocate(donnees(1:7,1:npoints,1:nq))
 allocate(vecq(1:nq,1:4))
 
@@ -281,8 +298,11 @@ do ixq=1,nq
   read(213,*)ixqbis,vecq(ixq,:)
   open(211,file=trim(fich)//".dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nn)
    read(211,REC=ixq)donnees(1:7,1:npoints,ixq)
+   donnees(:,1*nom1+1*nom2+1:2*nom1+1*nom2,ixq)=donnees(:,2*nom1+1*nom2:1*nom1+1*nom2+1:-1,ixq)
+   donnees(:,3*nom1+2*nom2+1:4*nom1+2*nom2,ixq)=donnees(:,4*nom1+2*nom2:3*nom1+2*nom2+1:-1,ixq)
+   donnees(:,5*nom1+3*nom2+1:5*nom1+4*nom2,ixq)=donnees(:,5*nom1+4*nom2:5*nom1+3*nom2+1:-1,ixq)
    if(blaM)then 
-    write(6,*)"ixq,donnees(1:3,75,ixq)=",ixq,xqlec,opp(2),donnees(1:3,75,ixq)
+    write(6,*)"ixq,donnees(1:3,75,ixq)=",ixq,vecq(ixq,1),vecq(ixq,3),donnees(1:3,3450,ixq)
    endif
   close(211)
 enddo
@@ -293,7 +313,50 @@ if(blaM)then
  write(6,*)
  write(6,*)"----------------------------------------"
 endif
+! ************************************************************** !
+open(212,file=trim(fich)//"gq.info")
+ read(212,*)
+ read(212,*) x0,nqgq,gq,qbidon,nom1gq,nom2gq,nngq
+ if(blaM)then
+  write(6,*)"----------------------------------------"
+  write(6,*)
+  write(6,*)"Chargement du tableau de données grands q"
+  write(6,*)
+  write(6,*)"x0=",x0
+  write(6,*)"nqgq=",nqgq
+  write(6,*)"nngq=",nngq
+  write(6,*)
+ endif
+close(212)
 
+npoints=5*nom1gq+4*nom2gq
+allocate(donneesgq(1:7,1:npoints,1:nqgq))
+allocate(vecqgq(1:nqgq,1:4))
+
+donneesgq(1,:,:)=1.0e50_qp
+vecqgq(:,:)=1.0e50_qp
+
+open(213,file=trim(fich)//"gqgrilleq.dat")
+read(213,*)
+do ixq=1,nqgq
+  read(213,*)ixqbis,vecqgq(ixq,:)
+  open(211,file=trim(fich)//"gq.dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nngq)
+   read(211,REC=ixq)donneesgq(1:7,1:npoints,ixq)
+   donneesgq(:,5*nom1gq+3*nom2gq+1:5*nom1gq+4*nom2gq,ixq)=donneesgq(:,5*nom1gq+4*nom2gq:5*nom1gq+3*nom2gq+1:-1,ixq)
+   if(blaM)then 
+    write(6,*)"ixq,q,opp(2),donneesgq(1:3,75,ixq)=",ixq,vecqgq(ixq,1),vecqgq(ixq,3),donneesgq(1:3,2000,ixq)
+   endif
+  close(211)
+enddo
+close(213)
+
+
+
+if(blaM)then
+ write(6,*)"Chargement gq terminé"
+ write(6,*)
+ write(6,*)"----------------------------------------"
+endif
 END SUBROUTINE load_data
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE unload_data

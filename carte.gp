@@ -14,20 +14,31 @@ cartetgk ="DONNEES/dettgk4.dat"
 cartettgk ="DONNEES/detttgk4.dat"
 cartet3gk ="DONNEES/dett3gk4.dat"
 coupegk ="DONNEES/coupegk.dat"
+coupepk ="DONNEES/coupepk.dat"
 coupefr ="DONNEES/coupefr.dat"
 tab=      "Tab.dat"
 
 x0=4
 
 epsBCS(x)=sqrt((x**2-x0)**2+1)
-set pm3d interpolate 2,2
 
 #set cbrange [0:0.01]
-set xrange [0.0:0.7]
-set yrange [1.0:6.0]
 
 set xlabel "omega/Delta"
 set ylabel "Im(G_{22}/det G(k,omega+i0+))"
+
+plot coupepk index 0  u 2:((1/($3**2+$4**2))) with linespoints lc rgb "red"    title "k=",\
+     coupepk index 3  u 2:((1/($3**2+$4**2))) with linespoints lc rgb "orange" title "k=",\
+#     coupepk index 1  u 2:((1/($3**2+$4**2))) with linespoints lc rgb "blue"   title "k=",\
+#     coupepk index 2  u 2:((1/($3**2+$4**2))) with linespoints lc rgb "green"  title "k=",\
+#     coupepk index 4  u 2:((1/($3**2+$4**2))) with lines lc rgb "brown"  title "k=",\
+#     coupepk index 5  u 2:((1/($3**2+$4**2))) with lines lc rgb "black"  title "k=",\
+#     coupepk index 5  u 2:((1/($3**2+$4**2))) with lines lc rgb "black"  title "k=",\
+#     coupepk index 6  u 2:((1/($3**2+$4**2))) with lines lc rgb "black"  title "k=",\
+#     coupepk index 7  u 2:((1/($3**2+$4**2))) with lines lc rgb "black"  title "k=",\
+#     coupepk index 8  u 2:((1/($3**2+$4**2))) with lines lc rgb "black"  title "k=",\
+#     coupepk index 9  u 2:((1/($3**2+$4**2))) with lines lc rgb "black"  title "k=",\
+#     coupepk index 10 u 2:((1/($3**2+$4**2))) with lines lc rgb "black"  title "k=",\
 
 plot coupefr index 0 u 2:6 with lines lc rgb "red"    title "k=6.04",\
      coupefr index 1 u 2:6 with lines lc rgb "blue"   title "k=6.54",\
@@ -47,6 +58,10 @@ plot coupegk index 0 u 2:((1/($3**2+$4**2))) with lines lc rgb "red"    title "k
      coupegk index 5 u 2:((1/($3**2+$4**2))) with lines lc rgb "black"  title "k=8.66",\
 
 set pm3d map
+set xrange [2.0:4.0]
+#set yrange [1.0:9.0]
+
+set pm3d interpolate 2,2
 #splot cartet3gk    u 1:2:((1/($3**2+$4**2))) with pm3d,\
 #
 set key off

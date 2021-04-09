@@ -11,14 +11,17 @@ LIB_PERSO=-L./libperso -lmalib
 selfcons: eqdetat.o dspec.o bestM.o angularint.o intldc.o intpole.o selftot.o selfcons.o
 	$(COMP) -fopenmp -fcheck=all -fbacktrace -O3 $^ $(LIB_PERSO) -o selfcons
 
-encorr: eqdetat.o dspec.o bestM.o angularint.o intldc.o intpole.o selftot.o encorr.o
+encorr: eqdetat.o dspec.o estM.o angularint.o intldc.o intpole.o selftot.o encorr.o
 	$(COMP) -fopenmp -fcheck=all -fbacktrace -O3 $^ $(LIB_PERSO) -o encorr
 
 hktest: eqdetat.o dspec.o Zerom.o bestM.o angularint.o intldc.o intpole.o selftot.o hktest.o
 	$(COMP) -O3 -fopenmp -fcheck=all -fbacktrace $^ $(LIB_PERSO) -o hktest
 
-hktest2: eqdetat.o dspec.o Zerom.o bestM.o angularint.o intldc.o intpole.o hktest2.o
-	$(COMP) -O3 -fcheck=all -fbacktrace $^ $(LIB_PERSO) -o hktest2
+testdspec: eqdetat.o dspec.o testdspec.o
+	$(COMP) -O3 -fopenmp -fcheck=all -fbacktrace $^ $(LIB_PERSO) -o testdspec
+
+test: eqdetat.o dspec.o estM.o test.o
+	$(COMP) -O3 -fopenmp -fcheck=all -fbacktrace $^ $(LIB_PERSO) -o test
 
 SVLtest: eqdetat.o dspec.o Zerom.o angularint.o intpole.o SVLtest.o
 	$(COMP) -fopenmp -fcheck=all -fbacktrace -O3 $^ $(LIB_PERSO) -o SVLtest
@@ -30,13 +33,13 @@ suppointsM: eqdetat.o dspec.o suppointsM.o
 	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o suppointsM
 
 spectre: eqdetat.o dspec.o Zerom.o spectre.o
-	$(COMP) -O3 $^ $(LIB_PERSO) -o spectre
+	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o spectre
 
 mkInfoFile: eqdetat.o mkInfoFile.o
-	$(COMP) -O3 $^ $(LIB_PERSO) -o mkInfoFile
+	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o mkInfoFile
 
-traitement: traitement.o
-	$(COMP) -O3 $^ $(LIB_PERSO) -o traitement
+traitement: eqdetat.o dspec.o angularint.o intpole.o traitement.o
+	$(COMP) -O3 -fopenmp $^ $(LIB_PERSO) -o traitement
 
 propre : 
 	rm -f *.o 
