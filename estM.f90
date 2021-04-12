@@ -9,7 +9,7 @@ REAL(QP), DIMENSION(:,:),   ALLOCATABLE, TARGET :: vecq,vecqgq
 REAL(QP) bmax,qpetit,omgrand,gq
 INTEGER, TARGET :: nom1,nom2,nq
 INTEGER, TARGET :: nom1gq,nom2gq,nqgq
-LOGICAL blaM,blaerr,blablaerr
+LOGICAL blaM,blaMM,blaerr,blablaerr
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE estmat_pairfield(om0,e,det,M,fr)
@@ -47,7 +47,7 @@ INTEGER iMm
 
 interpolM_recerr=interpoloM(q,om,dinterpolM,err)
 
-if(blaM.OR.blablaerr)then
+if(blaMM.OR.blablaerr)then
  do iMm=1,6
   write(6,*)"om,q,interpolM,dinterpolM=",om,q,interpolM_recerr(iMm),dinterpolM(iMm)
  enddo
@@ -211,7 +211,7 @@ if(err)then
 endif
 
 
-if(blaM.OR.blablaerr)then
+if(blaMM.OR.blablaerr)then
  write(6,*)
  write(6,*)"------------- interpolom -------------------"
  write(6,*)
@@ -301,7 +301,7 @@ do ixq=1,nq
    donnees(:,1*nom1+1*nom2+1:2*nom1+1*nom2,ixq)=donnees(:,2*nom1+1*nom2:1*nom1+1*nom2+1:-1,ixq)
    donnees(:,3*nom1+2*nom2+1:4*nom1+2*nom2,ixq)=donnees(:,4*nom1+2*nom2:3*nom1+2*nom2+1:-1,ixq)
    donnees(:,5*nom1+3*nom2+1:5*nom1+4*nom2,ixq)=donnees(:,5*nom1+4*nom2:5*nom1+3*nom2+1:-1,ixq)
-   if(blaM)then 
+   if(blaMM)then 
     write(6,*)"ixq,donnees(1:3,75,ixq)=",ixq,vecq(ixq,1),vecq(ixq,3),donnees(1:3,3450,ixq)
    endif
   close(211)
@@ -343,7 +343,7 @@ do ixq=1,nqgq
   open(211,file=trim(fich)//"gq.dat",ACTION="READ",ACCESS="DIRECT",FORM="UNFORMATTED",RECL=nngq)
    read(211,REC=ixq)donneesgq(1:7,1:npoints,ixq)
    donneesgq(:,5*nom1gq+3*nom2gq+1:5*nom1gq+4*nom2gq,ixq)=donneesgq(:,5*nom1gq+4*nom2gq:5*nom1gq+3*nom2gq+1:-1,ixq)
-   if(blaM)then 
+   if(blaMM)then 
     write(6,*)"ixq,q,opp(2),donneesgq(1:3,75,ixq)=",ixq,vecqgq(ixq,1),vecqgq(ixq,3),donneesgq(1:3,2000,ixq)
    endif
   close(211)

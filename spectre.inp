@@ -1,6 +1,8 @@
 0.8604366861256786  !read(10,*) x0
-2.03009440145508893240000000000000020 !read(10,*)xq
-5.0 !read(10,*)xq
-20000                  !read(10,*) nxq
-2.01502532468433918495165804319715909 !read(10,*) zdep(1) 
-BCS_LU_test     !read(10,*) fichier
+0.0007 !read(10,*)xq
+2.135406593395956 !read(10,*)xq
+28800          !read(10,*) ixqdep
+30000                  !read(10,*) nxq
+2.02 !read(10,*) zdep(1) 
+"DONNEES/LU/BCS_LU_pole"     !read(10,*) fichier
+F               !read(10,*) nvofich

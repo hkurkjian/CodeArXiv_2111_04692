@@ -46,8 +46,7 @@ PROGRAM spectre
  ccheck=mc2sDelta(x0)
 
  xq=xqmin
- write(6,*)'xq=',xq
- write(6,*)'om=',om
+ write(6,*)'xqmin,xqmax,dxq=',xqmin,xqmax,dxq
  write(6,*)'fichier=',trim(fichier)
  inquire(iolength=nn)xq,om,M,dM
  write(6,*)"Taille d un enregistrement en octets:",nn

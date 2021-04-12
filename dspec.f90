@@ -731,8 +731,8 @@ if(T<0.0_qp)then ! Intégrale du "+1" de 1+nP+nM
  r0=rhopp(num,om0,T)
  if(x0<x0crit)then
    if(ptbranchmtpp==1)then
-    choix(1:1)=             (/rinf/)
-    deriveepp=decoupe(inter,(/opp(1),bmax/),arg(1:1,1:1),choix(1:1),EPSpp,bla1)
+    choix(1:2)=             (/msql,  rinf/)
+    deriveepp=decoupe(inter,(/opp(1),2*opp(1),bmax/),arg(1:1,1:2),choix(1:2),EPSpp,bla1)
    elseif(ptbranchmtpp==2)then
     choix(1:3)=             (/mpnt,   msql,   rinf/)
     deriveepp=decoupe(inter,(/opp(1), opp(2), 2*opp(2),bmax/),arg(1:1,1:3),choix(1:3),EPSpp,bla1)

@@ -6,7 +6,7 @@ USE angularint
 USE OMP_LIB
 IMPLICIT NONE
 !$OMP THREADPRIVATE(xiP,xiM,epsP,epsM,xmin,xmax,ilec)
-LOGICAL bla0,bla00
+LOGICAL bla0,bla00,bla000
 INTEGER ecrintq,ilec
 REAL(QP) xiP,xiM,epsP,epsM,xmin,xmax,k0
 REAL(QP),ALLOCATABLE, DIMENSION(:,:) :: donlec1,donlec2,donlec3
@@ -165,6 +165,7 @@ FUNCTION intpasres(k,zk,lecture,ecriture,EPS,suffixe)
 ! For the other integrals, the large q contribution (vanishing at least as 1/bq3**6) is neglected
 
  intpasres=2.0_qp*PI*(Iq1+Iq2+Iq3+Iqinf) !Integration sur phi
+ if(bla0) write(6,*)"intpasres=",intpasres
 
 
 CONTAINS
@@ -188,7 +189,7 @@ CONTAINS
    xq=qs
    call oangpp
 
-   if(bla0)then
+   if(bla00)then
     write(6,*)"----------------------------------------"
     write(6,*)
     write(6,*)"qs=",qs
@@ -221,48 +222,48 @@ CONTAINS
    Iinf(4)=-Iinf(2)
    Iinf(5)=-Iinf(1)
    Iinf(6)= Iinf(3)
-   if(bla0)then
+   if(bla00)then
      write(6,FMT="(A6,6G20.10)")"Iinf=",Iinf
    endif
   
    if(ptbranchmtpp==1)then !BEC-like behavior: integrate from branch cut lower-edge opp(1) to infinity
      Ib=qromovfixed(intom,opp(1)         ,bmax                ,6,(/qs/),racinfvq,EPSom,profondeur,err) !deals with the 1/om^(3/2) decay at large om
-     if(bla0) write(6,FMT="(A10,6G20.10)")'Ib=',Ib
+     if(bla00) write(6,FMT="(A10,6G20.10)")'Ib=',Ib
      if(err)  call erreur("omega")
 
    elseif(ptbranchmtpp==2)then !One angular point opp(2) besides the lower-edge
     Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs/),midpntvq,EPSom,profondeur,err) !Integrate from the edge to the angular point
-    if(bla0) write(6,FMT="(A10,6G20.10)")'Ib=',Ib
+    if(bla00) write(6,FMT="(A10,6G20.10)")'Ib=',Ib
     if(err)  call erreur("omega")
 
     Ic=qromovfixed(intom,opp(2)         ,2.0_qp*opp(2)       ,6,(/qs/),midpntvq,EPSom,profondeur,err) !then from opp(2) to 2*opp(2), this circumscribes the numerical difficulty around opp(2)
-    if(bla0) write(6,FMT="(A10,6G20.10)")'Ic=',Ic
+    if(bla00) write(6,FMT="(A10,6G20.10)")'Ic=',Ic
     if(err)  call erreur("omega")
 
     Id=qromovfixed(intom,2.0_qp*opp(2)  ,bmax                ,6,(/qs/),racinfvq,EPSom,profondeur,err) !then from 2*opp(2) to infinity
-    if(bla0) write(6,FMT="(A10,6G20.10)")'Id=',Id
+    if(bla00) write(6,FMT="(A10,6G20.10)")'Id=',Id
     if(err)  call erreur("omega")
 
    elseif(ptbranchmtpp==3)then !Two angular points opp(2) and opp(3) besides the lower-edge
     Ib=qromovfixed(intom,opp(1)         ,opp(2)              ,6,(/qs/),midpntvq,EPSom,profondeur,err)
-    if(bla0) write(6,FMT="(A10,6G20.10)")'Ib=',Ib
+    if(bla00) write(6,FMT="(A10,6G20.10)")'Ib=',Ib
     if(err)  call erreur("omega")
 
     Ic=qromovfixed(intom,opp(2)         ,opp(3)              ,6,(/qs/),midpntvq,EPSom,profondeur,err)
-    if(bla0) write(6,FMT="(A10,6G20.10)")'Ic=',Ic
+    if(bla00) write(6,FMT="(A10,6G20.10)")'Ic=',Ic
     if(err)  call erreur("omega")
 
     Id=qromovfixed(intom,opp(3)         ,2.0_qp*opp(3)       ,6,(/qs/),midpntvq,EPSom,profondeur,err)
-    if(bla0) write(6,FMT="(A10,6G20.10)")'Id=',Id
+    if(bla00) write(6,FMT="(A10,6G20.10)")'Id=',Id
     if(err)  call erreur("omega")
 
     Ie=qromovfixed(intom,2.0_qp*opp(3)  ,bmax                ,6,(/qs/),racinfvq,EPSom,profondeur,err)
-    if(bla0) write(6,FMT="(A10,6G20.10)")'Ie=',Ie
+    if(bla00) write(6,FMT="(A10,6G20.10)")'Ie=',Ie
     if(err)  call erreur("omega")
    endif
   
    I=Ib+Ic+Id+Ie+Iinf !Combine the integration intervals
-   if(bla0)then
+   if(bla00)then
     write(6,*)
     write(6,FMT="(A12,7G20.10)")"qs,real(I)=",qs,real(I)
    endif
@@ -303,7 +304,7 @@ CONTAINS
   endif
   intom(:,:)=0.0_qp
 
-  if((bla00).AND.(size(om)==1))then
+  if((bla000).AND.(size(om)==1))then
    write(6,*)
    write(6,*)"****************"
   endif
@@ -376,13 +377,13 @@ CONTAINS
    intom(is,5)= rho(1,1)*IuP(1)
    intom(is,6)=-rho(1,2)*IuP(3)
 
-   if(bla00)then
+   if(bla000)then
     write(6,FMT="(A19,8G20.10)")"q,ome,real(intom)=",q,ome,intom(is,1:6)
    endif
 
   enddo
 
-  if(bla00)then
+  if(bla000)then
    write(6,*)
   endif
 
@@ -392,6 +393,7 @@ END FUNCTION intpasres
 SUBROUTINE erreur(var)
 CHARACTER(len=*), INTENT(IN) :: var
 if(bla0) write(6,*) "convergence non atteinte dans l’intégrale sur "//var
+!read(5,*)
 END SUBROUTINE erreur
 
 ! @@
@@ -528,8 +530,8 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    xmin=epsP-xiP
    xmax=epsM-xiM
 
-   if(bla0)then
-!   if(bla0.AND.(omp_get_thread_num()==0))then
+   if(bla00)then
+!   if(bla00.AND.(omp_get_thread_num()==0))then
     write(6,*)"---------------------------------"
     write(6,*)
     write(6,*)"qs=",qs
@@ -597,6 +599,8 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     write(6,*)"routint=",ecritrout(trout,routint(1:trout))
     write(6,*)"vres="   ,vres(1:trout)
     write(6,*)
+   endif
+   if(bla000)then
     write(6,*)"************************"
     write(6,*)
     write(6,*)"        decoupe         "
@@ -611,7 +615,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     close(125)
    endif
 !   if(bla0.AND.(omp_get_thread_num()==0))then
-   if(bla0)then
+   if(bla00)then
      write(6,FMT="(A7,6G20.10)")"intresq=",real(intresq(is,1:3)),imag(intresq(is,1:3))
      write(6,*)
    endif
@@ -638,8 +642,8 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    r=floor(arg(2))!Number of resonance angles
    intresom(:,:)=0.0_qp
 
-   if(bla00.AND.(size(om)==1))then
-!   if(bla00.AND.(size(om)==1).AND.(omp_get_thread_num()==0))then
+   if(bla000.AND.(size(om)==1))then
+!   if(bla000.AND.(size(om)==1).AND.(omp_get_thread_num()==0))then
     write(6,*)"************************"
    endif
 
@@ -679,14 +683,14 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     intresom(is,5)= rho(1,1)*IuP(1)
     intresom(is,6)=-rho(1,2)*IuP(3)
 
-!    if(bla00.OR.(omp_get_thread_num()==0))then
-    if(bla00)then
+!    if(bla000.OR.(omp_get_thread_num()==0))then
+    if(bla000)then
      write(6,FMT="(A21,8G20.10)")"k,zk,q,ome,real(intresom)=",k,zk,q,ome,real(intresom(is,2)),imag(intresom(is,2))
     endif
 
   enddo
-!  if(bla00.OR.(omp_get_thread_num()==0))then
-  if(bla00)then
+!  if(bla000.OR.(omp_get_thread_num()==0))then
+  if(bla000)then
    write(6,*)
   endif
   END FUNCTION intresom

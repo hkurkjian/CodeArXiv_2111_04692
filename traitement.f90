@@ -70,11 +70,13 @@ open(34,file='DONNEES/frt3gk.dat')
 13 CONTINUE
 close(12)
 write(6,*)"Fini3!"
-fich="DONNEES/BCS_4_pole"
+fich="DONNEES/LU/BCS_LU_pole"
 call rdInfo(fich)
 open(55,file='DONNEES/dispLU.dat')
 do iq=1,nqeff
  write(55,*)donpol(1:2,iq)
+ write(6,*) iq-1,donpol(1:2,iq),donpol(1,iq)-donpol(1,max(1,iq-1))
 enddo
+write(6,*)"Fini4!"
 close(55)
 END PROGRAM traitement
