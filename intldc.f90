@@ -50,13 +50,11 @@ SUBROUTINE ini_intpasres(lecture,ecriture,fichlec)
    enddo
   close(112)
 
-  if(nl3>0)then
-   open(112,file=trim(fichlec)//"_3.dat")
-    do ilec=1,nl3
-     read(112,*)donlec3(1:10,ilec)
-    enddo
-   close(112)
-  endif
+  open(112,file=trim(fichlec)//"_3.dat")
+   do ilec=1,nl3
+    read(112,*)donlec3(1:10,ilec)
+   enddo
+  close(112)
 
  endif
 
@@ -530,7 +528,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    xmin=epsP-xiP
    xmax=epsM-xiM
 
-   if(bla00)then
+   if(bla0)then
 !   if(bla00.AND.(omp_get_thread_num()==0))then
     write(6,*)"---------------------------------"
     write(6,*)
@@ -593,7 +591,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    arg(1,:)=qs
    arg(2,:)=vres(:)+0.5_qp
 
-   if(bla00)then
+   if(bla0)then
 !   if(bla00.OR.(omp_get_thread_num()==0))then
     write(6,FMT="(A6,10G20.10)")"bomf=",bomf(1:trout+1)
     write(6,*)"routint=",ecritrout(trout,routint(1:trout))

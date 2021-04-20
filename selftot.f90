@@ -71,7 +71,7 @@ if(trim(fichiers(2)).NE."bidon")then
 ! call ini_intpasres(.FALSE.,.TRUE.,fichiers(2))
  call ini_intpasres(.TRUE.,.FALSE.,fichiers(2))
 endif
-!Initialisation de bestM
+!Initialisation de estM
 qpetit=0.03_qp
 omgrand=50000.0_qp
 
@@ -96,8 +96,8 @@ FUNCTION detG(k,zk,EPS,sigcomb,suff)
 
   xik=k**2-x0
 
-!  sigcomb(1,:)=cmplx(intpasres(k,zk,.TRUE.,.FALSE.,EPS(1:2),suff),0.0_qp)
 !  sigcomb(1,:)=cmplx(intpasres(k,zk,.FALSE.,.TRUE.,EPS(1:2),suff),0.0_qp)
+  sigcomb(1,:)=cmplx(intpasres(k,zk,.TRUE.,.FALSE.,EPS(1:2),suff),0.0_qp)
   sigcomb(2,:)=0.0_qp
   sigcomb(2,:)=selfEpole(k,zk,EPS(3))
 !  sigcomb(1,:)=0.0_qp

@@ -9,7 +9,7 @@ LOGICAL blaSC
 REAL(QP)  mu,k,kmin,kmax,dk,zkdep(1:1)
 REAL(QP)  zk
 REAL(QP)  EPS(1:3)
-CHARACTER(len=90) fichiers(1:5),suffixe,suffeintq !1:3 fichldc, 3 fichlec, 4 fichpol
+CHARACTER(len=90) fichiers(1:3),suffixe,suffeintq !1:3 fichldc, 3 fichlec, 4 fichpol
 INTEGER nk,ik
 LOGICAL nvofich,res,newton
 
@@ -24,10 +24,8 @@ open(10,file='selfcons.inp')
  read(10,*)nk
  read(10,*)zkdep(1)
  read(10,*)fichiers(1) !pour charger bestM/donnees
- read(10,*)fichiers(2) !pour charger bestM/donnees_sup
- read(10,*)fichiers(3) !pour charger bestM/donnees_sup2
- read(10,*)fichiers(4) !pour intldc/intpasres
- read(10,*)fichiers(5) !pour intpole
+ read(10,*)fichiers(2) !pour intldc/intpasres
+ read(10,*)fichiers(3) !pour intpole
  read(10,*)EPS(1)      !intldc/EPSq
  read(10,*)EPS(2)      !intldc/EPSom
  read(10,*)EPS(3)      !intpole/EPSq
@@ -39,7 +37,7 @@ close(10)
 
 if(nvofich)then
  open(20,file="DONNEES/autocor"//trim(suffixe)//".dat")
-  write(20,*)"!Valeurs de k,z_s(k) et bornes des continua pour x0=",x0
+  write(20,*)"!Valeurs de k,z_s(k) et bornes des continua pour mu=",mu
  close(20)
 endif
 

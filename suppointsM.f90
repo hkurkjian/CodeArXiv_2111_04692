@@ -78,7 +78,7 @@ if(nvofich)then
    close(12)
    
    open(13,file=trim(fichier)//"grilleq.dat")
-    write(13,*)"!ixq,xq"
+    write(13,*)"!ixq,xq,opp(1:3)"
    close(13)
 
    call system("rm "//trim(fichier)//".dat")

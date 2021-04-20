@@ -8,7 +8,7 @@ LIB_PERSO=-L./libperso -lmalib
 %.o : %.f90
 	$(COMP) -I$(MOD) -fopenmp -fcheck=all -fbacktrace -O3 -c $< -o $@
 
-selfcons: eqdetat.o dspec.o bestM.o angularint.o intldc.o intpole.o selftot.o selfcons.o
+selfcons: eqdetat.o dspec.o estM.o angularint.o intldc.o intpole.o selftot.o selfcons.o
 	$(COMP) -fopenmp -fcheck=all -fbacktrace -O3 $^ $(LIB_PERSO) -o selfcons
 
 encorr: eqdetat.o dspec.o estM.o angularint.o intldc.o intpole.o selftot.o encorr.o
