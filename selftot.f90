@@ -96,11 +96,8 @@ FUNCTION detG(k,zk,EPS,sigcomb,suff)
 
   xik=k**2-x0
 
-!  sigcomb(1,:)=cmplx(intpasres(k,zk,.FALSE.,.TRUE.,EPS(1:2),suff),0.0_qp)
-  sigcomb(1,:)=cmplx(intpasres(k,zk,.TRUE.,.FALSE.,EPS(1:2),suff),0.0_qp)
-  sigcomb(2,:)=0.0_qp
+  sigcomb(1,:)=cmplx(intpasres(k,zk,.TRUE.,.FALSE.,EPS(1:2),suff),0.0_qp,kind=qpc)
   sigcomb(2,:)=selfEpole(k,zk,EPS(3))
-!  sigcomb(1,:)=0.0_qp
 
   sig=sigcomb(1,1:3)+sigcomb(1,4:6)+sigcomb(2,1:3)+sigcomb(2,4:6)
   detG=(-zk+xik-sig(1))*(-zk-xik-sig(2))-(1.0_qp-sig(3))**2
