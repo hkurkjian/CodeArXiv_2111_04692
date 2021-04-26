@@ -6,7 +6,7 @@ USE modpol
 IMPLICIT NONE
 REAL(QP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: donnees,donneesgq
 REAL(QP), DIMENSION(:,:),   ALLOCATABLE, TARGET :: vecq,vecqgq
-REAL(QP) bmax,qpetit,omgrand,gq
+REAL(QP) bmax,qpetit,omgrand,gq,ggq
 INTEGER, TARGET :: nom1,nom2,nq
 INTEGER, TARGET :: nom1gq,nom2gq,nqgq
 LOGICAL blaM,blaMM,blaerr,blablaerr
@@ -316,7 +316,7 @@ endif
 ! ************************************************************** !
 open(212,file=trim(fich)//"gq.info")
  read(212,*)
- read(212,*) x0,nqgq,gq,qbidon,nom1gq,nom2gq,nngq
+ read(212,*) x0,nqgq,gq,ggq,nom1gq,nom2gq,nngq
  if(blaM)then
   write(6,*)"----------------------------------------"
   write(6,*)

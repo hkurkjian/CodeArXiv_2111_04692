@@ -457,7 +457,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
  intres(:)=cmplx(0.0_qp,0.0_qp,kind=qpc)
 
  bmax =1.e6_qp
- qmax= 16.0_qp
+ qmax= ggq
 
  if(ecrintq.GE.2)then
   open(125,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
@@ -479,8 +479,8 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     write(6,*)"bq(igr),bq(igr+1)=",bq(igr),bq(igr+1)
     write(6,*)
    endif
-   if(abs(bq(igr+1)-bq(igr)).LE.1.0e-10) write(6,*) "On saute ce petit intervalle en q de taille :",abs(bq(igr+1)-bq(igr))
-   if(abs(bq(igr+1)-bq(igr)).LE.1.0e-10) cycle
+   if(abs(bq(igr+1)-bq(igr)).LE.1.0e-6) write(6,*) "On saute ce petit intervalle en q de taille :",abs(bq(igr+1)-bq(igr))
+   if(abs(bq(igr+1)-bq(igr)).LE.1.0e-6) cycle
    ires=qromovcq(intresq,bq(igr),bq(igr+1),6,(/bidon/),midpntvcq,EPSq)
    intres=intres+ires
    if(bla0)then
