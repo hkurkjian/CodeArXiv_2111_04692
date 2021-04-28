@@ -5,7 +5,6 @@ USE modsim
 USE angularint
 USE OMP_LIB
 IMPLICIT NONE
-!$OMP THREADPRIVATE(xiP,xiM,epsP,epsM,xmin,xmax,ilec)
 LOGICAL bla0,bla00,bla000
 INTEGER ecrintq,ilec
 REAL(QP) xiP,xiM,epsP,epsM,xmin,xmax,k0
@@ -13,6 +12,7 @@ REAL(QP),ALLOCATABLE, DIMENSION(:,:) :: donlec1,donlec2,donlec3
 REAL(QP) :: bq(1:4)
 INTEGER  :: profondeur
 INTEGER, PARAMETER :: al=1,bet=2,gam=3,delt=4,epsi=5,alti=6,betti=7,deltti=8,epsiti=9
+!$OMP THREADPRIVATE(xiP,xiM,epsP,epsM,xmin,xmax,ilec)
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE ini_intpasres(lecture,ecriture,fichlec)

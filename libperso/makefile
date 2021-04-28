@@ -1,7 +1,11 @@
+COMP=ifort
+BALISES= -qopenmp -O3
+
 COMP=gfortran
+BALISES= -fopenmp -O3
 
 %.o : %.f90
-	$(COMP) -fopenmp -O3 -c $< -o $@
+	$(COMP) $(BALISES) -c $< -o $@
 
 malib: nrtype.o nrutil.o modpol.o modsim.o recettes.o
 	ar rcv libmalib.a $^ 

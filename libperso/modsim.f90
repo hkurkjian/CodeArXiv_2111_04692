@@ -425,9 +425,9 @@ MODULE modsim
        do m=1,size(bornes)-1
         I=qromochoixd(func,bornes(m),bornes(m+1),arg(:,m),choix(m),EPS)
         decouped=decouped+I
-        if(bla) write(6,FMT="(A1,I1,A3,1P,G20.18)") "I",m,"=  ",I
+        if(bla) write(6,FMT="(A1,I1,A3,1P,G25.18)") "I",m,"=  ",I
        enddo
-       if(bla) write(6,FMT="(A5,1P,G20.18)") "Itot=",decouped
+       if(bla) write(6,FMT="(A5,1P,G25.18)") "Itot=",decouped
        END FUNCTION decouped
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -748,9 +748,9 @@ MODULE modsim
        do m=1,size(bornes)-1
         I=qromochoixc(func,bornes(m),bornes(m+1),arg(:,m),choix(m),EPS)
         decoupec=decoupec+I
-        if(bla) write(6,FMT="(A1,I1,A3,1P,2G20.18)") "I",m,"=  ",I
+        if(bla) write(6,FMT="(A1,I1,A3,1P,2G25.18)") "I",m,"=  ",I
        enddo
-       if(bla) write(6,FMT="(A5,1P,2G20.18)") "Itot=",decoupec
+       if(bla) write(6,FMT="(A5,1P,2G25.18)") "Itot=",decoupec
        END FUNCTION decoupec
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
