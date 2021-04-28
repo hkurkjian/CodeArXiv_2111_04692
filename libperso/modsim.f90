@@ -192,7 +192,7 @@ MODULE modsim
        PROCEDURE(funcs) :: func
        INTERFACE
          SUBROUTINE choose(funk,aa,bb,arg,s,n)
-         USE nrtype
+         IMPORT
          REAL(SP), INTENT(IN) :: aa,bb
          REAL(SP), DIMENSION(:), INTENT(IN) :: arg
          REAL(SP), INTENT(INOUT) :: s
@@ -358,7 +358,7 @@ MODULE modsim
        PROCEDURE(funcd) :: func
        INTERFACE
          SUBROUTINE choose(funk,aa,bb,arg,s,n)
-         USE nrtype
+         IMPORT
          REAL(DP), INTENT(IN) :: aa,bb
          REAL(DP), DIMENSION(:), INTENT(IN) :: arg
          REAL(DP), INTENT(INOUT) :: s
@@ -519,7 +519,7 @@ MODULE modsim
        PROCEDURE(funcq) :: func
        INTERFACE
          SUBROUTINE choose(funk,aa,bb,arg,s,n)
-         USE nrtype
+         IMPORT
          REAL(QP), INTENT(IN) :: aa,bb
          REAL(QP), DIMENSION(:), INTENT(IN) :: arg
          REAL(QP), INTENT(INOUT) :: s
@@ -682,7 +682,7 @@ MODULE modsim
        PROCEDURE(funcc) :: func
        INTERFACE
          SUBROUTINE choose(funk,aa,bb,arg,s,n)
-         USE nrtype
+         IMPORT
          REAL(DP), INTENT(IN) :: aa,bb
          REAL(DP), DIMENSION(:), INTENT(IN) :: arg
          COMPLEX(DPC), INTENT(INOUT) :: s
@@ -842,7 +842,7 @@ MODULE modsim
        PROCEDURE(funccq) :: func
        INTERFACE
          SUBROUTINE choose(funk,aa,bb,arg,s,n)
-         USE nrtype
+         IMPORT
          REAL(QP), INTENT(IN) :: aa,bb
          REAL(QP), DIMENSION(:), INTENT(IN) :: arg
          COMPLEX(QPC), INTENT(INOUT) :: s
@@ -1016,7 +1016,7 @@ MODULE modsim
        PROCEDURE(funcvq) :: func
        INTERFACE
          SUBROUTINE choose(funk,aa,bb,mm,arg,s,n)
-         USE nrtype
+         IMPORT
          INTEGER, INTENT(IN) :: mm
          REAL(QP), INTENT(IN) :: aa,bb
          REAL(QP), DIMENSION(:), INTENT(IN) :: arg
@@ -1060,7 +1060,7 @@ MODULE modsim
        PROCEDURE(funcvq) :: func
        INTERFACE
          SUBROUTINE choose(funk,aa,bb,mm,arg,s,n)
-         USE nrtype
+         IMPORT
          INTEGER, INTENT(IN) :: mm
          REAL(QP), INTENT(IN) :: aa,bb
          REAL(QP), DIMENSION(:), INTENT(IN) :: arg
@@ -1252,7 +1252,7 @@ MODULE modsim
        PROCEDURE(funcvcq) :: func
        INTERFACE
          SUBROUTINE choose(funk,aa,bb,mm,arg,s,n)
-         USE nrtype
+         IMPORT
          INTEGER, INTENT(IN) :: mm
          REAL(QP), INTENT(IN) :: aa,bb
          REAL(QP), DIMENSION(:), INTENT(IN) :: arg
@@ -1299,7 +1299,7 @@ MODULE modsim
        PROCEDURE(funcvcq) :: func
        INTERFACE
          SUBROUTINE choose(funk,aa,bb,mm,arg,s,n)
-         USE nrtype
+         IMPORT
          INTEGER, INTENT(IN) :: mm
          REAL(QP), INTENT(IN) :: aa,bb
          REAL(QP), DIMENSION(:), INTENT(IN) :: arg

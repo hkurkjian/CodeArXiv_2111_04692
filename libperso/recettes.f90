@@ -873,7 +873,7 @@ CONTAINS
         FUNCTION rd_s(x,y,z)
         REAL(SP), INTENT(IN) :: x,y,z
         REAL(SP) :: rd_s
-        REAL(SP), PARAMETER :: ERRTOL=0.0015_sp,TINY=1.0e-38_sp,BIG=4.5e37_sp,&
+        REAL(SP), PARAMETER :: ERRTOL=0.0015_sp,TINY=1.0e-37_sp,BIG=4.5e37_sp,&
         C1=3.0_sp/14.0_sp,C2=1.0_sp/6.0_sp,C3=9.0_sp/22.0_sp,&
         C4=3.0_sp/26.0_sp,C5=0.25_sp*C3,C6=1.5_sp*C4
         !Computes Carlson's elliptic integral of the second kind, RD(x, y, z). x and y must be

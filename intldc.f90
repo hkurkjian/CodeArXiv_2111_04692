@@ -479,8 +479,8 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     write(6,*)"bq(igr),bq(igr+1)=",bq(igr),bq(igr+1)
     write(6,*)
    endif
-   if(abs(bq(igr+1)-bq(igr)).LE.1.0e-6) write(6,*) "On saute ce petit intervalle en q de taille :",abs(bq(igr+1)-bq(igr))
-   if(abs(bq(igr+1)-bq(igr)).LE.1.0e-6) cycle
+   if(abs(bq(igr+1)-bq(igr)).LE.1.0e-10) write(6,*) "On saute ce petit intervalle en q de taille :",abs(bq(igr+1)-bq(igr))
+   if(abs(bq(igr+1)-bq(igr)).LE.1.0e-10) cycle
    ires=qromovcq(intresq,bq(igr),bq(igr+1),6,(/bidon/),midpntvcq,EPSq)
    intres=intres+ires
    if(bla0)then
