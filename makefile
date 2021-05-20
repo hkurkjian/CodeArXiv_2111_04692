@@ -1,7 +1,10 @@
-COMP=gfortran
-COMP=ifort
 MOD=./libperso
 LIB_PERSO=-L./libperso -lmalib
+
+COMP=ifort
+BALISES=-qopenmp -check all -backtrace -O3
+
+COMP=gfortran
 BALISES=-fopenmp -fcheck=all -fbacktrace -O3
 
 %.eps : %.gp

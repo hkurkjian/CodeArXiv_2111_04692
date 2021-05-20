@@ -61,7 +61,7 @@ SUBROUTINE ini_intpasres(lecture,ecriture,fichlec)
  if(ecriture)then
 
   open(101,file=trim(fichlec)//".info")
-   write(101,*)"! grille de valeur de q,om et Mat de qmin. bq, profondeur="
+   write(101,*)"! grille de valeur de q,om et Mat de pour profondeur, bq="
    write(101,*) profondeur,bq
   close(101)
 
@@ -412,9 +412,9 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
  CHARACTER(len=90) :: prefixe
  INTEGER tconf,configbis(1:7)
  REAL(QP) :: bk2(0:12),le2(1:8)
- REAL(QP) e,qmax,bqbis(1:8)
+ REAL(QP) e,qdep,qsup,qmax,bqbis(1:8)
  REAL(QP) EPSq,EPSom
- COMPLEX(QPC) ires(1:6)
+ COMPLEX(QPC) ires(1:6),ires1(1:6),ires2(1:6)
 
  INTEGER grecque,igr
 
@@ -457,7 +457,12 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
  intres(:)=cmplx(0.0_qp,0.0_qp,kind=qpc)
 
  bmax =1.e6_qp
- qmax= ggq
+ qsup =2.0_qp*bq(size(config)+1)
+ if(interpolation)then
+   qmax= max(ggq     ,2*qsup)
+ else
+   qmax= max(100.0_qp,2*qsup)
+ endif
 
  if(ecrintq.GE.2)then
   open(125,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
@@ -466,11 +471,31 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
 
  if((.NOT.allocated(donnees)).AND.(interpolation)) stop "Impossible d’interpoler, donnees est vide"
 
+! Partie non résonante à grands q
+ grecque=0
  if(tconf==0)then
-  grecque=0
-  intres=qromovcq(intresq,0.0_qp,qmax,6,(/bidon/),midpntvcq,EPSq)
+  qdep=0.0_qp
  else
-  do igr=1,size(config)
+  qdep=bq(tconf+1)
+ endif
+ 
+ ires1=qromovcq(intresq,qdep,qsup,6,(/bidon/),midsqlvcq,EPSq)
+ if(bla0)then
+  write(6,*)
+  write(6,FMT="(A9,6G20.10)")"re(ires1)=",real(ires1)
+  write(6,FMT="(A9,6G20.10)")"im(ires1)=",imag(ires1)
+  write(6,*)"---------------------------------"
+ endif
+ ires2=qromovcq(intresq,qsup,qmax,6,(/bidon/),midsqlvcq,EPSq)
+ if(bla0)then
+  write(6,*)
+  write(6,FMT="(A9,6G20.10)")"re(ires2)=",real(ires2)
+  write(6,FMT="(A9,6G20.10)")"im(ires2)=",imag(ires2)
+  write(6,*)"---------------------------------"
+ endif
+ intres=ires1+ires2
+ if(tconf>0)then
+  do igr=1,tconf
    grecque=config(igr)
    if(bla0)then
     write(6,*)"---------------------------------"
@@ -490,8 +515,6 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     write(6,*)"---------------------------------"
    endif
   enddo
-  grecque=0
-  intres=intres+qromovcq(intresq,bq(size(config)+1),qmax,6,(/bidon/),midpntvcq,EPSq)
  endif
  intres=2.0_qp*PI*intres
 
@@ -532,7 +555,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
 !   if(bla00.AND.(omp_get_thread_num()==0))then
     write(6,*)"---------------------------------"
     write(6,*)
-    write(6,*)"qs=",qs
+    write(6,*)"qs,is,boucle=",qs,is,"/",size(q),nint(2+log(size(q)/2.0_qp)/log(3.0_qp))
     write(6,*)"grecque,igr=",ecritc(grecque),igr
     write(6,*)"ptbranchmtpp=",ptbranchmtpp
     write(6,*)"opp=",opp
