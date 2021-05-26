@@ -457,12 +457,6 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
  intres(:)=cmplx(0.0_qp,0.0_qp,kind=qpc)
 
  bmax =1.e6_qp
- if(interpolation)then
-   qmax= max(ggq     ,2*qsup)
- else
-   qmax= max(100.0_qp,2*qsup)
- endif
-
  if(ecrintq.GE.2)then
   open(125,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
   close(125)
@@ -477,9 +471,17 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
   qsup =4.0_qp*k0
  else
   qdep=bq(tconf+1)
-  qsup =2.0_qp*bq(size(config)+1)
+  qsup =2.0_qp*bq(tconf+1)
  endif
  
+ write(6,*)"ggq=",ggq
+ if(interpolation)then
+   qmax= max(ggq     ,2*qsup)
+ else
+   qmax= max(100.0_qp,2*qsup)
+ endif
+
+ if(bla0) write(6,*)"bornes=",qdep,qsup
  ires1=qromovcq(intresq,qdep,qsup,6,(/bidon/),midsqlvcq,EPSq)
  if(bla0)then
   write(6,*)
@@ -487,6 +489,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
   write(6,FMT="(A9,6G20.10)")"im(ires1)=",imag(ires1)
   write(6,*)"---------------------------------"
  endif
+ if(bla0) write(6,*)"bornes=",qsup,qmax
  ires2=qromovcq(intresq,qsup,qmax,6,(/bidon/),midsqlvcq,EPSq)
  if(bla0)then
   write(6,*)
@@ -501,7 +504,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
    if(bla0)then
     write(6,*)"---------------------------------"
     write(6,*)
-    write(6,*)"igr=",igr
+    write(6,*)"igr/total=",igr,"/",tconf
     write(6,*)"bq(igr),bq(igr+1)=",bq(igr),bq(igr+1)
     write(6,*)
    endif
@@ -557,7 +560,7 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     write(6,*)"---------------------------------"
     write(6,*)
     write(6,*)"qs,is,boucle=",qs,is,"/",size(q),nint(2+log(size(q)/2.0_qp)/log(3.0_qp))
-    write(6,*)"grecque,igr=",ecritc(grecque),igr
+    write(6,*)"grecque,igr/total=",ecritc(grecque),igr,"/",tconf
     write(6,*)"ptbranchmtpp=",ptbranchmtpp
     write(6,*)"opp=",opp
     if(grecque.NE.0) write(6,*)"res=",res(1:tres)
