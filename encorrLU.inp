@@ -1,17 +1,17 @@
 0.8604366861256786       ! read(10,*)mu
-2.1                      ! read(10,*)kmin
-2.1                      ! read(10,*)kmax
+2.06                      ! read(10,*)kmin
+2.06                      ! read(10,*)kmax
 0 0                     ! read(10,*)nk
-3.4                    ! read(10,*)zkmin
-7.0                      ! read(10,*)zkmin
-15 0                    ! read(10,*)nzk
+2.501                    ! read(10,*)zkmin
+3.5                      ! read(10,*)zkmin
+50 0                    ! read(10,*)nzk
 "DONNEES/LU/BCS_LU"      ! read(10,*)fichldc(1)
 "DONNEES/LU/grille_LU"   ! read(10,*)fichlec
 "DONNEES/LU/BCS_LU_pole" ! read(10,*)fichierpole
 1.0e-3                   ! read(10,*)EPS(1)!EPSq  pour intldc
 1.0e-5                   ! read(10,*)EPS(2)!EPSom pour intldc
 1.0e-6                   ! read(10,*)EPS(3)!EPSq  pour intpole
-2                        ! read(10,*)nivobla
-LU                       ! read(10,*)suffixe
+1                        ! read(10,*)nivobla
+LUtest                       ! read(10,*)suffixe
 T                        ! read(10,*)nvofich
-0                        ! read(10,*)ecrintq
+1                        ! read(10,*)ecrintq

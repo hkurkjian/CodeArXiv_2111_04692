@@ -128,6 +128,8 @@ FUNCTION intpasres(k,zk,lecture,ecriture,EPS,suffixe)
    write(6,*)"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
  endif
 
+ prefixe="pasres"
+
  if(ecrintq.GE.2)then
   open(120,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
   close(120)
@@ -136,8 +138,6 @@ FUNCTION intpasres(k,zk,lecture,ecriture,EPS,suffixe)
  Iq1(:)=0.0_qp
  Iq2(:)=0.0_qp
  Iq3(:)=0.0_qp
-
- prefixe="pasres"
 
  ilec=1
  argq(1)=bidon
@@ -457,7 +457,6 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
  intres(:)=cmplx(0.0_qp,0.0_qp,kind=qpc)
 
  bmax =1.e6_qp
- qsup =2.0_qp*bq(size(config)+1)
  if(interpolation)then
    qmax= max(ggq     ,2*qsup)
  else
@@ -475,8 +474,10 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
  grecque=0
  if(tconf==0)then
   qdep=0.0_qp
+  qsup =4.0_qp*k0
  else
   qdep=bq(tconf+1)
+  qsup =2.0_qp*bq(size(config)+1)
  endif
  
  ires1=qromovcq(intresq,qdep,qsup,6,(/bidon/),midsqlvcq,EPSq)
