@@ -131,8 +131,10 @@ FUNCTION intpasres(k,zk,lecture,ecriture,EPS,suffixe)
  prefixe="pasres"
 
  if(ecrintq.GE.2)then
+  !$OMP CRITICAL
   open(120,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
   close(120)
+  !$OMP END CRITICAL
  endif
 
  Iq1(:)=0.0_qp
@@ -270,9 +272,11 @@ CONTAINS
    intq(is,:)=I(:)*qs**2 !Jacobian of the q integration
 
   if(ecrintq.GE.1)then
+   !$OMP CRITICAL
    open(120,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
     write(120,*)qs,real(intq(is,1:6))
    close(120)
+   !$OMP END CRITICAL
   endif
   
   enddo
@@ -337,10 +341,6 @@ CONTAINS
      Mat(1,2)=cmplx(donlec3(4,ilec),donlec3(8 ,ilec),kind=qpc)
     endif
     ilec=ilec+1
-!    read(110+fich,*)xqfi,omfi,reM11,reM12,reM21,reM22,imM11,imM12,imM21,imM22
-!    Mat(1,1)=cmplx(reM11,imM11,kind=qpc)
-!    Mat(2,2)=cmplx(reM22,imM22,kind=qpc)
-!    Mat(1,2)=cmplx(reM12,imM12,kind=qpc)
     Mat(2,1)=Mat(1,2)
     det=Mat(1,1)*Mat(2,2)-Mat(1,2)**2
     if(abs(xq -xqfi)>1.e-13_qp)then
@@ -458,8 +458,10 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
 
  bmax =1.e6_qp
  if(ecrintq.GE.2)then
+  !$OMP CRITICAL
   open(125,file="intq"//trim(prefixe)//trim(suffixe)//".dat")
   close(125)
+  !$OMP END CRITICAL
  endif
 
  if((.NOT.allocated(donnees)).AND.(interpolation)) stop "Impossible d’interpoler, donnees est vide"
@@ -527,10 +529,11 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
   USE nrutil
   USE recettes
   USE modsim
-  INTEGER,  INTENT(IN) :: m 
+  INTEGER,  INTENT(IN) :: m !m=6
   REAL(QP), INTENT(IN), DIMENSION(:)  ::  q,argq
   COMPLEX(QPC)  intresq(size(q),m)
 
+  COMPLEX(QPC)  Iinf(m)
   REAL(QP) qs,ommil
   REAL(QP) bom(1:3),bom2(1:6)
   INTEGER is,ttot,tres,trout,res(1:2),pos_bom(1:6),p1,p2
@@ -538,7 +541,6 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
   REAL(QP), ALLOCATABLE, DIMENSION(:)   :: bomf
   INTEGER,  ALLOCATABLE, DIMENSION(:)   :: vres,routint
   INTEGER itai
-  COMPLEX(QPC)  intmax(m)
 
   do is=1,size(q)
   
@@ -625,19 +627,33 @@ FUNCTION intres(k,zk,interpolation,EPS,bk,le,suffixe)
     write(6,*)"vres="   ,vres(1:trout)
     write(6,*)
    endif
+
+!  Intégration analytique de bmax à +oo
+   Iinf(1)=(xmax-xmin)            /(       sqrt(2.0_qp)*PI**3*k*qs*bmax**(1.0_qp/2.0_qp))
+   Iinf(2)=(xmin**(-1)-xmax**(-1))/(9.0_qp*sqrt(2.0_qp)*PI**3*k*qs*bmax**(9.0_qp/2.0_qp))
+   Iinf(3)=log(xmax/xmin)         /(5.0_qp*sqrt(2.0_qp)*PI**3*k*qs*bmax**(5.0_qp/2.0_qp))
+   Iinf(4)=-Iinf(2)
+   Iinf(5)=-Iinf(1)
+   Iinf(6)= Iinf(3)
+
    if(bla000)then
+    write(6,*)"Iinf=",real(Iinf(1:6))
+    write(6,*)
     write(6,*)"************************"
     write(6,*)
     write(6,*)"        decoupe         "
     write(6,*)
    endif
    intresq(is,:)=decoupevcq(intresom,bomf(1:trout+1),6,arg,routint(1:trout),EPSom,bla00)
+   intresq(is,:)=intresq(is,:)+Iinf(:)
    intresq(is,:)=intresq(is,:)*qs**2
 
    if(ecrintq.GE.1)then
+    !$OMP CRITICAL
     open(125,file="intq"//trim(prefixe)//trim(suffixe)//".dat",POSITION="APPEND")
      write(125,*)qs,real(intresq(is,:)),imag(intresq(is,1:3))
     close(125)
+    !$OMP END CRITICAL
    endif
 !   if(bla0.AND.(omp_get_thread_num()==0))then
    if(bla00)then

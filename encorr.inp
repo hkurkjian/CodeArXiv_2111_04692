@@ -2,16 +2,16 @@
 10.5                     ! read(10,*)kmin
 10.5                     ! read(10,*)kmax
 0 0                      ! read(10,*)nk
-3.1                    ! read(10,*)zkmin
-3.2                      ! read(10,*)zkmin
-15 0                     ! read(10,*)nzk
+2.0                      ! read(10,*)zkmin
+2.0                      ! read(10,*)zkmin
+0 0                     ! read(10,*)nzk
 "DONNEES/x0100/BCS_100"      ! read(10,*)fichldc(1)
 "DONNEES/x0100/grille_100"   ! read(10,*)fichlec
 "DONNEES/x0100/BCS_100_pole" ! read(10,*)fichierpole
 1.0e-3                   ! read(10,*)EPS(1)!EPSq  pour intldc
 1.0e-5                   ! read(10,*)EPS(2)!EPSom pour intldc
 1.0e-6                   ! read(10,*)EPS(3)!EPSq  pour intpole
-1                        ! read(10,*)nivobla
-100test2              ! read(10,*)suffixe
+2                        ! read(10,*)nivobla
+100SousLDC               ! read(10,*)suffixe
 T                        ! read(10,*)nvofich
 2                        ! read(10,*)ecrintq

@@ -114,8 +114,7 @@ do ic=1,(nk-nkdeb+1)*(nzk-nzkdeb+1)
 
  th=thresholds(mu,k)
  write(6,*)"th=",th
-! if(zk<th(2))then
- if(.FALSE.)then
+ if(zk<th(2))then
   det=detG   (k,zk,EPS,sigma,suffintq)
  else
   det=detGres(k,zk,EPS,sigma,suffintq)

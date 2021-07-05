@@ -1,0 +1,17 @@
+4.0                    ! read(10,*)mu
+1.5                     ! read(10,*)kmin
+1.5                     ! read(10,*)kmax
+0 0                      ! read(10,*)nk
+3.1                    ! read(10,*)zkmin
+3.2                      ! read(10,*)zkmin
+15 0                     ! read(10,*)nzk
+"DONNEES/x04/BCS_4"      ! read(10,*)fichldc(1)
+"DONNEES/x04/grille_x04"   ! read(10,*)fichlec
+"DONNEES/x04/BCS_4_pole" ! read(10,*)fichierpole
+1.0e-3                   ! read(10,*)EPS(1)!EPSq  pour intldc
+1.0e-5                   ! read(10,*)EPS(2)!EPSom pour intldc
+1.0e-6                   ! read(10,*)EPS(3)!EPSq  pour intpole
+1                        ! read(10,*)nivobla
+4test2              ! read(10,*)suffixe
+T                        ! read(10,*)nvofich
+2                        ! read(10,*)ecrintq
