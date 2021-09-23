@@ -448,7 +448,7 @@ SUBROUTINE rdInfo(fichpol)
   nqeff=taille/nn
 
   ! Select threshhold q below which omq is approximated by c q
-  qThr=0.0205_qp
+  qThr=0.0405_qp
   
   !load fichpol.dat into donpol
   allocate(donpol(1:8,1:nqeff))
@@ -466,15 +466,15 @@ FUNCTION contPole(k)
   ! Calculate the lower continuum edge for the 1->2 process
   USE recettes, ONLY : rtsafe
   REAL(QP), INTENT(IN) :: k
-  REAL(QP) :: contPole
+  REAL(QP) :: contPole(1:3)
 
   REAL(QP) qMax, omqMax, mMax(1:3), dmMax(1:3)
   REAL(QP) ptq(1:5),ptom(1:5),ptM(1:3,1:5),ptdM(1:3,1:5), sdonpol(1:8,1:5), errom
   REAL(QP) qT, omqT, domqT, qRt, omqRt
   REAL(QP) xikq, epkq, h, domqM, domqP
-  REAL(QP) k0, uC, contTMP(1:5)
+  REAL(QP) k0, uC, contTMP(1:9), qTMP(1:9), omTMP(1:9)
   REAL(QP) x1, x2, y1, y2
-  INTEGER nCM, iq
+  INTEGER nCM, iq, mini
 
   ! Initialize
   contTMP(:)=1.0e50_qp
@@ -496,10 +496,23 @@ FUNCTION contPole(k)
   
   if((kMM<=k).AND.(k<=kMP))then
     ! Close to minimum: contPole = eps_k
-    contPole=sqrt((k*k-x0)**2.0_qp+1.0_qp)
+    contPole(1)=sqrt((k*k-x0)**2.0_qp+1.0_qp)
+    contPole(2)=0.0_qp
+    contPole(3)=0.0_qp
   else if((k0+qMax < k).AND.(qMax<20.0))then
     ! At high k in BCS regime, contPole = eps_{k-qMax)+om_{qMax}
-    contPole=sqrt((k*k+qMax*qMax-2.0_qp*k*qMax-x0)**2.0_qp+1.0_qp)+omqMax
+    contPole(1)=sqrt((k*k+qMax*qMax-2.0_qp*k*qMax-x0)**2.0_qp+1.0_qp)+omqMax
+    contPole(2)=qMax
+    contPole(3)=omqMax
+  else if((k>kMP).AND.((k-kMP)<0.1_qp))then
+    ! Avoid the bug at low-q by computing analytically the edge when k is close to kPM or kMM 
+          contPole(2)=k-kMP
+          contPole(3)=c0*contPole(2)
+          contPole(1)=sqrt(((k-contPole(2))**2-x0)**2+1.0_qp)+contPole(3)
+  else if((k<kMM).AND.((kMM-k)<0.1_qp))then
+          contPole(2)=kMM-k
+          contPole(3)=c0*contPole(2)
+          contPole(1)=sqrt(((k+contPole(2))**2-x0)**2+1.0_qp)+contPole(3)
   else
     if(k<kMM)then
       ! Descending part: minimum of e_{k+q}+omq
@@ -535,7 +548,7 @@ FUNCTION contPole(k)
       omqT=ptom(3)      ! omq at qT
 
       ! Noticed that the brute-force technique breaks down at low q, so skip these values
-      if(qT>0.04)then
+      if(qT>0.02)then
 
         ! Derivative of omq
         h=qT*0.0001_qp   ! step size for derivative
@@ -559,6 +572,8 @@ FUNCTION contPole(k)
           call intOmQ(qRt,omqRt)
           nCM=nCM+1
           contTMP(nCM)=sqrt((k*k+qRt*qRt+2.0_qp*k*qRt*uC-x0)**2.0_qp+1.0_qp)+omqRt
+          qTMP(nCM)=qRt
+          omTMP=omqRt
 
           if (blaPole)then
             write(6,*)"Root found in interval",x1,x2,", for k=",k
@@ -574,7 +589,10 @@ FUNCTION contPole(k)
     enddo
 
     ! From all extrema, take the minimum
-    contPole=minval(contTMP)
+    mini=iminloc(contTMP)
+    contPole(1)=contTMP(mini)
+    contPole(2)=qTMP   (mini)
+    contPole(3)=omTMP  (mini)
     
   endif
   

@@ -63,6 +63,9 @@ if(err)then
    elseif(om>omgrand)then
     if(blaerr) write(6,*)"Appel de mat_pairfield_gom0"
     call mat_pairfield_gom0(om,0.0_qp,det,Mm,Gg)
+   elseif(q>ggq)then
+    if(blaerr) write(6,*)"Appel de mat_pairfield_gom0_gq"
+    call mat_pairfield_gom0_gq(om,0.0_qp,det,Mm,Gg)
    else
     if(blaerr) write(6,*)"Appel de mat_pairfield"
     call mat_pairfield(om,0.0_qp,det,Mm,Gg)

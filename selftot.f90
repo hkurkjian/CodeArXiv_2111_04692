@@ -128,12 +128,14 @@ END FUNCTION detGres
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION thresholds(mu,k)
   REAL(QP), INTENT(IN) :: mu,k
-  REAL(QP) :: thresholds(1:2)
-  thresholds(1)=contPole(k)
+  REAL(QP) :: thresholds(1:4)
+  REAL(QP) :: bid(1:3)
+  
+  thresholds(1:3)=contPole(k)
   if(k<3*sqrt(x0))then
-   thresholds(2)=3.0_qp
+   thresholds(4)=3.0_qp
   else
-   thresholds(2)=3*epsBCS(k/3.0_qp)
+   thresholds(4)=3*epsBCS(k/3.0_qp)
   endif
 
 END FUNCTION thresholds

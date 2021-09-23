@@ -9,7 +9,7 @@ REAL(QP) :: mu,k,zk
 COMPLEX(QPC) sigma(1:2,1:6),sigcomb(1:3),det
 REAL(QP) dk,dzk
 REAL(QP) kmin,kmax,zkmin,zkmax,EPS(1:3)
-REAL(QP) bqbidon(1:3),th(1:2)
+REAL(QP) bqbidon(1:3),th(1:4)
 INTEGER nk,nzk,nkdeb,ik,izk,nzkdeb,ic,nivobla,eintq,profondeurbidon
 CHARACTER(len=90) fichiers(1:5),suffixe,suffintq
 CHARACTER(len=5) cik,cizk
@@ -113,11 +113,11 @@ do ic=1,(nk-nkdeb+1)*(nzk-nzkdeb+1)
  !$OMP END CRITICAL
 
  th=thresholds(mu,k)
- write(6,*)"th=",th
- if(zk<th(2))then
-  det=detG   (k,zk,EPS,sigma,suffintq)
+ write(6,*)"th=",th(1),th(4)
+ if(zk<th(4))then
+!  det=detG   (k,zk,EPS,sigma,suffintq)
  else
-  det=detGres(k,zk,EPS,sigma,suffintq)
+!  det=detGres(k,zk,EPS,sigma,suffintq)
  endif
  
  sigcomb(1:3)=sigma(1,1:3)+sigma(1,4:6)+sigma(2,1:3)+sigma(2,4:6)
@@ -127,7 +127,7 @@ do ic=1,(nk-nkdeb+1)*(nzk-nzkdeb+1)
  open(21,file="DONNEES/selfEpol"//trim(suffixe)//".dat",POSITION="APPEND")
  open(22,file="DONNEES/selfEtot"//trim(suffixe)//".dat",POSITION="APPEND")
  open(23,file="DONNEES/det"     //trim(suffixe)//".dat",POSITION="APPEND")
-  write(6,*)"k,zk,bords des continua=",k,zk,th
+  write(6,*)"k,zk,bords des continua=",k,zk,th(1),th(4)
   write(6,*)"re(selfEldc)=",real(sigma(1,1:6))
   write(6,*)"im(selfEldc)=",imag(sigma(1,1:6))
   write(6,*)"re(selfEpol)=",real(sigma(2,1:6))
@@ -142,7 +142,7 @@ do ic=1,(nk-nkdeb+1)*(nzk-nzkdeb+1)
   write(23,*)k,zk,real(det),         imag(det)
   if(izk==nzk)then
    open(24,file="DONNEES/continuum"//trim(suffixe)//".dat",POSITION="APPEND")
-    write(24,*)k,th
+    write(24,*)k,th(1),th(4),th(2:3)
    close(24)
   endif
  close(20)

@@ -1513,10 +1513,70 @@ fr(2,1)=fr(1,2)
 
 END SUBROUTINE mat_pairfield_pttq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE mat_pairfield_gom0(om0,e,det,M,fr)
+SUBROUTINE mat_pairfield_gom0_gq(om0,e,det,M,fr)
 USE recettes
 USE eqdetat
 !mat_pairfield computes the 2*2 fluctuation matrix in the phase-modulus basis in the limit xq**2,om0>>1,x0 (in the BCS regime)
+!input: same for mat
+
+!output: 
+!M(1:2,1:2) a 2*2 symmetric matrix in the basis 1:phase, 2:modulus
+!det=M(1,1)*M(2,2)-M(1,2)**2, the determinant of the matrix
+!fr=1/M the pair propagator
+
+IMPLICIT NONE
+COMPLEX(QPC), DIMENSION(1:2,1:2), INTENT(OUT) :: M,fr
+COMPLEX(QPC), INTENT(OUT) :: det
+REAL(QP), INTENT(IN)  :: om0,e
+
+REAL(QP) rem11,rem22,imm11,imm22,rem12,imm12,fim22,fim12,unsat,al
+COMPLEX(QPC) m11,m22,m12
+
+call oangpp
+call oangpt
+
+unsat=unsurkfa0(x0)*sqrt(eF(x0))
+
+!al=2*om0/xq**2
+al=1+2*(om0-2*sqrt((xq**2/4-x0)**2+1))/xq**2 !alpha is adjusted to be always >0: al=1+2*(om-ec(q))/q**2
+fim22=-4*sqrt(al-1)/(al-2)**2/al**2-log((sqrt(al-1)+1)**2/(sqrt(al-1)-1)**2)/al**3
+fim12=atanh(2*sqrt(al-1)/al)/al
+
+rem11=-PI**2*unsat
+imm11=-PI**2*xq*sqrt(al-1)/2
+rem22= PI**2*(xq*sqrt(al+1)/2-unsat)
+imm22= PI**2*fim22/xq**7
+rem12= PI**2*fn12(al)/xq**3
+imm12= PI**2*fim12/xq**3
+
+write(6,*)"om,al,rem22,imm11,imm22,imm12=",om0,al,rem22,imm11,imm22,imm12
+!write(6,*)"rem22=",rem22
+!write(6,*)"imm11=",imm11
+!write(6,*)"imm22=",imm22
+!write(6,*)"imm12=",imm12
+
+m11=cmplx(rem11,imm11,kind=qpc)
+m22=cmplx(rem22,imm22,kind=qpc)
+m12=cmplx(rem12,imm12,kind=qpc)
+
+M(1,1)=(m11+m22)/2.0-m12
+M(2,2)=(m11+m22)/2.0+m12
+M(1,2)=(m11-m22)/2.0
+M(2,1)=M(1,2)
+
+det=M(1,1)*M(2,2)-M(1,2)**2.0_qp
+
+fr(1,1)=M(2,2)/det
+fr(2,2)=M(1,1)/det
+fr(1,2)=-M(1,2)/det
+fr(2,1)=fr(1,2)
+
+END SUBROUTINE mat_pairfield_gom0_gq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE mat_pairfield_gom0(om0,e,det,M,fr)
+USE recettes
+USE eqdetat
+!mat_pairfield computes the 2*2 fluctuation matrix in the phase-modulus basis in the limit om0>>1,x0,xq**2 (in the BCS regime)
 !input: same for mat
 
 !output: 
@@ -1558,6 +1618,9 @@ imm12= PI**2*fim12/xq**3
 m11=cmplx(rem11,imm11,kind=qpc)
 m22=cmplx(rem22,imm22,kind=qpc)
 m12=cmplx(rem12,imm12,kind=qpc)
+
+!write(6,*)"om,al,rem22,imm11,imm22,imm12=",om0,al,rem22,imm11,imm22,imm12
+PRINT '("om,al,rem22,imm11,imm22,imm12="/(6G20.10))',om0,al,rem22,imm11,imm22,imm12
 !write(6,*)"m11=",m11
 !write(6,*)"m22=",m22
 !write(6,*)"m12=",m12

@@ -8,7 +8,7 @@ USE eqdetat
 USE OMP_LIB
 IMPLICIT NONE
 
-REAL(QP) om,dom,M(1:2,1:2),dM(1:2,1:2),A(1:6),dMm(1:3),q
+REAL(QP) om,dom,M(1:2,1:2),dM(1:2,1:2),A(1:6),dMm(1:3),q,ommax,ommin
 COMPLEX(QPC) Mm2(1:6)
 REAL(QP) Mmbid(1:6,1:3)
 REAL(QP) bk(0:12),le(1:8)
@@ -30,8 +30,8 @@ testest=.TRUE.
 temperaturenulle=.TRUE.
 EPSpp=1.0e-8_qp
 x0crit=1.0_qp
-bla1=.FALSE.
 bla1=.TRUE.
+bla1=.FALSE.
 bla2=.TRUE.
 bla2=.FALSE.
 
@@ -46,40 +46,43 @@ x0=0.8604366861256786_qp
 
 if(testest)then
  blaM=.TRUE.
- blaerr=.TRUE.
+ blaM=.FALSE.
+ blaerr=.FALSE.
  call load_data(fich)
  
  call calcxqjoin
- xq=2.5
- om=231.6561472
- xq=3.055555556         
- om=3.882927055
- xq=20.870370370         
- om=1000.311989867 
+ xq=168.521030460055679625590380867127081_qp
  call oangpp
  write(6,*)"opp=",opp(1:3)
+ ommin=28300
+ ommax=28500
+ dom=(ommax-ommin)/1000
+ do itest=1,1000
+  om=ommin+itest*dom
  
- call estmat_pairfield(om,0.0_qp,det,Matt,Gamm)
- write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
- write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
- write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
- write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
- write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
- write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
- write(6,*)
- write(6,*)"det=",det
- write(6,*)
- 
- call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
- write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
- write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
- write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
- write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
- write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
- write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
- write(6,*)
- write(6,*)"det=",det
- write(6,*)
+  call estmat_pairfield(om,0.0_qp,det,Matt,Gamm)
+  write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
+  write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
+  write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
+  write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
+  write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
+  write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
+  write(6,*)
+  write(6,*)"det=",det
+  write(6,*)
+  
+  call mat_pairfield(om,0.0_qp,det,Matt,Gamm)
+  write(6,*)"om,xq,real(Matt(1,1))=",om,xq,real(Matt(1,1))
+  write(6,*)"om,xq,real(Matt(2,2))=",om,xq,real(Matt(2,2))
+  write(6,*)"om,xq,real(Matt(1,2))=",om,xq,real(Matt(1,2))
+  write(6,*)"om,xq,real(Matt(1,1))=",om,xq,imag(Matt(1,1))
+  write(6,*)"om,xq,real(Matt(2,2))=",om,xq,imag(Matt(2,2))
+  write(6,*)"om,xq,real(Matt(1,2))=",om,xq,imag(Matt(1,2))
+  write(6,*)
+  write(6,*)"det=",det
+  write(6,*)
+
+ enddo
  
  call unload_data
  stop
