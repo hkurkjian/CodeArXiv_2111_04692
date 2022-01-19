@@ -26,7 +26,7 @@ MODULE vars
 ! Parameters
  REAL(QP), PARAMETER, DIMENSION(1:6) :: eta=(/1.0,1.0, 1.0,1.0,-1.0,-1.0/) !Matrice eta   (B3) dans [1]: eta=signe devant Sigma dans (36)
  REAL(QP), PARAMETER, DIMENSION(1:6) :: sig=(/1.0,1.0,-1.0,1.0,-1.0, 1.0/) !Matrice sigma (B5) dans [1]: sig=+1 pour S^epsilon et -1 pour S^omega
- !$OMP THREADPRIVATE(xq,opp,opt,ptbranchmtpp,ptbranchmtpt)
+ !!$OMP THREADPRIVATE(xq,opp,opt,ptbranchmtpp,ptbranchmtpt)
 END MODULE vars
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE dspec

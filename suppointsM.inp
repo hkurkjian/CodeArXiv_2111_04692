@@ -10,4 +10,4 @@
 500                   !read(10,*)  nom2
 1.0e6                 !read(10,*)  bmax
 F                     !read(10,*) nvofich
-BCS_LUcomplet          !read(10,*) fichier
+BCS_bid          !read(10,*) fichier

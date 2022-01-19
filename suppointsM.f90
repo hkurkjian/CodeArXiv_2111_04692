@@ -169,7 +169,7 @@ do icb=(ixqdep-1)*npoints+1,ixqfin*npoints
  endif
  !$OMP END CRITICAL
  if(iom==passe(ifen)) write(6,*)"bornes:",bornes(ifen),bornes(ifen+1)
- write(6,*)"ixq,xq,ifen,iom,om,Mmv(1),pt=",ixq,xq,ifen,iom,om,Mmv(1),"  ",fini(ixq)," sur ",nmax
+ write(6,*)"fil,ixq,xq,ifen,iom,om,Mmv(1),pt=",OMP_GET_THREAD_NUM(),ixq,xq,ifen,iom,om,Mmv(1),"  ",fini(ixq)," sur ",nmax
 enddo
 !$OMP END PARALLEL DO
 
