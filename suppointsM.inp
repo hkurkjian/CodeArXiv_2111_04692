@@ -4,8 +4,6 @@
 10491                 !read(10,*) nq
 11000                 !read(10,*) nq
 35000                 !read(10,*) nq
-5                     !read(10,*) nqfen
-4                     !read(10,*) nqfen
 300                   !read(10,*)  nom1
 500                   !read(10,*)  nom2
 1.0e6                 !read(10,*)  bmax

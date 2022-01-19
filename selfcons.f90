@@ -13,17 +13,17 @@ CHARACTER(len=90) fichiers(1:3),suffixe,suffeintq !1:3 fichldc, 3 fichlec, 4 fic
 INTEGER nk,ik
 LOGICAL nvofich,res,newton
 
-REAL(QP) contK(1:2), xik, e0, Uk, Vk, OS
+REAL(QP) contK(1:4), OS
 REAL(QP) detZero, detCont, cont, borneinf, bornesup
 COMPLEX(QPC) sigbidon(1:2,1:6)
 
 open(10,file='selfcons.inp')
- read(10,*)mu
- read(10,*)kmin
+ read(10,*)mu          !interaction regime (=x0 in dspec)
+ read(10,*)kmin        !Grid of k points
  read(10,*)kmax
  read(10,*)nk
  read(10,*)zkdep(1)
- read(10,*)fichiers(1) !pour charger bestM/donnees
+ read(10,*)fichiers(1) !pour charger estM/donnees
  read(10,*)fichiers(2) !pour intldc/intpasres
  read(10,*)fichiers(3) !pour intpole
  read(10,*)EPS(1)      !intldc/EPSq
@@ -62,19 +62,13 @@ do ik=0,nk
  ! Calculate continuum thresholds
  contK=thresholds(mu,k) 
 
- ! Mean-field functions
- xik=k**2-mu
- e0=sqrt(xik**2+1.0_qp)
- Uk=sqrt((1.0_qp+xik/e0)/2.0_qp)
- Vk=sqrt((1.0_qp-xik/e0)/2.0_qp)
-    
  ! Look for a solution below the continuum
  if(newton)then
   if(blaSC) write(6,*)"mnewt, initial guess: zkdep=",zkdep
   call mnewt(20,zkdep,0.001_qp*EPS(1),0.1_qp*EPS(1),detGnewt)
  else
   OS=1.e-6_qp
-  cont=contK(2)
+  cont=min(contK(1),contK(4))
   if(blaSC) write(6,*)"rtsafe: trying to bracket the root"
   if(res)then
    detZero=detGres(k,     OS,EPS,sigbidon,suffeintq)
@@ -103,7 +97,7 @@ do ik=0,nk
  endif
 
  open(20,file="DONNEES/solautocor"//trim(suffixe)//".dat",POSITION="APPEND")
-  write(20,*)k,zkdep,contK
+  write(20,*)k,zkdep,contK(1),contK(4)
  close(20)
 
 enddo

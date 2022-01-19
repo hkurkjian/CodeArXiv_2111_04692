@@ -15,14 +15,14 @@ PROGRAM spectre
  LOGICAL nouveauf
 
  open(10,file='spectre.inp')
-  read(10,*)x0
-  read(10,*)xqmin
+  read(10,*)x0        !Interaction regime
+  read(10,*)xqmin     !Grid of q points
   read(10,*)xqmax
   read(10,*)ixqdep
   read(10,*)nxq
-  read(10,*)om
-  read(10,*)fichier
-  read(10,*)nouveauf
+  read(10,*)om        !Initial guess for the solution at xqmin
+  read(10,*)fichier   !data file
+  read(10,*)nouveauf  !Start a new file or complete an existing one?
  close(10)
 
  bla1=.TRUE.

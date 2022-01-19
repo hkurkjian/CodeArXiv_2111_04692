@@ -19,19 +19,17 @@ INTEGER  ifen,nfen,nfen1,nfen2,nn,npoints
 LOGICAL  nvofich
 
 open(10,file='suppointsM.inp')
- read(10,*)x0
- read(10,*)xqmin
+ read(10,*)x0     !Interaction regime
+ read(10,*)xqmin  !grid of q points
  read(10,*)xqmax
  read(10,*)ixqdep
  read(10,*)ixqfin
  read(10,*)nq
- read(10,*)nfen1
- read(10,*)nfen2
- read(10,*)nom1
- read(10,*)nom2
- read(10,*)bmax
- read(10,*)nvofich
- read(10,*)fichier
+ read(10,*)nom1   !Number of points for window of type 1 or 2 (finer grid near the angular points opp(1--3))
+ read(10,*)nom2   !Number of points for window of type 3 or 4 (normal grid from opp(i)+dom to opp(i+1)-dom or from opp(3)+dom3 to bmax)
+ read(10,*)bmax   !Upper boundary of the omega grid
+ read(10,*)nvofich!create a new file or complete an existing one?
+ read(10,*)fichier!data file
 close(10)
 
 bla1=.TRUE.
@@ -46,10 +44,10 @@ call calcxqjoin
 xq1 = xqjoin
 xq2   =2*sqrt(x0)
 
-npoints=nfen1*nom1+nfen2*nom2
-nfen=nfen1+nfen2
+npoints=5*nom1+4*nom2 !4 window of type 3 or 4, 5 window of type 1 or 2
+nfen=5+4
 
-write(6,*)'nom1,nom2,nfen1,nfen2,npoints='    ,nom1,nom2,nfen1,nfen2,npoints
+write(6,*)'nom1,nom2,npoints='    ,nom1,nom2,npoints
 write(6,*)'ixqdep,ixqfin;nq=' ,ixqdep,ixqfin,"; ",nq
 write(6,*)'xq1,xq2 ='   ,xq1,xq2
 write(6,*)'bmax='   ,bmax
@@ -112,6 +110,7 @@ do icb=(ixqdep-1)*npoints+1,ixqfin*npoints
  endif
 
 
+! size of the type 1 and 2 windows
  dom1  =min((opp(2)-opp(1))/10,0.1_qp)
  if((opp(3)-opp(1)).LE.0.1_qp) dom1=(opp(2)-opp(1))/4
  dom2  =min(0.1_qp,(opp(3)-opp(2))/4)
@@ -139,11 +138,11 @@ do icb=(ixqdep-1)*npoints+1,ixqfin*npoints
  dom=(bornes(ifen+1)-bornes(ifen))/nom2
 
  y=dy*(iom-passe(ifen)+1-0.5_qp)
- if(tfen(ifen)==4) y=1/sqrt(bornes(ifen+1))+dymax*(iom-passe(ifen)+1-0.5_qp)
-
  if(tfen(ifen)==1) om=bornes(ifen)  +y**2
  if(tfen(ifen)==2) om=bornes(ifen+1)-y**2
  if(tfen(ifen)==3) om=bornes(ifen)  +dom*(iom-passe(ifen)+1-0.5_qp)
+
+ if(tfen(ifen)==4) y=1/sqrt(bornes(ifen+1))+dymax*(iom-passe(ifen)+1-0.5_qp)
  if(tfen(ifen)==4) om=1.0_qp/y**2
  
  if(om>200000.0_qp)then

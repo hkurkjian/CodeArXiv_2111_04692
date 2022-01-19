@@ -364,6 +364,8 @@ END SUBROUTINE load_data
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE unload_data
 deallocate(donnees)
+deallocate(donneesgq)
 deallocate(vecq)
+deallocate(vecqgq)
 END SUBROUTINE unload_data
 END MODULE estM

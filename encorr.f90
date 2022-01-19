@@ -18,14 +18,14 @@ LOGICAL nvofich
 !k 0 to 3
 !zk 1 to 6
 open(10,file='encorr.inp')
- read(10,*)mu
- read(10,*)kmin
+ read(10,*)mu          !interaction regime =x0 in dspec
+ read(10,*)kmin        !grid of points in k
  read(10,*)kmax
  read(10,*)nk,nkdeb
- read(10,*)zkmin
+ read(10,*)zkmin       !grid of points in zk
  read(10,*)zkmax
  read(10,*)nzk,nzkdeb
- read(10,*)fichiers(1) !pour charger bestM/donnees
+ read(10,*)fichiers(1) !pour charger estM/donnees
  read(10,*)fichiers(2) !pour intldc/intpasres
  read(10,*)fichiers(3) !pour intpole
  read(10,*)EPS(1)      !intldc/EPSq
@@ -115,9 +115,9 @@ do ic=1,(nk-nkdeb+1)*(nzk-nzkdeb+1)
  th=thresholds(mu,k)
  write(6,*)"th=",th(1),th(4)
  if(zk<th(4))then
-!  det=detG   (k,zk,EPS,sigma,suffintq)
+  det=detG   (k,zk,EPS,sigma,suffintq)
  else
-!  det=detGres(k,zk,EPS,sigma,suffintq)
+  det=detGres(k,zk,EPS,sigma,suffintq)
  endif
  
  sigcomb(1:3)=sigma(1,1:3)+sigma(1,4:6)+sigma(2,1:3)+sigma(2,4:6)

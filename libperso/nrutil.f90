@@ -72,6 +72,9 @@ MODULE nrutil
 	INTERFACE put_diag
 		MODULE PROCEDURE put_diag_rv, put_diag_r
 	END INTERFACE
+	INTERFACE vabs
+		MODULE PROCEDURE vabs_s,vabs_d,vabs_q
+	END INTERFACE
 CONTAINS
 !BL
 	SUBROUTINE array_copy_r(src,dest,n_copied,n_not_copied)
@@ -1674,10 +1677,22 @@ CONTAINS
 	lower_triangle=(outerdiff(arth_i(1,1,j),arth_i(1,1,k)) > -n)
 	END FUNCTION lower_triangle
 !BL
-	FUNCTION vabs(v)
+	FUNCTION vabs_s(v)
 	REAL(SP), DIMENSION(:), INTENT(IN) :: v
-	REAL(SP) :: vabs
-	vabs=sqrt(dot_product(v,v))
-	END FUNCTION vabs
+	REAL(SP) :: vabs_s
+	vabs_s=sqrt(dot_product(v,v))
+	END FUNCTION vabs_s
+!BL
+	FUNCTION vabs_d(v)
+	REAL(DP), DIMENSION(:), INTENT(IN) :: v
+	REAL(DP) :: vabs_d
+	vabs_d=sqrt(dot_product(v,v))
+	END FUNCTION vabs_d
+!BL
+	FUNCTION vabs_q(v)
+	REAL(QP), DIMENSION(:), INTENT(IN) :: v
+	REAL(QP) :: vabs_q
+	vabs_q=sqrt(dot_product(v,v))
+	END FUNCTION vabs_q
 !BL
 END MODULE nrutil

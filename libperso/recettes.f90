@@ -1,3 +1,4 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE recettes 
         USE nrtype
         USE nrutil, ONLY : assert
@@ -31,13 +32,13 @@ MODULE recettes
                  MODULE PROCEDURE rj_q
         END INTERFACE
         INTERFACE elle
-                 MODULE PROCEDURE elle_s,elle_d,elle_q,elle_c,elle_rc,elle_cq,elle_rcq
+                 MODULE PROCEDURE elle_s,elle_d,elle_q,elle_cq,elle_ccq,elleim_q
         END INTERFACE
         INTERFACE ellf
-                 MODULE PROCEDURE ellf_s,ellf_d,ellf_q,ellf_c,ellf_rc,ellf_cq,ellf_rcq
+                 MODULE PROCEDURE ellf_s,ellf_d,ellf_q,ellf_cq,ellf_ccq,ellfim_q
         END INTERFACE
         INTERFACE ellpi
-                 MODULE PROCEDURE ellpi_q
+                 MODULE PROCEDURE ellpi_q,ellpi_cq
         END INTERFACE
         INTERFACE argum
                  MODULE PROCEDURE argum_d,argum_q
@@ -51,14 +52,241 @@ MODULE recettes
         INTERFACE mnewt
                 MODULE PROCEDURE mnewt_s, mnewt_d, mnewt_q
         END INTERFACE
+        INTERFACE newt
+                MODULE PROCEDURE newt_q
+        END INTERFACE
         INTERFACE ludcmp
                 MODULE PROCEDURE ludcmp_s, ludcmp_d, ludcmp_q, ludcmp_cq
         END INTERFACE
         INTERFACE lubksb
                 MODULE PROCEDURE lubksb_s, lubksb_d, lubksb_q
         END INTERFACE
+        INTERFACE lnsrch
+                MODULE PROCEDURE lnsrch_q
+        END INTERFACE
+        INTERFACE fdjac
+                MODULE PROCEDURE fdjac_q
+        END INTERFACE
+        INTERFACE fmin
+                MODULE PROCEDURE fmin_s,fmin_d,fmin_q
+        END INTERFACE
+        ABSTRACT INTERFACE
+         FUNCTION funcvs(x)
+         USE nrtype
+         REAL(SP), DIMENSION(:), INTENT(IN) :: x
+         REAL(SP), DIMENSION(size(x)) :: funcvs
+         END FUNCTION funcvs
+         FUNCTION funcvd(x)
+         USE nrtype
+         REAL(DP), DIMENSION(:), INTENT(IN) :: x
+         REAL(DP), DIMENSION(size(x)) :: funcvd
+         END FUNCTION funcvd
+         FUNCTION funcvq(x)
+         USE nrtype
+         REAL(QP), DIMENSION(:), INTENT(IN) :: x
+         REAL(QP), DIMENSION(size(x)) :: funcvq
+         END FUNCTION funcvq
+        END INTERFACE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CONTAINS
+        SUBROUTINE fmin_s(x,f,fm,func)
+        REAL(SP), DIMENSION(:), INTENT(IN)  :: x
+        REAL(SP), DIMENSION(size(x)), INTENT(OUT) :: f
+        REAL(SP), INTENT(OUT) :: fm
+!        Returns f = 1/2(F · F) at x. FUNCTION funcv(x) is a fixed-name, user-supplied routine that
+!        returns the vector of functions at x.
+        PROCEDURE(funcvs) func
+        f=func(x)
+        fm=0.5_sp*dot_product(f,f)
+        END SUBROUTINE fmin_s
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        SUBROUTINE fmin_d(x,f,fm,func)
+        REAL(DP), DIMENSION(:), INTENT(IN)  :: x
+        REAL(DP), DIMENSION(size(x)), INTENT(OUT) :: f
+        REAL(DP), INTENT(OUT) :: fm
+        PROCEDURE(funcvd) func
+        f=func(x)
+        fm=0.5_dp*dot_product(f,f)
+        END SUBROUTINE fmin_d
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        SUBROUTINE fmin_q(x,f,fm,func)
+        REAL(QP), DIMENSION(:), INTENT(IN)  :: x
+        REAL(QP), DIMENSION(size(x)), INTENT(OUT) :: f
+        REAL(QP), INTENT(OUT) :: fm
+        PROCEDURE(funcvq) func
+        f=func(x)
+        fm=0.5_qp*dot_product(f,f)
+        END SUBROUTINE fmin_q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        SUBROUTINE newt_q(x,tolf,check,func)
+        USE nrutil, ONLY :nrerror,vabs
+        IMPLICIT NONE
+        REAL(QP), DIMENSION(:), INTENT(INOUT) :: x
+        REAL(QP), INTENT(IN) :: tolf
+        LOGICAL, INTENT(OUT) :: check
+        PROCEDURE(funcvq) func
+
+        INTEGER, PARAMETER :: MAXITS=200
+        REAL(QP), PARAMETER :: TOLMIN=1.0e-6_qp,TOLX=epsilon(x),STPMX=100.0_qp
+!       Given an initial guess x for a root in N dimensions, find the root by a globally convergent
+!       Newton's method. The length N vector of functions to be zeroed, called fvec in the routine
+!       below, is returned by a user-supplied routine that must be called funcv and have the
+!       declaration FUNCTION funcv(x). The output quantity check is false on a normal return
+!       and true if the routine has converged to a local minimum of the function fmin defined
+!       below. In this case try restarting from a different initial guess.
+!       Parameters: MAXITS is the maximum number of iterations; TOLF sets the convergence
+!       criterion on function values; TOLMIN sets the criterion for deciding whether spurious convergence
+!       to a minimum of fmin has occurred; TOLX is the convergence criterion on δx;
+!       STPMX is the scaled maximum step length allowed in line searches.
+        INTEGER(I4B) :: its
+        INTEGER(I4B), DIMENSION(size(x)) :: indx
+        REAL(QP) :: d,f,fold,stpmax
+        REAL(QP), DIMENSION(size(x)) :: g,p,xold
+        REAL(QP), DIMENSION(size(x)) :: fvec
+        REAL(QP), DIMENSION(size(x),size(x)) :: fjac
+        call fmin(x,fvec,f,func) !fvec is also computed by this call.
+        if (maxval(abs(fvec(:))) < 0.01_qp*TOLF) then !Test for initial guess being a root.
+         check=.false.  !Use more stringent test than simply TOLF.
+         RETURN
+        end if
+        stpmax=STPMX*max(vabs(x(:)),real(size(x),qp)) !Calculate stpmax for line searches.
+        do its=1,MAXITS !Start of iteration loop.
+         call fdjac(x,fvec,fjac,func)
+         !If analytic Jacobian is available, you can replace the routine fdjac below with your own routine.
+         g(:)=matmul(fvec(:),fjac(:,:)) !Compute ∇f for the line search.
+         xold(:)=x(:)                   !Store x,
+         fold=f                         !and f.
+         p(:)=-fvec(:)                  !Right-hand side for linear equations.
+         call ludcmp(fjac,indx,d)       !Solve linear equations by LU decomposition.
+         call lubksb(fjac,indx,p)
+         call lnsrch(xold,fold,g,p,x,f,stpmax,check,fminsimp)
+         !lnsrch returns new x and f. It also calculates fvec at the new x when it calls fmin.
+         if (maxval(abs(fvec(:))) < TOLF) then !Test for convergence on function values.
+          check=.FALSE. 
+          RETURN
+         end if
+         if (check) then !Check for gradient of f zero, i.e., spurious convergence.
+          check=(maxval(abs(g(:))*max(abs(x(:)),1.0_qp)/max(f,0.5_qp*size(x))) < TOLMIN)
+          RETURN !Test for convergence on δx.
+         end if
+         if (maxval(abs(x(:)-xold(:))/max(abs(x(:)),1.0_qp)) < TOLX) RETURN
+        end do
+        call nrerror('MAXITS exceeded in newt')
+        CONTAINS 
+         FUNCTION fminsimp(x)
+         IMPLICIT NONE
+         REAL(QP) :: fminsimp
+         REAL(QP), DIMENSION(:), INTENT(IN) :: x
+         call fmin(x,fvec,f,func)
+         fminsimp=f
+         END FUNCTION fminsimp
+        END SUBROUTINE newt_q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        SUBROUTINE lnsrch_q(xold,fold,g,p,x,f,stpmax,check,func)
+        USE nrutil, ONLY :assert_eq, nrerror,vabs
+        IMPLICIT NONE
+        REAL(QP), DIMENSION(:), INTENT(IN) :: xold,g
+        REAL(QP), DIMENSION(:), INTENT(INOUT) :: p
+        REAL(QP), INTENT(IN) :: fold,stpmax
+        REAL(QP), DIMENSION(:), INTENT(OUT) :: x
+        REAL(QP), INTENT(OUT) :: f
+        LOGICAL, INTENT(OUT) :: check
+        INTERFACE
+         FUNCTION func(x)
+         USE nrtype
+         REAL(QP) :: func
+         REAL(QP), DIMENSION(:), INTENT(IN) :: x
+         END FUNCTION func
+        END INTERFACE
+        REAL(QP), PARAMETER :: ALF=1.0e-4_qp,TOLX=epsilon(x)
+!        Given an N-dimensional point xold, the value of the function and gradient there, fold
+!        and g, and a direction p, finds a new point x along the direction p from xold where the
+!        function func has decreased “sufficiently.” xold, g, p, and x are all arrays of length N.
+!        The new function value is returned in f. stpmax is an input quantity that limits the length
+!        of the steps so that you do not try to evaluate the function in regions where it is undefined
+!        or subject to overflow. p is usually the Newton direction. The output quantity check is
+!        false on a normal exit. It is true when x is too close to xold. In a minimization algorithm,
+!        this usually signals convergence and can be ignored. However, in a zero-finding algorithm
+!        the calling program should check whether the convergence is spurious.
+!        Parameters: ALF ensures sufficient decrease in function value; TOLX is the convergence
+!        criterion on Δx.
+        INTEGER(I4B) :: ndum
+        REAL(QP) :: a,alam,alam2,alamin,b,disc,f2,pabs,rhs1,rhs2,slope,tmplam
+        ndum=assert_eq(size(g),size(p),size(x),size(xold),'lnsrch')
+        check=.false.
+        pabs=vabs(p(:))
+        if (pabs > stpmax) p(:)=p(:)*stpmax/pabs !Scale if attempted step is too big.
+        slope=dot_product(g,p)
+        if (slope >= 0.0) call nrerror('roundoff problem in lnsrch')
+        alamin=TOLX/maxval(abs(p(:))/max(abs(xold(:)),1.0_qp)) !Compute λmin.
+        alam=1.0 !Always try full Newton step first.
+        do !Start of iteration loop.
+         x(:)=xold(:)+alam*p(:)
+         f=func(x)
+         if (alam < alamin) then !Convergence on Δx. For zero finding, the calling program should verify the convergence.
+          x(:)=xold(:)
+          check=.true.
+          RETURN
+         else if (f <= fold+ALF*alam*slope) then !Sufficient function decrease.
+          RETURN
+         else !Backtrack.
+          if (alam == 1.0) then !First time.
+           tmplam=-slope/(2.0_qp*(f-fold-slope))
+          else !Subsequent backtracks.
+           rhs1=f-fold-alam*slope
+           rhs2=f2-fold-alam2*slope
+           a=(rhs1/alam**2-rhs2/alam2**2)/(alam-alam2)
+           b=(-alam2*rhs1/alam**2+alam*rhs2/alam2**2)/(alam-alam2)
+           if (a == 0.0) then
+            tmplam=-slope/(2.0_qp*b)
+           else
+            disc=b*b-3.0_qp*a*slope
+            if (disc < 0.0) then
+             tmplam=0.5_qp*alam
+            else if (b <= 0.0) then
+             tmplam=(-b+sqrt(disc))/(3.0_qp*a)
+            else
+             tmplam=-slope/(b+sqrt(disc))
+            end if
+           end if
+           if (tmplam > 0.5_qp*alam) tmplam=0.5_qp*alam !λ ≤ 0.5λ1.
+          end if
+         end if
+         alam2=alam
+         f2=f
+         alam=max(tmplam,0.1_qp*alam) !λ ≥ 0.1λ1.
+        end do !Try again.
+        END SUBROUTINE lnsrch_q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        SUBROUTINE fdjac_q(x,fvec,df,funcv)
+        USE nrtype; USE nrutil, ONLY :assert_eq
+        IMPLICIT NONE
+        REAL(QP), DIMENSION(:), INTENT(IN) :: fvec
+        REAL(QP), DIMENSION(:), INTENT(INOUT) :: x
+        REAL(QP), DIMENSION(:,:), INTENT(OUT) :: df
+        PROCEDURE(funcvq) funcv
+
+        REAL(QP), PARAMETER :: petit=1.0e-12_qp
+!       Computes forward-difference approximation to Jacobian. On input, x is the point at which
+!       the Jacobian is to be evaluated, and fvec is the vector of function values at the point,
+!       both arrays of length N. df is the N × N output Jacobian. FUNCTION funcv(x) is a
+!       fixed-name, user-supplied routine that returns the vector of functions at x.
+!        Parameter: EPS is the approximate square root of the machine precision.
+        INTEGER(I4B) :: j,n
+        REAL(QP), DIMENSION(size(x)) :: xsav,xph,h
+        n=assert_eq(size(x),size(fvec),size(df,1),size(df,2),'fdjac')
+        xsav=x
+        h=petit*abs(xsav)
+        where (h == 0.0) h=petit
+        xph=xsav+h !Trick to reduce finite precision error.
+        h=xph-xsav
+        do j=1,n
+         x(j)=xph(j)
+         df(:,j)=(funcv(x)-fvec(:))/h(j) !Forward difference formula.
+         x(j)=xsav(j)
+        end do
+        END SUBROUTINE fdjac_q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUBROUTINE mnewt_s(ntrial,x,tolx,tolf,usrfun)
         INTEGER(I4B), INTENT(IN) :: ntrial
         REAL(SP), INTENT(IN) :: tolx,tolf
@@ -105,9 +333,6 @@ CONTAINS
         REAL(DP), DIMENSION(:,:), INTENT(OUT) :: fjac
         END SUBROUTINE usrfun
         END INTERFACE
-!        Given an initial guess x for a root in N dimensions, take ntrial Newton-Raphson steps to
-!        improve the root. Stop if the root converges in either summed absolute variable increments
-!        tolx or summed absolute function values tolf.
         INTEGER(I4B) :: i
         INTEGER(I4B), DIMENSION(size(x)) :: indx
         REAL(DP) :: d
@@ -115,7 +340,6 @@ CONTAINS
         REAL(DP), DIMENSION(size(x),size(x)) :: fjac
         do i=1,ntrial
          call usrfun(x,fvec,fjac)
-!        User subroutine supplies function values at x in fvec and Jacobian matrix in fjac.
          if (sum(abs(fvec)) <= tolf) RETURN !Check function convergence.
          p=-fvec !Right-hand side of linear equations.
          call ludcmp(fjac,indx,d) !Solve linear equations using LU decomposition.
@@ -138,9 +362,6 @@ CONTAINS
         REAL(QP), DIMENSION(:,:), INTENT(OUT) :: fjac
         END SUBROUTINE usrfun
         END INTERFACE
-!        Given an initial guess x for a root in N dimensions, take ntrial Newton-Raphson steps to
-!        improve the root. Stop if the root converges in either summed absolute variable increments
-!        tolx or summed absolute function values tolf.
         INTEGER(I4B) :: i
         INTEGER(I4B), DIMENSION(size(x)) :: indx
         REAL(QP) :: d
@@ -148,7 +369,6 @@ CONTAINS
         REAL(QP), DIMENSION(size(x),size(x)) :: fjac
         do i=1,ntrial
          call usrfun(x,fvec,fjac)
-!        User subroutine supplies function values at x in fvec and Jacobian matrix in fjac.
          if (sum(abs(fvec)) <= tolf) RETURN !Check function convergence.
          p=-fvec !Right-hand side of linear equations.
          call ludcmp(fjac,indx,d) !Solve linear equations using LU decomposition.
@@ -1184,7 +1404,7 @@ CONTAINS
         !nonnegative, and at most one can be zero. TINY must be at least 5 times the machine
         !underflow limit, BIG at most one-fifth the machine overflow limit.
         REAL(QP) :: alamb,ave,delx,dely,delz,e2,e3,sqrtx,sqrty,sqrtz,xt,yt,zt
-        if(.NOT.((min(x,y,z) >= 0.d0).AND.(min(x+y,x+z,y+z)>=TINY).AND.(max(x,y,z)<=BIG)))then
+        if(.NOT.((min(x,y,z) >= 0.0_qp).AND.(min(x+y,x+z,y+z)>=TINY).AND.(max(x,y,z)<=BIG)))then
           write(6,*) 'erreur ds les arguments de rf_q'
           write(6,*) 'x,y,z=',x,y,z
           STOP
@@ -1292,11 +1512,11 @@ CONTAINS
         USE nrutil, ONLY : assert
         REAL(QP), INTENT(IN) :: x,y,z,p
         REAL(QP) :: rj_q
-        REAL(QP), PARAMETER :: ERRTOL=0.000005_qp,TINY=2.5e-33_qp,BIG=9.0e41_qp,&
+        REAL(QP), PARAMETER :: ERRTOL=0.000005_qp,TINY=2.5e-233_qp,BIG=9.0e241_qp,&
         C1=3.0_qp/14.0_qp,C2=1.0_qp/3.0_qp,C3=3.0_qp/22.0_qp,&
         C4=3.0_qp/26.0_qp,C5=0.75_qp*C3,C6=1.5_qp*C4,C7=0.5_qp*C2,&
         C8=C3+C3
-        !Computes Carlson’s elliptic integral of the third kind, RJ(x, y, z, p). x, y, and z must be
+        !Computes Carlson's elliptic integral of the third kind, RJ(x, y, z, p). x, y, and z must be
         !nonnegative, and at most one can be zero. p must be nonzero. If p < 0, the Cauchy
         !principal value is returned. TINY must be at least twice the cube root of the machine
         !underflow limit, BIG at most one-fifth the cube root of the machine overflow limit.
@@ -1362,7 +1582,7 @@ CONTAINS
         COMP1=2.236_qp/SQRTNY,COMP2=TNBG*TNBG/25.0_qp,&
         THIRD=1.0_qp/3.0_qp,&
         C1=0.3_qp,C2=1.0_qp/7.0_qp,C3=0.375_qp,C4=9.0_qp/22.0_qp
-!        Computes Carlson’s degenerate elliptic integral, RC(x, y). x must be nonnegative and y
+!        Computes Carlson's degenerate elliptic integral, RC(x, y). x must be nonnegative and y
 !        must be nonzero. If y < 0, the Cauchy principal value is returned. TINY must be at least
 !        5 times the machine underflow limit, BIG at most one-fifth the machine maximum overflow
 !        limit.
@@ -1393,35 +1613,27 @@ CONTAINS
         FUNCTION elle_s(phi,ak)
         REAL(SP), INTENT(IN) :: phi,ak
         REAL(SP) :: elle_s
-        !Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
-        !and RF . The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
+!        Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
+!        and RF . The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
+!        int_0^phi dt*sqrt(1-ak**2*sin(t)**2)
+!        if ak^2*sin(phi)^2>1 returns the real part of the intergral
         REAL(SP) :: cc,q,s
         s=sin(phi)
-        cc=cos(phi)**2
-        q=(1.0_sp-s*ak)*(1.0_sp+s*ak)
-        if(isnan(cc).OR.isnan(q))then
-         write(6,*)'Arguments dans elle, phi,ak=',phi,ak
-         write(6,*)'cc,q=',cc,q
-         STOP
-        endif
-        elle_s=s*(rf(cc,q,1.0_sp)-((s*ak)**2)*rd(cc,q,1.0_sp)/3.0_sp)
+        if(ak**2*s**2>1) s=1/abs(ak) !The integrande becomes pure imaginary beyond t=arcsin(1/abs(ak))
+        cc=1-s**2
+        q=(1-s*ak)*(1+s*ak)
+        elle_s=s*(rf(cc,q,1.0_sp)-((s*ak)**2)*rd(cc,q,1.0_sp)/3)
         END FUNCTION elle_s
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION elle_d(phi,ak)
         REAL(DP), INTENT(IN) :: phi,ak
         REAL(DP) :: elle_d
-        !Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
-        !and RF . The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
         REAL(DP) :: cc,q,s
         s=sin(phi)
-        cc=cos(phi)**2
-        q=(1.0_dp-s*ak)*(1.0_dp+s*ak)
-        if(isnan(cc).OR.isnan(q))then
-         write(6,*)'Arguments dans elle, phi,ak=',phi,ak
-         write(6,*)'cc,q=',cc,q
-         STOP
-        endif
+        if(ak**2*s**2>1) s=1/abs(ak)
+        cc=1-s**2
+        q=(1-s*ak)*(1+s*ak)
         elle_d=s*(rf(cc,q,1.0_dp)-((s*ak)**2)*rd(cc,q,1.0_dp)/3.0_dp)
         END FUNCTION elle_d
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1429,77 +1641,132 @@ CONTAINS
         FUNCTION elle_q(phi,ak)
         REAL(QP), INTENT(IN) :: phi,ak
         REAL(QP) :: elle_q
-        !Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
-        !and RF . The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
         REAL(QP) :: cc,q,s
         s=sin(phi)
-        cc=cos(phi)**2
-        q=(1.0_qp-s*ak)*(1.0_qp+s*ak)
-        if(isnan(cc).OR.isnan(q))then
-         write(6,*)'Arguments dans elle, phi,ak=',phi,ak
-         write(6,*)'cc,q=',cc,q
-         STOP
-        endif
+        if(ak**2*s**2>1) s=1/abs(ak)
+        cc=1-s**2
+        q=(1-s*ak)*(1+s*ak)
         elle_q=s*(rf(cc,q,1.0_qp)-((s*ak)**2)*rd(cc,q,1.0_qp)/3.0_qp)
         END FUNCTION elle_q
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        FUNCTION elle_c(phi,ak)
-        COMPLEX(DPC), INTENT(IN) :: phi,ak
-        COMPLEX(DPC) :: elle_c
-        !Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
-        !and RF . The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
-        COMPLEX(DPC) :: cc,q,s,un
-        un=dcmplx(1.d0,0.d0)
-        s=sin(phi)
-        cc=cos(phi)**2
-        q=(1.0_dp-s*ak)*(1.0_dp+s*ak)
-        elle_c=s*(rf(cc,q,un)-((s*ak)**2)*rd(cc,q,un)/3.0_dp)
-        END FUNCTION elle_c
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        FUNCTION elle_rc(phi,ak)
-        COMPLEX(DPC), INTENT(IN) :: ak
-        REAL(DP), INTENT(IN) :: phi
-        COMPLEX(DPC) :: elle_rc
-        !Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
-        !and RF . The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
-        COMPLEX(DPC) :: cc,q,s,un
-        un=dcmplx(1.d0,0.d0)
-        s=sin(phi)
-        cc=cos(phi)**2
-        q=(1.0_dp-s*ak)*(1.0_dp+s*ak)
-        elle_rc=s*(rf(cc,q,un)-((s*ak)**2)*rd(cc,q,un)/3.0_dp)
-        END FUNCTION elle_rc
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        FUNCTION elleim_q(phi,ak,complx)
+        REAL(QP), INTENT(IN) :: phi,ak
+        LOGICAL, INTENT(IN) :: complx !valeur sans importance, sert pour l'INTERFACE elle
+        COMPLEX(QPC) :: elleim_q
+        REAL(QP) :: phi1,kp,im,re
+!       Integrale elliptique du 1er type au voisinage de sa ligne de coupure sur l'axe réel
+!       quand ak^2*sin^2(phi)>1, l'intégrale est réelle de 0 à phi1=asin(1/abs(ak)) (partie réelle calculée par elle(phi,ak))
+!       puis imaginaire pure de phi1 à phi. La partie imaginaire est calculée ci-dessous
+        re=elle(phi,ak)
+        if(abs(ak)>1)then 
+         phi1=asin(1/abs(ak))
+         kp=sqrt(ak**2/(ak**2-1))
+         im=-(elle(PI/2.0_qp-phi1,kp)-elle(PI/2.0_qp-phi,kp))*sqrt(ak**2-1)
+        else
+         im=0.0_qp
+        endif
+        elleim_q=cmplx(re,im,kind=qpc)
+        END FUNCTION elleim_q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION elle_cq(phi,ak)
-        COMPLEX(QPC), INTENT(IN) :: phi,ak
-        COMPLEX(QPC) :: elle_cq
-        !Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
-        !and RF . The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
-        COMPLEX(QPC) :: cc,q,s,un
-        un=cmplx(1.0_qp,0.0_qp)
-        s=sin(phi)
-        cc=cos(phi)**2
-        q=(1.0_qp-s*ak)*(1.0_qp+s*ak)
-        elle_cq=s*(rf(cc,q,un)-((s*ak)**2)*rd(cc,q,un)/3.0_qp)
-        END FUNCTION elle_cq
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        FUNCTION elle_rcq(phi,ak)
-        COMPLEX(QPC), INTENT(IN) :: ak
+! Calcule l'intégrale elliptique de première espèce prolongée naivement au plan complexe
+! ak complexe, phi réel
+        USE modsim
+        IMPLICIT NONE
         REAL(QP), INTENT(IN) :: phi
-        COMPLEX(QPC) :: elle_rcq
-        !Legendre elliptic integral of the 2nd kind E(φ, k), evaluated using Carlson's functions RD
-        !and RF . The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
-        COMPLEX(QPC) :: cc,q,s,un
-        un=cmplx(1.0_qp,0.0_qp)
-        s=sin(phi)
-        cc=cos(phi)**2
-        q=(1.0_qp-s*ak)*(1.0_qp+s*ak)
-        elle_rcq=s*(rf(cc,q,un)-((s*ak)**2)*rd(cc,q,un)/3.0_qp)
-        END FUNCTION elle_rcq
+        COMPLEX(QPC), INTENT(IN) :: ak
+        COMPLEX(QPC) :: elle_cq
+        COMPLEX(QPC) :: int1,int2
+        REAL(QP) t,dt,pref
+        INTEGER it,nt
+        
+        elle_cq=qromocq(intee,0.0_qp,phi,(/bidon/),midpntcq,1.0e-18_qp)
+        
+        CONTAINS
+         FUNCTION intee(x,arg)
+         USE nrtype
+         IMPLICIT NONE
+         REAL(QP), DIMENSION(:), INTENT(IN) :: x
+         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+         COMPLEX(QPC), DIMENSION(size(x)) :: intee
+        
+         intee=sqrt(1.0_qp-ak**2.0_qp*sin(x)**2.0_qp)
+        
+         END FUNCTION
+        END FUNCTION elle_cq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        FUNCTION elle_ccq(phi,ak)
+! Calcule l'intégrale elliptique de première espèce prolongée naivement au plan complexe
+! ak complexe, phi complexe
+        USE modsim
+        IMPLICIT NONE
+        COMPLEX(QPC), INTENT(IN) :: phi,ak
+        COMPLEX(QPC) :: elle_ccq
+        COMPLEX(QPC) :: int1,int2
+        REAL(QP) t,dt,pref
+        INTEGER it,nt
+        
+        elle_ccq=qromocq(intee,0.0_qp,1.0_qp,(/bidon/),midpntcq,1.0e-18_qp)
+        elle_ccq=phi*elle_ccq
+        
+        CONTAINS
+         FUNCTION intee(x,arg)
+         USE nrtype
+         IMPLICIT NONE
+         REAL(QP), DIMENSION(:), INTENT(IN) :: x
+         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+         COMPLEX(QPC), DIMENSION(size(x)) :: intee
+        
+         intee=sqrt(1.0_qp-ak**2.0_qp*sin(phi*x)**2.0_qp)
+        
+         END FUNCTION
+        END FUNCTION elle_ccq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        FUNCTION elleadiab(phi,ak)
+! Calcule l'intégrale elliptique de seconde espèce prolongée au plan complexe
+! Déplace les lignes de coupure par relèvement adiabatique de la racine de l'intégrande
+! Des points de brancherment demeurent là où l'argument de la racine carrée s'annulle
+        COMPLEX(QPC), INTENT(IN) :: phi,ak
+        COMPLEX(QPC) :: elleadiab
+        COMPLEX(QPC) :: int1,int2
+        REAL(QP) t,dt,pref
+        INTEGER it,nt
+        
+        elleadiab=cmplx(0.0_qp,0.0_qp,kind=qpc)
+        nt=54000
+        dt=1.0_qp/real(nt)
+        int1=1.0_qp
+        do it=0,nt
+! Règle de Simpson
+         if((it==0).OR.(it==nt))then
+          pref=1.0_qp
+         elseif(modulo(it,2)==1)then
+          pref=4.0_qp
+         elseif(modulo(it,2)==0)then
+          pref=2.0_qp
+         endif
+         t=it*dt
+         int2=int1
+         int1=intee(t,(/bidon/))
+         int1=int1*(-1.0_qp)**(minloc(abs((/int1+int2,int1-int2/)),DIM=1))
+!Suivi adiabatique de l'intégrande. Échoue aux points de branchement où intef,intee=0
+         elleadiab=elleadiab+pref*int1
+        enddo
+        elleadiab=phi*elleadiab*dt/3.0_qp
+        
+        CONTAINS
+         FUNCTION intee(x,arg)
+         USE nrtype
+         IMPLICIT NONE
+         REAL(QP), INTENT(IN) :: x
+         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+         COMPLEX(QPC) :: intee
+        
+         intee=sqrt(1.0_qp-ak**2.0_qp*sin(phi*x)**2.0_qp)
+        
+         END FUNCTION
+        END FUNCTION
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellf_s(phi,ak)
@@ -1507,101 +1774,164 @@ CONTAINS
         REAL(SP) :: ellf_s
 !        Legendre elliptic integral of the 1st kind F(φ, k), evaluated using Carlson's function RF .
 !        The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
-        REAL(SP) :: s
+!        int_0^phi dt/sqrt(1-ak**2*sin(t)**2)
+        REAL(SP) :: s,cc
         s=sin(phi)
-        if(isnan(s).OR.isnan(ak))then
-         write(6,*)'Arguments dans ellf, phi,ak=',phi,ak
-         write(6,*)'s=',s
-         STOP
-        endif
-        ellf_s=s*rf(cos(phi)**2,(1.0_sp-s*ak)*(1.0_sp+s*ak),1.0_sp)
+        if(ak**2*s**2>1) s=1/abs(ak)
+        cc=1-s**2
+        ellf_s=s*rf(cc,(1.0_sp-s*ak)*(1.0_sp+s*ak),1.0_sp)
         END FUNCTION ellf_s
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellf_d(phi,ak)
         REAL(DP), INTENT(IN) :: phi,ak
         REAL(DP) :: ellf_d
-!        Legendre elliptic integral of the 1st kind F(φ, k), evaluated using Carlson's function RF .
-!        The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
-        REAL(DP) :: s
+        REAL(DP) :: s,cc
         s=sin(phi)
-        if(isnan(s).OR.isnan(ak))then
-         write(6,*)'Arguments dans ellf, phi,ak=',phi,ak
-         write(6,*)'s=',s
-         STOP
-        endif
-        ellf_d=s*rf(cos(phi)**2,(1.0_dp-s*ak)*(1.0_dp+s*ak),1.0_dp)
+        if(ak**2*s**2>1) s=1/abs(ak)
+        cc=1-s**2
+        ellf_d=s*rf(cc,(1.0_dp-s*ak)*(1.0_dp+s*ak),1.0_dp)
         END FUNCTION ellf_d
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellf_q(phi,ak)
         REAL(QP), INTENT(IN) :: phi,ak
         REAL(QP) :: ellf_q
-!        Legendre elliptic integral of the 1st kind F(φ, k), evaluated using Carlson's function RF .
-!        The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
-        REAL(QP) :: s
+        REAL(QP) :: s,cc
         s=sin(phi)
-        if(isnan(s).OR.isnan(ak))then
-         write(6,*)'Arguments dans ellf, phi,ak=',phi,ak
-         write(6,*)'s=',s
-         STOP
-        endif
-        ellf_q=s*rf(cos(phi)**2,(1.0_qp-s*ak)*(1.0_qp+s*ak),1.0_qp)
+        if(ak**2*s**2>1) s=1/abs(ak)
+        cc=1-s**2
+        ellf_q=s*rf(cc,(1.0_qp-s*ak)*(1.0_qp+s*ak),1.0_qp)
         END FUNCTION ellf_q
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        FUNCTION ellf_c(phi,ak)
-        COMPLEX(DPC), INTENT(IN) :: phi,ak
-        COMPLEX(DPC) :: ellf_c
-!        Legendre elliptic integral of the 1st kind F(φ, k), evaluated using Carlson's function RF .
-!        The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
-        COMPLEX(DPC) :: s
-        s=sin(phi)
-        ellf_c=s*rf(cos(phi)**2,(1.0_dp-s*ak)*(1.0_dp+s*ak),dcmplx(1.0_dp,0.0_dp))
-        END FUNCTION ellf_c
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        FUNCTION ellf_rc(phi,ak)
-        REAL(DP), INTENT(IN) :: phi
-        COMPLEX(DPC), INTENT(IN) :: ak
-        COMPLEX(DPC) :: ellf_rc
-!        Legendre elliptic integral of the 1st kind F(φ, k), evaluated using Carlson's function RF .
-!        The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
-        COMPLEX(DPC) :: s
-        s=dcmplx(sin(phi),0.d0)
-        ellf_rc=s*rf(dcmplx(cos(phi)**2,0.d0),(1.0_dp-s*ak)*(1.0_dp+s*ak),dcmplx(1.0_dp,0.0_dp))
-        END FUNCTION ellf_rc
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        FUNCTION ellfim_q(phi,ak,complx)
+!       Integrale elliptique du 2eme type au voisinage de sa ligne de coupure sur l'axe réel
+!       quand ak^2*sin^2(phi)>1, l'intégrale est réelle de 0 à phi1=asin(1/abs(ak)) (partie réelle calculée par ellf(phi,ak))
+!       puis imaginaire pure de phi1 à phi. La partie imaginaire est calculée ci-dessous
+        REAL(QP), INTENT(IN) :: phi,ak
+        LOGICAL, INTENT(IN) :: complx!valeur sans importance, sert pour l'INTERFACE ellf
+        COMPLEX(QPC) :: ellfim_q
+        REAL(QP) :: phi1,kp,im,re
+        re=ellf(phi,ak)
+        if(abs(ak)>1)then 
+         phi1=asin(1/abs(ak))
+         kp=sqrt(ak**2/(ak**2-1))
+         im=(ellf(PI/2.0_qp-phi1,kp)-ellf(PI/2.0_qp-phi,kp))/sqrt(ak**2-1)
+        else
+         im=0.0_qp
+        endif
+        ellfim_q=cmplx(re,im,kind=qpc)
+        END FUNCTION ellfim_q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellf_cq(phi,ak)
-        COMPLEX(QPC), INTENT(IN) :: phi,ak
-        COMPLEX(QPC) :: ellf_cq
-!        Legendre elliptic integral of the 1st kind F(φ, k), evaluated using Carlson's function RF .
-!        The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
-        COMPLEX(QPC) :: s
-        s=sin(phi)
-        ellf_cq=s*rf(cos(phi)**2,(1.0_qp-s*ak)*(1.0_qp+s*ak),cmplx(1.0_qp,0.0_qp,QPC))
-        END FUNCTION ellf_cq
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        FUNCTION ellf_rcq(phi,ak)
+! Calcule l'intégrale elliptique de seconde espèce prolongée naivement au plan complexe
+! ak complexe, phi réel
+        USE modsim
+        IMPLICIT NONE
         REAL(QP), INTENT(IN) :: phi
         COMPLEX(QPC), INTENT(IN) :: ak
-        COMPLEX(QPC) :: ellf_rcq
-!        Legendre elliptic integral of the 1st kind F(φ, k), evaluated using Carlson's function RF .
-!        The argument ranges are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
-        COMPLEX(QPC) :: s
-        s=cmplx(sin(phi),0.0_qp)
-        ellf_rcq=s*rf(cmplx(cos(phi)**2,0.0_qp,QPC),(1.0_qp-s*ak)*(1.0_qp+s*ak),cmplx(1.0_qp,0.0_qp,QPC))
-        END FUNCTION ellf_rcq
+        COMPLEX(QPC) :: ellf_cq
+        COMPLEX(QPC) :: int1,int2
+        REAL(QP) t,dt,pref
+        INTEGER it,nt
+        
+        ellf_cq=qromocq(intef,0.0_qp,phi,(/bidon/),midpntcq,1.0e-18_qp)
+        
+        CONTAINS
+         FUNCTION intef(x,arg)
+         USE nrtype
+         IMPLICIT NONE
+         REAL(QP), DIMENSION(:), INTENT(IN) :: x
+         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+         COMPLEX(QPC), DIMENSION(size(x)) :: intef
+        
+         intef=sqrt(1.0_qp-ak**2.0_qp*sin(x)**2.0_qp)
+        
+         END FUNCTION
+        END FUNCTION ellf_cq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        FUNCTION ellf_ccq(phi,ak)
+! Calcule l'intégrale elliptique de seconde espèce prolongée naivement au plan complexe
+! ak complexe, phi complexe
+        USE modsim
+        IMPLICIT NONE
+        COMPLEX(QPC), INTENT(IN) :: phi,ak
+        COMPLEX(QPC) :: ellf_ccq
+        COMPLEX(QPC) :: int1,int2
+        REAL(QP) t,dt,pref
+        INTEGER it,nt
+        
+        ellf_ccq=qromocq(intef,0.0_qp,1.0_qp,(/bidon/),midpntcq,1.0e-18_qp)
+        ellf_ccq=phi*ellf_ccq
+        
+        CONTAINS
+         FUNCTION intef(x,arg)
+         USE nrtype
+         IMPLICIT NONE
+         REAL(QP), DIMENSION(:), INTENT(IN) :: x
+         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+         COMPLEX(QPC), DIMENSION(size(x)) :: intef
+        
+         intef=sqrt(1.0_qp-ak**2.0_qp*sin(phi*x)**2.0_qp)
+        
+         END FUNCTION
+        END FUNCTION ellf_ccq
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        FUNCTION ellfadiab(phi,ak)
+! Calcule l'intégrale elliptique de seconde espèce prolongée au plan complexe
+! Déplace les lignes de coupure par relèvement adiabatique de la racine de l'intégrande
+! Des points de brancherment demeurent là où l'argument de la racine carrée s'annulle
+        COMPLEX(QPC), INTENT(IN) :: phi,ak
+        COMPLEX(QPC) :: ellfadiab
+        COMPLEX(QPC) :: int1,int2
+        REAL(QP) t,dt,pref
+        INTEGER it,nt
+        
+        ellfadiab=cmplx(0.0_qp,0.0_qp,kind=qpc)
+        nt=54000
+        dt=1.0_qp/real(nt)
+        int1=1.0_qp
+        do it=0,nt
+! Règle de Simpson
+         if((it==0).OR.(it==nt))then
+          pref=1.0_qp
+         elseif(modulo(it,2)==1)then
+          pref=4.0_qp
+         elseif(modulo(it,2)==0)then
+          pref=2.0_qp
+         endif
+         t=it*dt
+         int2=int1
+         int1=intef(t,(/bidon/))
+         int1=int1*(-1.0_qp)**(minloc(abs((/int1+int2,int1-int2/)),DIM=1))
+!Suivi adiabatique de l'intégrande. Échoue aux points de branchement où intef,intee=0
+         ellfadiab=ellfadiab+pref*int1
+        enddo
+        ellfadiab=phi*ellfadiab*dt/3.0_qp
+        
+        CONTAINS
+         FUNCTION intef(x,arg)
+         USE nrtype
+         IMPLICIT NONE
+         REAL(QP), INTENT(IN) :: x
+         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
+         COMPLEX(QPC) :: intef
+        
+         intef=sqrt(1.0_qp-ak**2.0_qp*sin(phi*x)**2.0_qp)
+        
+         END FUNCTION
+        END FUNCTION
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION ellpi_q(phi,en,ak)
         REAL(QP), INTENT(IN) :: phi,en,ak
         REAL(QP) :: ellpi_q
-!        Legendre elliptic integral of the 3rd kind Π(φ, n, k), evaluated using Carlson’s functions RJ
-!        and RF . (Note that the sign convention on n is opposite that of Abramowitz and Stegun.)
+!        Legendre elliptic integral of the 3rd kind Π(φ, n, k), evaluated using Carlson's functions RJ
+!        and RF.
 !        The ranges of φ and k are 0 ≤ φ ≤ π/2, 0 ≤ k sin φ ≤ 1.
-!        definition mathematica int_0^phi dt/(1-n*sin^2 t)/sqrt(1-k*sin^2 t)
+!        definition mathematica int_0^phi dt/(1-en*sin^2 t)/sqrt(1-ak*sin^2 t)
         REAL(QP) :: cc,enss,q,s
         s=sin(phi)
         enss=-en*s*s
@@ -1609,6 +1939,21 @@ CONTAINS
         q=(1.0_qp-s**2*ak)
         ellpi_q=s*(rf(cc,q,1.0_qp)-enss*rj(cc,q,1.0_qp,1.0_qp+enss)/3.0_qp)
         END FUNCTION ellpi_q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        FUNCTION ellpi_cq(phi,en,ak)
+        USE modsim
+        REAL(QP), INTENT(IN) :: phi
+        COMPLEX(QPC), INTENT(IN) :: en,ak
+        COMPLEX(QPC) :: ellpi_cq
+
+        ellpi_cq=qromo(fonc,0.0_qp,phi,(/bidon/),midpntcq,1.0e-12_qp)
+        CONTAINS
+         FUNCTION fonc(x,arg)
+         REAL(QP), DIMENSION(:), INTENT(IN) :: x,arg
+         COMPLEX(QPC), DIMENSION(size(x)) :: fonc
+         fonc=1/(1-en*sin(x)**2)/sqrt(1-ak*sin(x)**2)
+         END FUNCTION fonc
+        END FUNCTION ellpi_cq
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION rtnewt(funcd,arg,x1,x2,xacc)
         REAL(DP), INTENT(IN) :: x1,x2,xacc
@@ -1850,18 +2195,15 @@ CONTAINS
         INTEGER m
         m=size(arr,dim=dimm)
         allocate(a(1:size(arr,dim=3-dimm)))
-        write(6,*)"m=",m
         do j=2,m !Pick out each element in turn.
          if(dimm==1)then
             a=arr(j,:)
-            write(6,*)"a=",a
             do i=j-1,1,-1 !Look for the place to insert it.
               if (arr(i,col) <= a(col)) exit
               arr(i+1,:)=arr(i,:)
             end do
             arr(i+1,:)=a!Insert it.
             do i=1,m
-             write(6,*)arr(i,:)
             enddo
          else
             a=arr(:,j)
@@ -1958,7 +2300,7 @@ CONTAINS
          if (k > MAXIT) call nrerror('frenel: series failed')
          s=sums
          c=sumc
-        else !Evaluate continued fraction by modified Lentz’s method (§5.2).
+        else !Evaluate continued fraction by modified Lentz's method (§5.2).
          pix2=PI*ax*ax 
          b=cmplx(1.0_qp,-pix2,kind=qpc)
          cc=BIG
@@ -1993,178 +2335,6 @@ CONTAINS
          absc=abs(real(z))+abs(aimag(z))
          END FUNCTION absc
         END SUBROUTINE frenel
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        FUNCTION cacaf(phi,ak)
-! Calcule l'intégrale elliptique de première espèce prolongée au plan complexe
-! Déplace les lignes de coupure par relèvement adiabatique de la racine de l'intégrande
-! Des points de brancherment demeurent là où l'argument de la racine carrée s'annulle
-        COMPLEX(QPC), INTENT(IN) :: phi,ak
-        COMPLEX(QPC) :: cacaf
-        COMPLEX(QPC) :: int1,int2
-        REAL(QP) t,dt,pref,arg(1:4)
-        INTEGER it,nt
-        
-        cacaf=cmplx(0.0_qp,0.0_qp,kind=qpc)
-        nt=54000
-        dt=1.0_qp/real(nt)
-        arg=(/real(phi),imag(phi),real(ak),imag(ak)/)
-        int1=1.0_qp
-! Règle de Simpson
-        do it=0,nt
-         if((it==0).OR.(it==nt))then
-          pref=1.0_qp
-         elseif(modulo(it,2)==1)then
-          pref=4.0_qp
-         elseif(modulo(it,2)==0)then
-          pref=2.0_qp
-         endif
-         t=it*dt
-         int2=int1
-         int1=intef(t,arg)
-         int1=int1*(-1.0_qp)**(minloc(abs((/int1+int2,int1-int2/)),DIM=1))
-!Suivi adiabatique de l'intégrande. Échoue aux points de branchement où intef,intee=0
-!         write(6,*)'t,int1=',t,int1
-         cacaf=cacaf+pref*int1
-        enddo
-        cacaf=phi*cacaf*dt/3.0_qp
-        
-        CONTAINS
-         FUNCTION intef(x,arg)
-         USE nrtype
-         IMPLICIT NONE
-         REAL(QP), INTENT(IN) :: x
-         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
-         COMPLEX(QPC) :: intef
-         COMPLEX(QPC) phi,ak
-        
-         phi=arg(1)+iiq*arg(2)
-         ak =arg(3)+iiq*arg(4)
-        
-         intef=1.0_qp/sqrt(1.0_qp-ak**2.0_qp*sin(phi*x)**2.0_qp)
-!         intef=1.0_qp
-        
-         END FUNCTION
-        END FUNCTION
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        FUNCTION cacae(phi,ak)
-! Calcule l'intégrale elliptique de seconde espèce prolongée au plan complexe
-! Déplace les lignes de coupure par relèvement adiabatique de la racine de l'intégrande
-! Des points de brancherment demeurent là où l'argument de la racine carrée s'annulle
-        COMPLEX(QPC), INTENT(IN) :: phi,ak
-        COMPLEX(QPC) :: cacae
-        COMPLEX(QPC) :: int1,int2
-        REAL(QP) t,dt,pref,arg(1:4)
-        INTEGER it,nt
-        
-        cacae=cmplx(0.0_qp,0.0_qp,kind=qpc)
-        nt=54000
-        dt=1.0_qp/real(nt)
-        arg=(/real(phi),imag(phi),real(ak),imag(ak)/)
-        int1=1.0_qp
-        do it=0,nt
-! Règle de Simpson
-         if((it==0).OR.(it==nt))then
-          pref=1.0_qp
-         elseif(modulo(it,2)==1)then
-          pref=4.0_qp
-         elseif(modulo(it,2)==0)then
-          pref=2.0_qp
-         endif
-         t=it*dt
-         int2=int1
-         int1=intee(t,arg)
-         int1=int1*(-1.0_qp)**(minloc(abs((/int1+int2,int1-int2/)),DIM=1))
-!Suivi adiabatique de l'intégrande. Échoue aux points de branchement où intef,intee=0
-!         write(6,*)'t,int1=',t,int1
-         cacae=cacae+pref*int1
-        enddo
-        cacae=phi*cacae*dt/3.0_qp
-        
-        CONTAINS
-         FUNCTION intee(x,arg)
-         USE nrtype
-         IMPLICIT NONE
-         REAL(QP), INTENT(IN) :: x
-         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
-         COMPLEX(QPC) :: intee
-         COMPLEX(QPC) phi,ak
-        
-         phi=arg(1)+iiq*arg(2)
-         ak =arg(3)+iiq*arg(4)
-        
-         intee=sqrt(1.0_qp-ak**2.0_qp*sin(phi*x)**2.0_qp)
-!         intee=1.0_qp
-        
-         END FUNCTION
-        END FUNCTION
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        FUNCTION cacaf2(phi,ak)
-! Calcule l'intégrale elliptique de première espèce prolongée au plan complexe
-! Déplace les lignes de coupure par relèvement adiabatique de la racine de l'intégrande
-! Des points de branchement demeurent là où l'argument de la racine carrée s'annule
-        USE modsim
-        IMPLICIT NONE
-        COMPLEX(QPC), INTENT(IN) :: phi,ak
-        COMPLEX(QPC) :: cacaf2
-        COMPLEX(QPC) :: int1,int2
-        REAL(QP) t,dt,pref,arg(1:4)
-        INTEGER it,nt
-        
-        cacaf2=cmplx(0.0_qp,0.0_qp,kind=qpc)
-        arg=(/real(phi),imag(phi),real(ak),imag(ak)/)
-        cacaf2=qromocq(intef,0.0_qp,1.0_qp,arg,midsqlcq,1.0e-14_qp)
-        cacaf2=phi*cacaf2
-        
-        CONTAINS
-         FUNCTION intef(x,arg)
-         USE nrtype
-         IMPLICIT NONE
-         REAL(QP), DIMENSION(:), INTENT(IN) :: x
-         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
-         COMPLEX(QPC), DIMENSION(size(x)) :: intef
-         COMPLEX(QPC) phi,ak
-        
-         phi=arg(1)+iiq*arg(2)
-         ak =arg(3)+iiq*arg(4)
-        
-         intef=1.0_qp/sqrt(1.0_qp-ak**2.0_qp*sin(phi*x)**2.0_qp)
-        
-         END FUNCTION
-        END FUNCTION
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        FUNCTION cacae2(phi,ak)
-! Calcule l'intégrale elliptique de première espèce prolongée au plan complexe
-! Déplace les lignes de coupure par relèvement adiabatique de la racine de l'intégrande
-! Des points de branchement demeurent là où l'argument de la racine carrée s'annule
-        USE modsim
-        IMPLICIT NONE
-        COMPLEX(QPC), INTENT(IN) :: phi,ak
-        COMPLEX(QPC) :: cacae2
-        COMPLEX(QPC) :: int1,int2
-        REAL(QP) t,dt,pref,arg(1:4)
-        INTEGER it,nt
-        
-        cacae2=cmplx(0.0_qp,0.0_qp,kind=qpc)
-        arg=(/real(phi),imag(phi),real(ak),imag(ak)/)
-        cacae2=qromocq(intee,0.0_qp,1.0_qp,arg,midpntcq,1.0e-14_qp)
-        cacae2=phi*cacae2
-        
-        CONTAINS
-         FUNCTION intee(x,arg)
-         USE nrtype
-         IMPLICIT NONE
-         REAL(QP), DIMENSION(:), INTENT(IN) :: x
-         REAL(QP), DIMENSION(:), INTENT(IN) :: arg
-         COMPLEX(QPC), DIMENSION(size(x)) :: intee
-         COMPLEX(QPC) phi,ak
-        
-         phi=arg(1)+iiq*arg(2)
-         ak =arg(3)+iiq*arg(4)
-        
-         intee=sqrt(1.0_qp-ak**2.0_qp*sin(phi*x)**2.0_qp)
-        
-         END FUNCTION
-        END FUNCTION
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         FUNCTION nlignes(fich)
         CHARACTER(len=*), INTENT(IN) :: fich

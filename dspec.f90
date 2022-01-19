@@ -327,7 +327,6 @@ if(axer)then
   
      elseif(om0<opp(3))then!cut in opp(1), opp(2), om0 and opp(3)
       if((opp(3)-om0).LE.0.0001_qp)then
-       write(6,*)"top"
        nc=7
        mil =(opp(2)+opp(3))/2
        mil1=opp(2)-3*(opp(3)-opp(2))
@@ -486,9 +485,6 @@ if(axer)then
        mil1=ag(2)+0.01_qp
        mil2=(ag(2)+ag(3))/2
        mil3=(ag(3)+ag(4))/2.0_qp
-!       write(6,*)"top"
-!      if(.FALSE.)then
-!      if(.TRUE.)then
        arg(1,1:nc)  =(/nsu,   su,   su,             nsu,  nsu,  nsu,  nsu,  nsu,                 nsu,  nsu/)
        choix(1:nc)  =(/mpnt,  mpnt, msqu,           msql, msql, msqu, msql, msqu,                msql, rinf/)
        bornes(1:nc+1) =(/0.0_qp,ag(1),mil,ag(2),mil1, mil2, ag(3),mil3,ag(4),2*ag(4),bmax/)
@@ -508,9 +504,7 @@ if(axer)then
   
       Icomp=-r0*log((ag(2)-om0)/(om0-ag(1)))
      elseif(om0<ag(3))then
-!      if(((om0-ag(2))<0.01_qp).AND.(ag(2)+0.01_qp<(ag(2)+ag(3))/2))then
       if(.FALSE.)then
-!      if(.TRUE.)then
        nc=9
        mil1=ag(2)+0.01_qp
        mil2=(ag(2)+ag(3))/2
@@ -651,9 +645,6 @@ CONTAINS
   
   inter(:)=0.0_qp
 
-!!$OMP  PARALLEL DO &
-!!$OMP& PRIVATE(is,ome,r,cterm)&
-!!$OMP& SHARED(om,inter) SCHEDULE(STATIC)
   do is=1,size(om)
    ome=om(is)
    if(ome==om0) ome=om0+1.0e-20
@@ -688,7 +679,6 @@ CONTAINS
    endif
 
   enddo
-!!$OMP END PARALLEL DO
   END FUNCTION inter
 END FUNCTION intpp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -786,7 +776,6 @@ CONTAINS
   if((floor(num)==1).OR.(floor(num)==2))then
    intinfini= -4.0_qp*PI*om0/(3.0_qp*sqrt(2.0_qp)*bm**(3.0_qp/2.0_qp))
   elseif(floor(num)==3)then
-!   intinfini= -2.0_qp*PI/(sqrt(2.0_qp*bm))-2.0_qp*PI*(x0-xq**2/4.0_qp)/(3.0_qp*sqrt(2.0_qp*bm**3)) !Subleading order in der_+-
    intinfini= -2.0_qp*PI/(sqrt(2.0_qp*bm))
   else
    stop "Mauvais num dans deriveepp"
@@ -875,11 +864,6 @@ else
  endif
 endif
 rhopp=rho*PI/(2.0_qp*xq*om)
-!if(rhopp>1.0e20)then
-! write(6,*) 'rhopp=Infini'
-! write(6,*)"om,num,T,opp,secteur=",om,num,T,opp,secteur
-! stop
-!endif
 !!!!!!!!!!!!!!!!
 CONTAINS
  FUNCTION integrande(y,arg)
@@ -981,34 +965,6 @@ CONTAINS
  endif
 
  END FUNCTION rB
-!!!!!!!!!!!!!!!!
-! FUNCTION rAbis(sec) !Alternate version of the elliptic integrals. Disactivated to avoid calling elle,ellf with complex arguments
-! INTEGER, INTENT(IN) :: sec
-! REAL(QP) rAbis
-! 
-! if    (sec==1)then 
-!  rAbis=   2.0_qp*ellf(PI/2.0_qp,tht)
-! elseif(sec==2)then
-!  rAbis=   ellf(PI/2.0_qp-asin(s1),iiq*sht)*cht
-!  rAbis=rAbis+ellf(PI/2.0_qp-asin(s2),iiq*sht)*cht
-! elseif(sec==3)then
-!  rAbis=   ellf(PI/2.0_qp-asin(s2),iiq*sht)*cht
-! endif
-! END FUNCTION rAbis
-!!!!!!!!!!!!!!!!!
-! FUNCTION rBbis(sec)
-! INTEGER, INTENT(IN) :: sec
-! REAL(QP) rBbis
-! 
-! if    (sec==1)then 
-!  rBbis=   2.0_qp*elle(PI/2.0_qp,tht)/(1.0_qp-th2t)
-! elseif(sec==2)then
-!  rBbis=   elle(PI/2.0_qp-asin(s1),iiq*sht)*cht
-!  rBbis=rBbis+elle(PI/2.0_qp-asin(s2),iiq*sht)*cht
-! elseif(sec==3)then
-!  rBbis=   elle(PI/2.0_qp-asin(s2),iiq*sht)*cht
-! endif
-! END FUNCTION rBbis
 !!!!!!!!!!!!!!!!
  FUNCTION rCC(sec)
  INTEGER, INTENT(IN) :: sec
@@ -1550,10 +1506,6 @@ rem12= PI**2*fn12(al)/xq**3
 imm12= PI**2*fim12/xq**3
 
 write(6,*)"om,al,rem22,imm11,imm22,imm12=",om0,al,rem22,imm11,imm22,imm12
-!write(6,*)"rem22=",rem22
-!write(6,*)"imm11=",imm11
-!write(6,*)"imm22=",imm22
-!write(6,*)"imm12=",imm12
 
 m11=cmplx(rem11,imm11,kind=qpc)
 m22=cmplx(rem22,imm22,kind=qpc)
@@ -1603,7 +1555,6 @@ endif
 unsat=unsurkfa0(x0)*sqrt(eF(x0))
 
 al=2*om0/xq**2
-!fim22=-sqrt(al-1.0_qp)*(8*al/(al-2)**2+2*log((sqrt(al-1)+1)**2/(sqrt(al-1)-1)**2)/sqrt(al-1))/(2*al**3)
 fim22=-4*sqrt(al-1)/(al-2)**2/al**2-log((sqrt(al-1)+1)**2/(sqrt(al-1)-1)**2)/al**3
 fim12=atanh(2*sqrt(al-1)/al)/al
 
@@ -1619,11 +1570,7 @@ m11=cmplx(rem11,imm11,kind=qpc)
 m22=cmplx(rem22,imm22,kind=qpc)
 m12=cmplx(rem12,imm12,kind=qpc)
 
-!write(6,*)"om,al,rem22,imm11,imm22,imm12=",om0,al,rem22,imm11,imm22,imm12
 PRINT '("om,al,rem22,imm11,imm22,imm12="/(6G20.10))',om0,al,rem22,imm11,imm22,imm12
-!write(6,*)"m11=",m11
-!write(6,*)"m22=",m22
-!write(6,*)"m12=",m12
 
 M(1,1)=(m11+m22)/2.0-m12
 M(2,2)=(m11+m22)/2.0+m12
@@ -1631,7 +1578,6 @@ M(1,2)=(m11-m22)/2.0
 M(2,1)=M(1,2)
 
 det=M(1,1)*M(2,2)-M(1,2)**2.0_qp
-!write(6,*)"om0,xq,det=",om0,xq,det
 
 fr(1,1)=M(2,2)/det
 fr(2,2)=M(1,1)/det
@@ -1646,7 +1592,6 @@ REAL(QP) fn12
 REAL(QP) bbmax
  
 bbmax=1.0e20_qp
-!write(6,*)"alp,sqrt(alp-1.0_qp),2*sqrt(alp-1.0_qp)=",alp,sqrt(alp-1.0_qp),2*sqrt(alp-1.0_qp)
 if(2*sqrt(alp-1.0_qp)>1.0_qp)then
  fn12=     qromo(intn12r ,0.0_qp,1.0_qp               ,(/bidon/),midsquq,1.0e-11_qp)
  fn12=fn12+qromo(intn12r ,1.0_qp,2*sqrt(alp-1.0_qp)   ,(/bidon/),midsqlq,1.0e-11_qp)
@@ -1660,7 +1605,6 @@ else
 endif
 fn12=fn12+2/3.0_qp/bbmax**3
 fn12=fn12*4.0_qp/PI
-!write(6,*)"fn12=",fn12
 
 CONTAINS 
  FUNCTION intn12r(t,arg)
@@ -1671,7 +1615,6 @@ CONTAINS
 
  cterme=atanh(2*sqrt(alp-1)/alp)/(4.0_qp*alp*(t-sqrt(alp-1.0_qp)))
  intn12r=t*atanh(2*t/(t**2+1))/((t**2+1+alp)*(t**2-(alp-1)))-cterme
-! write(6,*)"t,cterme=",t(1),cterme(1),intn12r(1)
  END FUNCTION intn12r
  FUNCTION intn12pr(t,arg)
  REAL(QP), INTENT(IN), DIMENSION(:) :: t,arg
@@ -1680,9 +1623,6 @@ CONTAINS
  INTEGER is
 
  intn12pr=t*atanh(2*t/(t**2+1))/((t**2+1+alp)*(t**2-(alp-1)))
-! do is=1,size(t)
-! write(6,*)"t,cterme=",t(is),intn12pr(is)
-! enddo
  END FUNCTION intn12pr
 END FUNCTION fn12
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

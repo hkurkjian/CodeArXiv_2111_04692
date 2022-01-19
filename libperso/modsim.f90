@@ -862,6 +862,7 @@ MODULE modsim
         if (j >= K) then
          call polint(h(j-KM:j),s(j-KM:j),0.0_qp,qromocq,dqromo)
          if ((abs(dqromo) <= EPS*abs(qromocq)).AND.(abs(s(j)-s(j-1))<0.01_qp*abs(s(j)))) RETURN
+         if ((abs(qromocq) <= EPS*10e-30_qp)) RETURN
         end if
         s(j+1)=s(j)
         h(j+1)=h(j)/9.0_qp
