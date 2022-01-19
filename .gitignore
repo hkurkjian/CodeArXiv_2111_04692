@@ -29,3 +29,4 @@ DONNEES/
 mkInfoFile.inp
 *.exe
 SVLtest.f90
+.DS_store
